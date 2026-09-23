@@ -1,0 +1,22 @@
+# RQ2: Player Behavioral Profiling and Clustering
+
+minimum_games_threshold: null # TBD: Decided in Notebook 07 based on retention & stability
+min_games_candidates: [5, 10, 20, 50]
+
+profile_level: "auto" # "overall", "per_mode", or "player_mode" - Decided after Mode EDA
+mode_strategy: null # TBD: Decided after Mode EDA (Notebook 05)
+
+n_clusters: null # TBD: Selected from diagnostics in Notebook 07
+candidate_k_range: [2, 3, 4, 5, 6, 7, 8]
+
+algorithm: "kmeans"
+batch_size: 10000
+scaler: "standard" # standard / robust (robust as sensitivity)
+random_state: 42
+
+experiments:
+  c1_main_clustering: true
+  c2_hierarchical_validation: true # subset or centroids diagnostic
+  c3_games_played_sensitivity: true # with vs without games_played
+  c4_min_games_sensitivity: true # across candidate thresholds
+  c5_outcome_comparison: true # post-clustering descriptive comparison ONLY

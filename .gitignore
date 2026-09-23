@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# Environment / local configs
+.env
+*.token
+*.key
+
+# Data directories (raw / heavy parquet / temp)
+data/raw/*
+!data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Checkpoint staging & large experiment artifacts
+artifacts/checkpoints/*.tmp
+artifacts/checkpoints/staging/
+artifacts/models/*.joblib
+artifacts/models/*.xgb
+artifacts/logs/*.log
+
+# Operating system artifacts
+.DS_Store
+Thumbs.db
+desktop.ini

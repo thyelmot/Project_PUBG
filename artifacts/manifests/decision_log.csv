@@ -1,0 +1,9 @@
+decision_id,title,spec_basis,choice_made,evidence_required,timing,affected_artifacts
+D01,Combat Timing duration proxy dependency,Spec v3.0 §12,Phase features inherit duration proxy and are outcome-dependent; S1 excludes phase features,Estimated match duration max(survive_time) distribution,Pre-feature build,features.yaml; rq1_analysis; s1_pipeline
+D02,P1 vs P2 survival disclosure,Spec v3.0 §31,P1 includes direct survival; P2 excludes it; common features documented,Feature registry dependency inspection,Pre-model training,rq3.yaml; p1_p2_comparison
+D03,Roster calculation before task filtering,Spec v3.0 §14,Calculate N_teams and match completeness on full valid match roster before dropping rows,Roster key and placement audits,Cleaning / metadata build,match_metadata.parquet; placement.py
+D04,Chronology grading requirements,Spec v3.0 §1.2.E,Grade A: exact order; Grade B: date only (cross-day); Grade C: blocked S2/P3,Timestamp format precision ties analysis,Pre-split / Gate G2,chronology_report.json; split_assignments.parquet
+D05,Outcome-dependent EDA split barrier,Spec v3.0 §25,Split manifest locked before relationship EDA; test split not used for selection,Split definition and cutoff integrity,Pre-EDA / Gate G2,split_manifest.json; eda.ipynb
+D06,Historical K/D denominator verification,Spec v3.0 §16,hist_kd requires verified deaths; if incomplete keep candidate or excluded,Death event join coverage audit,Historical feature build,historical.py; registry.py
+D07,No-kill vs Missing event separation,Spec v3.0 §12,kills=0 with no events is confirmed zero; kills>0 with no events is missing event,Event join discrepancy table,Combat timing build,combat_timing.py; kill_discrepancy.csv
+D08,Unified blocked status enum,Spec v3.0 §35,status=blocked and reason_code=blocked_by_chronology for Grade C historical,Chronology validation result,Historical / Model execution,experiment_registry.csv; summary.ipynb

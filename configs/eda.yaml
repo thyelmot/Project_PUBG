@@ -1,0 +1,54 @@
+# Exploratory Data Analysis & Visualization Catalog
+
+sampling:
+  viz_sample_size: 50000
+  diagnostic_sample_size: 100000
+  random_state: 42
+
+catalog:
+  structural:
+    - id: "A01"
+      name: "distribution_of_matches_per_player"
+    - id: "A02"
+      name: "player_retention_curve"
+    - id: "A03"
+      name: "matches_by_mode_distribution"
+    - id: "A04"
+      name: "game_size_distribution"
+    - id: "A05"
+      name: "teams_per_match_distribution"
+    - id: "A06"
+      name: "temporal_coverage_and_match_frequency"
+  raw_distributions:
+    - id: "B01"
+      name: "kills_distribution"
+    - id: "B02"
+      name: "damage_distribution"
+    - id: "B03"
+      name: "walk_distance_distribution"
+    - id: "B04"
+      name: "ride_distance_distribution"
+    - id: "B05"
+      name: "assists_distribution"
+    - id: "B06"
+      name: "dbno_distribution"
+    - id: "B07"
+      name: "survival_time_distribution"
+    - id: "B08"
+      name: "raw_placement_distribution"
+    - id: "B09"
+      name: "normalized_placement_distribution"
+  derived_ratios:
+    - id: "C01"
+      name: "damage_per_kill_distribution"
+    - id: "C02"
+      name: "walk_ratio_distribution"
+    - id: "C03"
+      name: "assist_ratio_distribution"
+  timing:
+    - id: "H01"
+      name: "first_kill_time_distribution"
+    - id: "H02"
+      name: "combat_phase_proportions_overall"
+    - id: "H06"
+      name: "combat_phase_by_placement_group" # Priority report chart

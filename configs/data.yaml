@@ -1,0 +1,23 @@
+spec_version: "3.0"
+spec_checksum: null
+
+source:
+  dataset_name: "PUBG Match Deaths and Statistics"
+  dataset_slug: "skihikingkevin/pubg-match-deaths"
+  archive_url: "https://drive.usercontent.google.com/download?id=1-NpwnrD3VlD-ZGUyyKk2TwobswwF8zAy&export=download&confirm=t"
+  direct_download_url: "https://drive.usercontent.google.com/download?id=1-NpwnrD3VlD-ZGUyyKk2TwobswwF8zAy&export=download&confirm=t"
+  view_url: "https://drive.google.com/file/d/1-NpwnrD3VlD-ZGUyyKk2TwobswwF8zAy/view?usp=sharing"
+  google_drive_file_id: "1-NpwnrD3VlD-ZGUyyKk2TwobswwF8zAy"
+  archive_filename: "Data_PUBG.zip"
+  archive_sha256: "f1cf75b718519bcadb1a2f9ed284b98d102f9e8a831337d24c5105a53daef7a6"
+  archive_size_bytes: 4399919847
+  agg_urls: []
+  kill_urls: []
+  expected_checksums:
+    "Data_PUBG.zip": "f1cf75b718519bcadb1a2f9ed284b98d102f9e8a831337d24c5105a53daef7a6"
+
+discovery:
+  agg_patterns:
+    - "**/agg_match_stats*.csv"
+  kill_patterns:
+    - "**/kill_match_stats*.csv"

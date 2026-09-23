@@ -1,0 +1,59 @@
+version: "3.0"
+
+aggregate:
+  required_columns:
+    date: string
+    game_size: int64
+    match_id: string
+    match_mode: string
+    party_size: int64
+    player_assists: int64
+    player_dbno: int64
+    player_dist_ride: float64
+    player_dist_walk: float64
+    player_dmg: float64
+    player_kills: int64
+    player_name: string
+    player_survive_time: float64
+    team_id: string
+    team_placement: int64
+  optional_columns: {}
+  aliases:
+    match_id: ["matchId", "match_id"]
+    player_name: ["playerName", "player_name"]
+    team_id: ["teamId", "team_id"]
+    team_placement: ["teamPlacement", "team_placement"]
+  units:
+    player_survive_time: "seconds"
+    player_dist_walk: "meters"
+    player_dist_ride: "meters"
+    player_dmg: "points"
+
+deaths:
+  required_columns:
+    match_id: string
+    time: float64
+    killer_name: string
+    victim_name: string
+    killed_by: string
+  optional_columns:
+    killer_placement: float64
+    victim_placement: float64
+    map: string
+    killer_position_x: float64
+    killer_position_y: float64
+    victim_position_x: float64
+    victim_position_y: float64
+  aliases:
+    match_id: ["matchId", "match_id"]
+    killer_name: ["killerName", "killer_name"]
+    victim_name: ["victimName", "victim_name"]
+    killed_by: ["killedBy", "killed_by"]
+  units:
+    time: "seconds"
+
+keys:
+  player_match_key: ["match_id", "player_name"]
+  match_key: ["match_id"]
+  team_key: ["match_id", "team_id"]
+  event_killer_key: ["match_id", "killer_name"]

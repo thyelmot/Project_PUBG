@@ -1,0 +1,32 @@
+# Paths configuration - maps logical roots to local/colab/persistent paths
+
+environments:
+  local:
+    raw_root: "../Data_PUBG"
+    data_root: "./data"
+    artifacts_root: "./artifacts"
+    figures_root: "./figures"
+    reports_root: "./reports"
+    temp_dir: "./artifacts/logs/temp"
+  colab:
+    raw_root: "/content/data/raw"
+    data_root: "/content/data"
+    artifacts_root: "/content/Project_PUBG/artifacts"
+    figures_root: "/content/Project_PUBG/figures"
+    reports_root: "/content/Project_PUBG/reports"
+    temp_dir: "/content/temp"
+
+active_environment: "auto"
+
+subpaths:
+  raw: "data/raw"
+  interim: "data/interim"
+  processed: "data/processed"
+  checkpoints: "artifacts/checkpoints"
+  experiments: "artifacts/experiments"
+  manifests: "artifacts/manifests"
+  models: "artifacts/models"
+  metrics: "artifacts/metrics"
+  logs: "artifacts/logs"
+  tables: "reports/tables"
+  appendix: "reports/appendix"

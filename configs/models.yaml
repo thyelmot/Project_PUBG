@@ -1,0 +1,45 @@
+# Model candidates, hyperparameters, and resource constraints
+
+baselines:
+  train_mean:
+    enabled: true
+  train_median:
+    enabled: true
+
+linear:
+  exact_linear:
+    enabled: true
+    fit_intercept: true
+  sgd_regressor:
+    enabled: true
+    loss: "squared_error"
+    penalty: "l2"
+    alpha: 0.0001
+    max_iter: 1000
+    tol: 0.001
+    random_state: 42
+    streaming: true
+
+nonlinear_candidates:
+  hist_gradient_boosting:
+    enabled: true
+    max_iter: 100
+    learning_rate: 0.1
+    max_leaf_nodes: 31
+    random_state: 42
+  random_forest:
+    enabled: false # Optional: evaluate resource budget first
+    n_estimators: 100
+    max_depth: 15
+    random_state: 42
+  xgboost:
+    enabled: false # Enabled if package is available and memory permits
+    n_estimators: 100
+    learning_rate: 0.1
+    max_depth: 6
+    random_state: 42
+
+resource_limits:
+  max_memory_gb: 12.0
+  fallback_to_sgd_on_oom: true
+  chunk_batch_size: 50000

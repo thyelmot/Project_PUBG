@@ -1,0 +1,35 @@
+# Preprocessing configuration
+
+cleaning:
+  deduplication:
+    strategy: "exact_and_key_audit"
+    conflict_resolution: "audit_and_log" # do not silently drop first
+  invalid_handling:
+    non_negative_checks:
+      - player_kills
+      - player_assists
+      - player_dbno
+      - player_dmg
+      - player_dist_walk
+      - player_dist_ride
+      - player_survive_time
+      - team_placement
+    drop_unnamed_players_for_profiles: true
+    keep_unnamed_for_current_match_if_valid: true
+
+modes:
+  team_size_mapping:
+    1: "Solo"
+    2: "Duo"
+    4: "Squad"
+  perspective_field: "match_mode" # e.g. tpp / fpp
+  unrecognized_party_size: "Custom/Other"
+
+roster:
+  min_observed_teams_for_placement: 2
+  require_valid_team_id: true
+  validate_team_placement_consistency: true
+
+chronology:
+  timestamp_format: "iso8601"
+  grade_assignment: null # TBD: Determined at Gate G2 (Grade A, B, or C)

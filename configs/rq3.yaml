@@ -1,0 +1,30 @@
+# RQ3: Survival and Placement Prediction
+
+minimum_history_threshold: null # TBD: Decided in Notebook 08 (e.g., 5 or 10 matches)
+chronology_required_for_historical: true
+
+split:
+  strategy: "auto" # "chronological" if Grade A/B, "group_by_match" if Grade C
+  train_ratio: 0.70
+  validation_ratio: 0.15
+  test_ratio: 0.15
+  group_column: "match_id"
+  random_state: 42
+
+experiments:
+  s1_survival_retrospective: true
+  s2_survival_historical: true # Blocked if chronology is Grade C
+  p1_placement_retrospective_with_survival: true
+  p2_placement_retrospective_no_survival: true
+  p3_placement_historical: true # Blocked if chronology is Grade C
+  t0_t1_timing_comparison: true
+  ablation_full_task: "p2" # Anchor task for group ablation
+
+evaluation:
+  metrics: ["mae", "rmse", "r2"]
+  aggregations: ["micro", "match_aware", "team_aware"]
+  bootstrap:
+    enabled: true
+    replicates: 500
+    random_state: 42
+    level: "match" # Resample entire matches to respect internal correlation

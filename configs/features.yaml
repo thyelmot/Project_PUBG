@@ -1,0 +1,143 @@
+# Feature engineering configuration and registry parameters
+
+feature_versions:
+  schema_version: 1
+  feature_version: 1
+  pipeline_version: 1
+
+combat_timing:
+  enabled: true
+  early_cutoff: 0.3333333333
+  mid_cutoff: 0.6666666667
+  min_valid_duration_seconds: 60.0
+
+transforms:
+  log_transform_features: [] # TBD: Decided in EDA (Notebook 05)
+  standardize: true
+
+groups:
+  combat:
+    - player_kills
+    - player_dmg
+    - damage_per_kill
+  movement:
+    - player_dist_walk
+    - player_dist_ride
+    - total_distance
+    - walk_ratio
+  support:
+    - player_assists
+    - player_dbno
+    - assist_ratio
+  combat_timing_absolute:
+    - event_kill_count
+    - first_kill_time
+    - avg_kill_time
+    - has_kill
+  combat_timing_phase:
+    - early_kills
+    - mid_kills
+    - late_kills
+    - early_kill_ratio
+    - mid_kill_ratio
+    - late_kill_ratio
+  target_derived_diagnostics:
+    - kills_per_minute
+    - damage_per_minute
+    - walk_velocity
+    - ride_velocity
+
+tasks:
+  s1_safe_features:
+    - player_kills
+    - player_dmg
+    - damage_per_kill
+    - player_dist_walk
+    - player_dist_ride
+    - total_distance
+    - walk_ratio
+    - player_assists
+    - player_dbno
+    - assist_ratio
+    - first_kill_time
+    - avg_kill_time
+    - has_kill
+    # Note: Phase features & rates per survival are EXCLUDED from S1 (D01 rule)
+
+  p1_features:
+    - player_kills
+    - player_dmg
+    - damage_per_kill
+    - player_dist_walk
+    - player_dist_ride
+    - total_distance
+    - walk_ratio
+    - player_assists
+    - player_dbno
+    - assist_ratio
+    - player_survive_time # DIRECT SURVIVAL
+    - first_kill_time
+    - avg_kill_time
+    - has_kill
+    - early_kills
+    - mid_kills
+    - late_kills
+    - early_kill_ratio
+    - mid_kill_ratio
+    - late_kill_ratio
+
+  p2_features:
+    # Identical to P1 EXCEPT player_survive_time is EXCLUDED (D02 rule)
+    - player_kills
+    - player_dmg
+    - damage_per_kill
+    - player_dist_walk
+    - player_dist_ride
+    - total_distance
+    - walk_ratio
+    - player_assists
+    - player_dbno
+    - assist_ratio
+    - first_kill_time
+    - avg_kill_time
+    - has_kill
+    - early_kills
+    - mid_kills
+    - late_kills
+    - early_kill_ratio
+    - mid_kill_ratio
+    - late_kill_ratio
+
+  t0_base_features:
+    - player_kills
+    - player_dmg
+    - damage_per_kill
+    - player_dist_walk
+    - player_dist_ride
+    - total_distance
+    - walk_ratio
+    - player_assists
+    - player_dbno
+    - assist_ratio
+
+  t1_timing_features:
+    # t0_base_features + timing features
+    - player_kills
+    - player_dmg
+    - damage_per_kill
+    - player_dist_walk
+    - player_dist_ride
+    - total_distance
+    - walk_ratio
+    - player_assists
+    - player_dbno
+    - assist_ratio
+    - first_kill_time
+    - avg_kill_time
+    - has_kill
+    - early_kills
+    - mid_kills
+    - late_kills
+    - early_kill_ratio
+    - mid_kill_ratio
+    - late_kill_ratio

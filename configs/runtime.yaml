@@ -1,0 +1,18 @@
+# Runtime and execution settings
+
+mode: "development" # "development" (fast fixtures/samples) or "full" (all valid data)
+random_state: 42
+chunk_size: 50000
+storage_backend: "local" # "local" or "colab"
+resume: true
+
+duckdb:
+  threads: 4
+  memory_limit: "4GB"
+  temp_directory: "./artifacts/logs/temp"
+
+logging:
+  level: "INFO"
+  log_to_file: true
+  log_to_console: true
+  log_dir: "./artifacts/logs"
