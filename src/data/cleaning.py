@@ -15,6 +15,11 @@ def audit_and_clean_aggregate_data(
     removal_log_path: Path,
 ) -> Dict[str, Any]:
     """Clean aggregate dataset across shards: audit duplicates, missing keys, and invalid values."""
+    if not aggregate_parquet_paths:
+        raise FileNotFoundError(
+            "No aggregate Parquet shards were provided. Run notebook 01 with the same "
+            "PUBG_STORAGE_MODE and PUBG_DRIVE_PROJECT_ROOT before notebook 02."
+        )
     output_cleaned_parquet.parent.mkdir(parents=True, exist_ok=True)
     removal_log_path.parent.mkdir(parents=True, exist_ok=True)
 

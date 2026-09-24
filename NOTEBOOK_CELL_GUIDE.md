@@ -144,7 +144,7 @@ Chuẩn bị môi trường dùng chung.
 
 ### Cell 5 — Code: khởi tạo stage 02
 
-Import các hàm làm sạch, metadata, split và chronology; mở DuckDB; tìm toàn bộ `agg_*.parquet` trong staging. Nếu notebook 01 chưa tạo các tệp này, cell sau sẽ không có đầu vào hợp lệ.
+Import các hàm làm sạch, metadata, split và chronology; mở DuckDB; tìm đệ quy toàn bộ `agg_*.parquet` trong staging. Nếu notebook 01 chưa tạo các tệp này, cell dừng ngay và hiển thị đúng thư mục cần kiểm tra.
 
 ### Cell 6 — Code: làm sạch aggregate
 

@@ -300,7 +300,13 @@ con = get_duckdb_connection(temp_dir=paths["temp_dir"], **{k: cfg["runtime"]["du
 ckpt_mgr = CheckpointManager(manifest_path=paths["checkpoints"] / "checkpoint_manifest.json")
 
 staging_dir = paths["interim"] / "staging_shards"
-agg_shards = sorted(list(staging_dir.glob("agg_*.parquet")))
+agg_shards = sorted(staging_dir.rglob("agg_*.parquet"))
+if not agg_shards:
+    raise FileNotFoundError(
+        f"Không tìm thấy aggregate Parquet trong {staging_dir}. "
+        "Hãy chạy xong notebook 01 với cùng PUBG_STORAGE_MODE và PUBG_DRIVE_PROJECT_ROOT."
+    )
+print(f"Đầu vào stage 02: {len(agg_shards)} aggregate shards từ {staging_dir}")
 
 # 1. Làm sạch sơ bộ và ghi removal log
 cleaned_pq = paths["interim"] / "cleaned_aggregate.parquet"

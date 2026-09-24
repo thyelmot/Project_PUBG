@@ -169,6 +169,12 @@ class TestDataAndFeaturesPipeline(unittest.TestCase):
         self.assertIn("rq1", invalidated)
         self.assertIn("rq3_prediction", invalidated)
 
+    def test_cleaning_rejects_missing_stage_01_output(self):
+        with self.assertRaisesRegex(FileNotFoundError, "Run notebook 01"):
+            audit_and_clean_aggregate_data(
+                self.con, [], self.test_dir / "cleaned.parquet", self.test_dir / "removal.csv"
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
