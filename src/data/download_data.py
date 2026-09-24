@@ -131,13 +131,13 @@ def download_file_with_checksum(
         raise e
 
 
-def download_and_extract_archive(
+def resolve_archive(
     archive_url: str,
     target_dir: Path,
     expected_checksum: Optional[str] = None,
     archive_filename: str = "Data_PUBG.zip",
 ) -> Path:
-    """Download zip archive (or reuse if present) and extract into target_dir."""
+    """Locate or download the ZIP without expanding it on disk."""
     target_dir.mkdir(parents=True, exist_ok=True)
 
     # Check if archive exists locally in parent or target
@@ -160,6 +160,18 @@ def download_and_extract_archive(
 
     if expected_checksum and hash_file(local_archive).lower() != expected_checksum.lower():
         raise ValueError(f"Checksum mismatch for local archive: {local_archive}")
+
+    return local_archive
+
+
+def download_and_extract_archive(
+    archive_url: str,
+    target_dir: Path,
+    expected_checksum: Optional[str] = None,
+    archive_filename: str = "Data_PUBG.zip",
+) -> Path:
+    """Legacy full extraction; notebooks use streaming ingestion instead."""
+    local_archive = resolve_archive(archive_url, target_dir, expected_checksum, archive_filename)
 
     logger.info(f"Using archive {local_archive.name}. Extracting -> {target_dir}...")
     with zipfile.ZipFile(local_archive, "r") as zip_ref:

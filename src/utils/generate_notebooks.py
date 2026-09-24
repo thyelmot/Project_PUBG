@@ -44,6 +44,13 @@ def create_notebook(filename: str, title: str, description: str, cells_data: lis
     for i, cell in enumerate(cells):
         if cell["cell_type"] == "code" and not cell.get("metadata", {}).get("tags"):
             source = "".join(cell["source"])
+            # Release previous stage objects in the shared All-in-One kernel.
+            if source.startswith("import sys"):
+                source = ("import gc\n"
+                          "for _old_name in ('df', 'df_sample', 'df_paths', 'meta_df', 'splits', 'profiles', 'outcomes', 'filtered_profiles', 'filtered_outcomes', 'X', 'res', 'p1_preds', 'p2_preds', 'p1_test', 'p2_test', '_'):\n"
+                          "    globals().pop(_old_name, None)\n"
+                          "if 'con' in globals():\n    globals().pop('con').close()\n"
+                          "gc.collect()\n" + source)
             # A fresh kernel must restore imports and paths before stage cells.
             guard = ('if "paths" not in globals() or "PROJECT_ROOT" not in globals():\n'
                      '    raise RuntimeError("Runtime đã mất trạng thái. Chạy lại cell Chọn nơi lưu dữ liệu và Bootstrap, rồi cell khởi tạo stage trước khi tiếp tục.")\n')
@@ -156,7 +163,7 @@ print(f"\\nKiểm tra dữ liệu thô ({raw_root}):")
 if csv_shards:
     print(f"  -> Đã tìm thấy {len(csv_shards)} file CSV thô sẵn sàng cho bước kiểm kê.")
 else:
-    print("  -> Chưa tìm thấy file CSV thô. Notebook 01 sẽ tự động tải/giải nén từ liên kết dữ liệu.")
+    print("  -> Chưa có CSV thô. Notebook 01 đọc ZIP theo batch, không giải nén toàn bộ ra đĩa.")
 """,
         ("markdown", "### 4. Chẩn đoán tài nguyên phần cứng (CPU, RAM, Disk, GPU)\n\nKiểm tra dung lượng đĩa trống, quyền ghi và thông số phần cứng để đảm bảo an toàn bộ nhớ khi xử lý dữ liệu lớn."),
         """
@@ -198,7 +205,7 @@ print("\\n=> Sẵn sàng thực thi. Vui lòng mở và chạy notebook tiếp t
 create_notebook(
     "01_download_validate.ipynb",
     "01 — Tải dữ liệu, kiểm kê Shards và xác thực Schema Contract",
-    "Kiểm kê tất cả file nguồn raw CSV, kiểm tra tính toàn vẹn (checksum, size, dòng), đối chiếu schema và chuyển đổi sang Parquet staging.",
+    "Đọc đầy đủ CSV trong ZIP theo batch, kiểm tra schema và lưu Parquet ZSTD. Không giải nén toàn bộ; khôi phục theo shard khi bị ngắt.",
     [
 """
 import sys
@@ -209,8 +216,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.utils.config import load_config, resolve_paths
 from src.data.io import get_duckdb_connection, atomic_write_json
-from src.data.inventory import inventory_sources
-from src.data.schema import convert_shard_to_parquet, validate_shard_schema
+from src.data.batch_ingest import ingest_sources
 from src.data.checkpoints import CheckpointManager
 
 cfg = load_config(str(PROJECT_ROOT / "configs"))
@@ -218,64 +224,17 @@ paths = resolve_paths(cfg)
 con = get_duckdb_connection(temp_dir=paths["temp_dir"], **{k: cfg["runtime"]["duckdb"][k] for k in ("memory_limit", "threads")})
 ckpt_mgr = CheckpointManager(manifest_path=paths["checkpoints"] / "checkpoint_manifest.json")
 
-# 1. Khám phá và kiểm kê toàn bộ file nguồn raw
-raw_root = Path(paths["raw_root"]).resolve()
-data_cfg = cfg["data"]
-from src.data.download_data import download_and_extract_archive
-
-inventory = inventory_sources(
-    raw_root=raw_root,
-    agg_patterns=data_cfg["discovery"]["agg_patterns"],
-    kill_patterns=data_cfg["discovery"]["kill_patterns"],
-    con=con,
-    compute_hash=False
-)
-
-# Tự động tải và giải nén nếu chưa có file CSV thô
-if inventory["total_files"] == 0 and data_cfg["source"].get("archive_url"):
-    print(f"Chưa có dữ liệu thô tại {raw_root}. Đang tải/giải nén từ {data_cfg['source']['archive_url']}...")
-    download_and_extract_archive(
-        archive_url=data_cfg["source"]["archive_url"],
-        target_dir=raw_root,
-        expected_checksum=data_cfg["source"].get("archive_sha256"),
-        archive_filename=data_cfg["source"].get("archive_filename", "Data_PUBG.zip"),
-    )
-    inventory = inventory_sources(
-        raw_root=raw_root,
-        agg_patterns=data_cfg["discovery"]["agg_patterns"],
-        kill_patterns=data_cfg["discovery"]["kill_patterns"],
-        con=con,
-        compute_hash=False
-    )
-
-if not inventory["aggregate_shards"] or not inventory["death_shards"]:
-    raise FileNotFoundError("Thiếu aggregate hoặc deaths CSV. Kiểm tra raw_root và public archive_url trong configs/data.yaml.")
-if any(shard["status"] != "valid" for shard in inventory["aggregate_shards"] + inventory["death_shards"]):
-    raise ValueError("Có shard không đọc được. Kiểm tra log inventory trước khi chuyển sang Parquet.")
-print(f"Tìm thấy {inventory['total_files']} files ({inventory['total_bytes'] / (1024**3):.2f} GB).")
-atomic_write_json(paths["manifests"] / "source_inventory.json", inventory)
-
-# 2. Chuyển đổi typed Parquet staging
+# 1. Đọc ZIP/CSV theo batch và ghi Parquet nén; không giải nén toàn bộ
 staging_dir = paths["interim"] / "staging_shards"
-schema_cfg = cfg["schema"]
+inventory = ingest_sources(
+    con, paths["raw_root"], staging_dir, cfg["data"], cfg["schema"],
+    batch_rows=globals().get("PUBG_BATCH_ROWS", 50000),
+)
+atomic_write_json(paths["manifests"] / "source_inventory.json", inventory)
+print(f"Đã xử lý đầy đủ {len(inventory['shards'])} shards, {sum(s['rows'] for s in inventory['shards']):,} dòng.")
 
-converted_agg = []
-for shard in inventory["aggregate_shards"]:
-    csv_file = Path(raw_root) / shard["relative_path"]
-    out_pq = staging_dir / f"{csv_file.stem}.parquet"
-    col_map = {c: c for c in schema_cfg["aggregate"]["required_columns"]}
-    convert_shard_to_parquet(con, csv_file, out_pq, schema_cfg["aggregate"]["required_columns"], col_map)
-    converted_agg.append(out_pq)
-
-converted_kill = []
-for shard in inventory["death_shards"]:
-    csv_file = Path(raw_root) / shard["relative_path"]
-    out_pq = staging_dir / f"{csv_file.stem}.parquet"
-    col_map = {c: c for c in schema_cfg["deaths"]["required_columns"]}
-    convert_shard_to_parquet(con, csv_file, out_pq, schema_cfg["deaths"]["required_columns"], col_map)
-    converted_kill.append(out_pq)
-
-ckpt_mgr.commit("schema", "schema_v1", {"converted_agg_shards": staging_dir})
+# 2. Khóa checkpoint sau khi tất cả shard đã hoàn tất
+ckpt_mgr.commit("schema", "schema_batch_v1", {"converted_agg_shards": staging_dir / "batch_manifest.json"})
 print("Gate G1 Hoàn tất: Shards đã được kiểm kê và chuẩn hóa sang Parquet.")
 """
     ]
@@ -308,7 +267,8 @@ con = get_duckdb_connection(temp_dir=paths["temp_dir"], **{k: cfg["runtime"]["du
 ckpt_mgr = CheckpointManager(manifest_path=paths["checkpoints"] / "checkpoint_manifest.json")
 
 staging_dir = paths["interim"] / "staging_shards"
-agg_shards = sorted(staging_dir.rglob("agg_*.parquet"))
+from src.data.batch_ingest import staged_paths
+agg_shards = staged_paths(staging_dir, "aggregate")
 if not agg_shards:
     raise FileNotFoundError(
         f"Không tìm thấy aggregate Parquet trong {staging_dir}. "
@@ -398,7 +358,8 @@ con = get_duckdb_connection(temp_dir=paths["temp_dir"], **{k: cfg["runtime"]["du
 ckpt_mgr = CheckpointManager(manifest_path=paths["checkpoints"] / "checkpoint_manifest.json")
 
 staging_dir = paths["interim"] / "staging_shards"
-death_shards = sorted(list(staging_dir.glob("kill_*.parquet")))
+from src.data.batch_ingest import staged_paths
+death_shards = staged_paths(staging_dir, "deaths")
 cleaned_agg = paths["interim"] / "cleaned_aggregate.parquet"
 meta_pq = paths["interim"] / "match_metadata.parquet"
 
@@ -757,7 +718,7 @@ if abl_path.is_file():
 all_cells = [{"cell_type": "markdown", "metadata": {}, "source": [
     "# PUBG — Hai chế độ chạy trên Colab\n\n"
     "Chọn `runtime` để chạy All-in-One không cần Drive, hoặc `drive` để lưu trực tiếp vào thư mục dự án trên Drive. "
-    "Sau đó chạy notebook từ trên xuống; bước 01 tải dataset qua liên kết công khai nếu raw chưa tồn tại.\n\n"
+    "Sau đó chạy từ trên xuống; bước 01 đọc ZIP theo batch và lưu Parquet nén, dùng lại shard hoàn tất khi chạy lại.\n\n"
     "Ở chế độ runtime, kết quả là tạm thời; tải ZIP ở cell cuối trước khi ngắt phiên. "
     "Đây là cách chạy code hiện có, không phải chứng nhận đã hoàn tất mọi thí nghiệm trong đặc tả. "
     "Một số bước dùng pandas toàn bộ dữ liệu nên cần đủ RAM.\n"]}]

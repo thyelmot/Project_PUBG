@@ -11,6 +11,8 @@ STORAGE_OPTIONS_CELL = '''# @title Chọn nơi lưu dữ liệu { display-mode: 
 # @markdown `drive`: lưu nối tiếp 13 notebook trong cùng thư mục Google Drive.
 PUBG_STORAGE_MODE = "runtime"  # @param ["runtime", "drive"]
 PUBG_DRIVE_PROJECT_ROOT = "/content/drive/MyDrive/PUBG_Project/Project_PUBG"  # @param {type:"string"}
+# @markdown Số dòng mỗi batch khi đọc CSV trong ZIP; giảm nếu RAM ít. Không lấy mẫu dữ liệu.
+PUBG_BATCH_ROWS = 50000  # @param {type:"integer"}
 '''
 
 
