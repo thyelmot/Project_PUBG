@@ -66,7 +66,7 @@ create_notebook(
     "00 — Khởi tạo môi trường, cấu hình và trạng thái Checkpoint",
     "Kiểm tra môi trường runtime, tài nguyên phần cứng (CPU/RAM/Disk), quyền ghi và tính tương thích của 10 file cấu hình.",
     [
-        ("markdown", "### 1. Môi trường chạy\n\nMã nguồn đã được khởi tạo ở cell trên. Dữ liệu và kết quả lưu trên đĩa runtime, không cần cấp quyền Drive."),
+        ("markdown", "### 1. Môi trường chạy\n\nMã nguồn đã được khởi tạo ở cell trên. Dữ liệu lưu theo chế độ runtime hoặc Drive đã chọn; kiểm tra đường dẫn được in bên dưới."),
         """
 import sys
 import os

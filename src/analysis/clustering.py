@@ -43,8 +43,9 @@ def run_k_diagnostics(
         labels = km.fit_predict(X)
         labels_eval = labels if n_samples <= sample_size_for_silhouette else km.predict(X_eval)
 
-        sil = silhouette_score(X_eval, labels_eval) if len(np.unique(labels_eval)) > 1 else np.nan
-        db = davies_bouldin_score(X_eval, labels_eval) if len(np.unique(labels_eval)) > 1 else np.nan
+        valid_labels = 1 < len(np.unique(labels_eval)) < len(X_eval)
+        sil = silhouette_score(X_eval, labels_eval) if valid_labels else np.nan
+        db = davies_bouldin_score(X_eval, labels_eval) if valid_labels else np.nan
 
         # Size distribution
         sizes = pd.Series(labels).value_counts(normalize=True).to_dict()

@@ -199,6 +199,47 @@ for i, cell in enumerate(nb["cells"]):
                 self.assertIn("reports/tables/ablation_results.csv", archive.namelist())
                 self.assertFalse(any(name.startswith("data/") for name in archive.namelist()))
 
+            # Fresh processes emulate separate Colab tabs: only Drive files survive.
+            drive_program = '''import json, os, sys, types
+from pathlib import Path
+sys.stdout.reconfigure(encoding="utf-8")
+colab = types.ModuleType("google.colab")
+colab.drive = types.SimpleNamespace(mount=lambda path: None)
+colab.files = types.SimpleNamespace(download=lambda path: None)
+sys.modules["google.colab"] = colab
+scope = {"PUBG_INSTALL_DEPENDENCIES": False, "__name__": "__main__"}
+nb = json.load(open(sys.argv[1], encoding="utf-8"))
+root = Path(sys.argv[2]).resolve()
+for i, cell in enumerate(nb["cells"]):
+    if cell["cell_type"] != "code":
+        continue
+    print("EXECUTING", sys.argv[1], i, flush=True)
+    exec(compile("".join(cell["source"]), f"cell-{i}", "exec"), scope)
+    if "storage-options" in cell.get("metadata", {}).get("tags", []):
+        scope.update(PUBG_STORAGE_MODE="drive", PUBG_DRIVE_PROJECT_ROOT=str(root),
+                     PUBG_RUNTIME_TEMP_DIR=str(root.parent / "temp"))
+    if "paths" in scope:
+        for key in ["raw", "interim", "processed", "tables", "manifests", "experiments"]:
+            assert scope["paths"][key].is_relative_to(root), (i, key, scope["paths"][key])
+        from src.utils.config import load_config, resolve_paths
+        assert resolve_paths(load_config())["data_root"] == root / "data"
+'''
+            for mode in ["separate", "combined"]:
+                drive_project = workspace / mode / "MyDrive/PUBG_Project/Project_PUBG"
+                shutil.copytree(raw, drive_project / "data/raw")
+                notebooks = (sorted((ROOT / "notebooks").glob("[0-1][0-9]_*.ipynb"))
+                             if mode == "separate" else [notebook])
+                for current in notebooks:
+                    with self.subTest(mode=mode, notebook=current.name):
+                        run = subprocess.run(
+                            [sys.executable, "-c", drive_program, str(current), str(drive_project)],
+                            cwd=workspace, env=environment, capture_output=True, text=True,
+                            encoding="utf-8", errors="replace", timeout=120)
+                        self.assertEqual(run.returncode, 0, (run.stdout + run.stderr)[-10000:])
+                        if run.returncode:
+                            break
+                self.assertTrue((drive_project / "artifacts/manifests/final_results_manifest.json").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,7 +15,7 @@
 
 1. Upload toàn bộ `Project_PUBG` lên Drive hoặc để bootstrap tạo mã nguồn trong thư mục Drive đã chọn.
 2. Mở từng notebook từ `00_setup.ipynb` đến `12_final_results_summary.ipynb`.
-3. Trong cell **Chọn nơi lưu dữ liệu**, chọn `drive` và dùng cùng một `PUBG_DRIVE_PROJECT_ROOT`, mặc định `/content/drive/MyDrive/Project_PUBG`.
+3. Trong cell **Chọn nơi lưu dữ liệu**, chọn `drive` và dùng cùng một `PUBG_DRIVE_PROJECT_ROOT`, mặc định `/content/drive/MyDrive/PUBG_Project/Project_PUBG`.
 4. Chấp nhận quyền mount Drive, rồi chạy notebook hiện tại từ trên xuống. Chỉ chuyển sang notebook sau khi notebook trước đã hoàn tất.
 
 Mỗi tab Colab vẫn có biến Python riêng. Dữ liệu nối tiếp qua `data/`, `artifacts/` và `reports/` trong cùng thư mục Drive. Không chạy đồng thời hai notebook ghi vào cùng artifact.

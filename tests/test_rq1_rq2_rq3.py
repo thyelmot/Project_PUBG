@@ -23,6 +23,16 @@ from src.data.io import get_duckdb_connection, atomic_write_parquet
 
 
 class TestRQ1RQ2RQ3Pipelines(unittest.TestCase):
+    def test_k_diagnostics_with_one_sample_per_evaluated_cluster(self):
+        from unittest.mock import patch
+        with patch("src.analysis.clustering.KMeans") as constructor:
+            model = constructor.return_value
+            model.fit_predict.return_value = np.array([0, 1, 0, 1])
+            model.predict.return_value = np.array([0, 1])
+            model.inertia_ = 1.0
+            result = run_k_diagnostics(np.arange(8).reshape(4, 2), k_range=[2], sample_size_for_silhouette=2)
+        self.assertTrue(np.isnan(result.iloc[0]["silhouette_score"]))
+
     def setUp(self):
         self.test_dir = Path(__file__).resolve().parent / ".tmp_test_rq"
         if self.test_dir.exists():

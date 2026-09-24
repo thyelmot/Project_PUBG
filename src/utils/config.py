@@ -49,6 +49,16 @@ def load_config(config_dir: str = "configs", base_dir: Optional[Path] = None) ->
 
     # Attach base directory
     config["_project_root"] = str(cfg_dir.parent.resolve())
+    # Preserve the notebook's storage selection across every stage config reload.
+    session_root = os.environ.get("PUBG_SESSION_DRIVE_ROOT")
+    if session_root and Path(session_root).resolve() == cfg_dir.parent.resolve():
+        config["paths"]["environments"]["drive"] = {
+            "raw_root": "./data/raw", "data_root": "./data",
+            "artifacts_root": "./artifacts", "reports_root": "./reports",
+            "figures_root": "./figures",
+            "temp_dir": os.environ.get("PUBG_SESSION_TEMP_DIR", "/content/temp"),
+        }
+        config["paths"]["active_environment"] = "drive"
     return config
 
 

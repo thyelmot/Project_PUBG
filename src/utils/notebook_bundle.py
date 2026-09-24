@@ -10,7 +10,7 @@ STORAGE_OPTIONS_CELL = '''# @title Chọn nơi lưu dữ liệu { display-mode: 
 # @markdown `runtime`: không cần Drive, phù hợp notebook All-in-One.
 # @markdown `drive`: lưu nối tiếp 13 notebook trong cùng thư mục Google Drive.
 PUBG_STORAGE_MODE = "runtime"  # @param ["runtime", "drive"]
-PUBG_DRIVE_PROJECT_ROOT = "/content/drive/MyDrive/Project_PUBG"  # @param {type:"string"}
+PUBG_DRIVE_PROJECT_ROOT = "/content/drive/MyDrive/PUBG_Project/Project_PUBG"  # @param {type:"string"}
 '''
 
 
@@ -47,10 +47,11 @@ if PUBG_STORAGE_MODE == "drive":
     from google.colab import drive
     drive.mount("/content/drive")
     PROJECT_ROOT = Path(globals().get(
-        "PUBG_DRIVE_PROJECT_ROOT", "/content/drive/MyDrive/Project_PUBG"
+        "PUBG_DRIVE_PROJECT_ROOT", "/content/drive/MyDrive/PUBG_Project/Project_PUBG"
     )).expanduser().resolve()
 else:
-    _candidates = [Path.cwd(), *Path.cwd().parents, Path("/content/Project_PUBG")]
+    _candidates = ([Path("/content/Project_PUBG")] if IN_COLAB else
+                   [Path.cwd(), *Path.cwd().parents])
     _candidates += [p / "Project_PUBG" for p in list(_candidates)]
     PROJECT_ROOT = next((p.resolve() for p in _candidates
                          if (p / "configs/data.yaml").is_file() and (p / "src/utils/config.py").is_file()), None)
@@ -85,18 +86,14 @@ if globals().get("PUBG_INSTALL_DEPENDENCIES", IN_COLAB) and not globals().get("_
         subprocess.check_call([sys.executable, "-m", "pip", "install", "--prefer-binary", *_missing])
     _PUBG_PACKAGES_READY = True
 
+if PUBG_STORAGE_MODE == "drive":
+    os.environ["PUBG_SESSION_DRIVE_ROOT"] = str(PROJECT_ROOT)
+    os.environ["PUBG_SESSION_TEMP_DIR"] = str(globals().get("PUBG_RUNTIME_TEMP_DIR", "/content/temp"))
+else:
+    os.environ.pop("PUBG_SESSION_DRIVE_ROOT", None)
+    os.environ.pop("PUBG_SESSION_TEMP_DIR", None)
 from src.utils.config import load_config, resolve_paths
 cfg = load_config(str(PROJECT_ROOT / "configs"))
-if PUBG_STORAGE_MODE == "drive":
-    cfg["paths"]["environments"]["drive"] = {
-        "raw_root": str(PROJECT_ROOT / "data/raw"),
-        "data_root": str(PROJECT_ROOT / "data"),
-        "artifacts_root": str(PROJECT_ROOT / "artifacts"),
-        "figures_root": str(PROJECT_ROOT / "figures"),
-        "reports_root": str(PROJECT_ROOT / "reports"),
-        "temp_dir": globals().get("PUBG_RUNTIME_TEMP_DIR", "/content/temp"),
-    }
-    cfg["paths"]["active_environment"] = "drive"
 paths = resolve_paths(cfg)
 for _path in paths.values():
     _path.mkdir(parents=True, exist_ok=True)
