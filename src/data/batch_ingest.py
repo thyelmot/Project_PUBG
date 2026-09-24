@@ -3,7 +3,10 @@
 from contextlib import ExitStack
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
+import shutil
+import tempfile
 import zipfile
 
 import pandas as pd
@@ -15,13 +18,16 @@ from src.data.schema import validate_shard_schema
 from src.utils.hashing import hash_file
 
 
-def convert_csv_batches(con, stream, output, schema, batch_rows=50000):
-    """Keep at most one CSV chunk and its typed Arrow result in memory."""
+def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=None):
+    """Build locally, then publish the closed Parquet file to persistent storage."""
     if not isinstance(batch_rows, int) or isinstance(batch_rows, bool) or batch_rows < 1:
         raise ValueError("batch_rows must be a positive integer")
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    partial = output.with_suffix(".parquet.partial")
+    local_dir = Path(work_dir) if work_dir else Path(tempfile.gettempdir()) / "pubg_batch_ingest"
+    local_dir.mkdir(parents=True, exist_ok=True)
+    partial = local_dir / f"{output.name}.{os.getpid()}.partial"
+    uploading = output.with_suffix(".parquet.uploading")
     rows = 0
     writer = None
     try:
@@ -61,15 +67,24 @@ def convert_csv_batches(con, stream, output, schema, batch_rows=50000):
         writer = None
         if pq.ParquetFile(partial).metadata.num_rows != rows:
             raise ValueError("Parquet row count does not match CSV batches")
-        partial.replace(output)
+        # Google Drive shortcut/FUSE paths are unreliable for a file held open for hours.
+        # Copy only after ParquetWriter is closed, then atomically publish on the target.
+        shutil.copyfile(partial, uploading)
+        if partial.stat().st_size != uploading.stat().st_size or hash_file(partial) != hash_file(uploading):
+            raise IOError("Published Parquet does not match the local completed file")
+        uploading.replace(output)
         return rows
     finally:
         if writer is not None:
             writer.close()
         partial.unlink(missing_ok=True)
+        try:
+            uploading.unlink(missing_ok=True)
+        except OSError:
+            pass
 
 
-def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=50000):
+def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=50000, work_dir=None):
     """Prefer the ZIP when available; otherwise use existing CSVs without deleting them.
 
     Checkpoints become reusable only after a complete member and its checksum are saved.
@@ -132,7 +147,8 @@ def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=
             if not reusable:
                 print(f"[{index}/{len(entries)}] {name}: streaming {batch_rows:,} rows/batch", flush=True)
                 with (archive.open(handle) if archive else open(handle, "rb")) as stream:
-                    rows = convert_csv_batches(con, stream, output, schema_cfg[kind], batch_rows)
+                    rows = convert_csv_batches(
+                        con, stream, output, schema_cfg[kind], batch_rows, work_dir=work_dir)
                 record = {"source": name, "kind": kind, "signature": signature,
                           "file": output.name, "rows": rows, "source_bytes": size,
                           "sha256": hash_file(output)}

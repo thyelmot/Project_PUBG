@@ -40,13 +40,15 @@ class TestBatchIngest(unittest.TestCase):
 
             with patch("src.data.batch_ingest.convert_csv_batches", side_effect=interrupted):
                 with self.assertRaisesRegex(RuntimeError, "simulated"):
-                    ingest_sources(con, raw, staging, data, schemas, batch_rows=2)
+                    ingest_sources(con, raw, staging, data, schemas, batch_rows=2,
+                                   work_dir=root / "local-work")
             with self.assertRaisesRegex(RuntimeError, "01"):
                 staged_paths(staging, "aggregate")
             saved = calls[0]
             timestamp = saved.stat().st_mtime_ns
             with patch("src.data.batch_ingest.convert_csv_batches", wraps=actual) as convert:
-                result = ingest_sources(con, raw, staging, data, schemas, batch_rows=2)
+                result = ingest_sources(con, raw, staging, data, schemas, batch_rows=2,
+                                        work_dir=root / "local-work")
                 self.assertEqual(convert.call_count, 2)
             self.assertEqual(saved.stat().st_mtime_ns, timestamp)
             self.assertTrue(result["complete"])
@@ -63,30 +65,53 @@ class TestBatchIngest(unittest.TestCase):
             saved.write_bytes(b"broken")
             (staging / "agg_stale.parquet").write_bytes(b"old")
             with patch("src.data.batch_ingest.convert_csv_batches", wraps=actual) as convert:
-                ingest_sources(con, raw, staging, data, schemas, batch_rows=1)
+                ingest_sources(con, raw, staging, data, schemas, batch_rows=1,
+                               work_dir=root / "local-work")
                 self.assertEqual(convert.call_count, 1)
             self.assertEqual(len(staged_paths(staging, "aggregate")), 2)
             with patch("src.data.batch_ingest.convert_csv_batches", side_effect=AssertionError("must reuse")):
-                ingest_sources(con, raw, staging, data, schemas, batch_rows=10)
+                ingest_sources(con, raw, staging, data, schemas, batch_rows=10,
+                               work_dir=root / "local-work")
             # Reject traversal even though archive members are never extracted.
             with zipfile.ZipFile(archive, "a") as z:
                 z.writestr("../escape.csv", "bad")
             with self.assertRaisesRegex(ValueError, "Unsafe ZIP"):
-                ingest_sources(con, raw, staging, data, schemas)
+                ingest_sources(con, raw, staging, data, schemas, work_dir=root / "local-work")
 
     def test_failed_conversion_preserves_previous_output(self):
         schema = {"required_columns": {"match_id": "string", "value": "float64"}}
         with tempfile.TemporaryDirectory() as directory, duckdb.connect() as con:
             output = Path(directory) / "data.parquet"
-            convert_csv_batches(con, io.BytesIO(b"match_id,value\na,1\n"), output, schema, 1)
+            work = Path(directory) / "local-work"
+            convert_csv_batches(con, io.BytesIO(b"match_id,value\na,1\n"), output, schema, 1, work)
             original = output.read_bytes()
             for contents in [b"wrong,value\na,1\n", b'match_id,value\na,1\n"broken,2\n']:
                 with self.assertRaises(Exception):
-                    convert_csv_batches(con, io.BytesIO(contents), output, schema, 1)
+                    convert_csv_batches(con, io.BytesIO(contents), output, schema, 1, work)
                 self.assertEqual(output.read_bytes(), original)
                 self.assertFalse(output.with_suffix(".parquet.partial").exists())
             with self.assertRaises(ValueError):
-                convert_csv_batches(con, io.BytesIO(b""), output, schema, 0)
+                convert_csv_batches(con, io.BytesIO(b""), output, schema, 0, work)
+
+    def test_writer_uses_local_work_dir_before_publish(self):
+        schema = {"required_columns": {"match_id": "string", "value": "float64"}}
+        with tempfile.TemporaryDirectory() as directory, duckdb.connect() as con:
+            root = Path(directory)
+            output, work = root / "drive-shortcut" / "data.parquet", root / "content-temp"
+            written_paths = []
+            real_writer = pq.ParquetWriter
+
+            def capture_writer(path, *args, **kwargs):
+                written_paths.append(Path(path))
+                return real_writer(path, *args, **kwargs)
+
+            with patch("src.data.batch_ingest.pq.ParquetWriter", side_effect=capture_writer):
+                convert_csv_batches(con, io.BytesIO(b"match_id,value\na,1\nb,2\n"),
+                                    output, schema, batch_rows=1, work_dir=work)
+            self.assertEqual(written_paths[0].parent, work)
+            self.assertTrue(output.is_file())
+            self.assertFalse(list(work.glob("*.partial")))
+            self.assertFalse(output.with_suffix(".parquet.uploading").exists())
 
 
 if __name__ == "__main__":

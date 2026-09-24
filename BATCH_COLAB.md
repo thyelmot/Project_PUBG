@@ -5,6 +5,8 @@
 ZIP hiện có trong workspace gồm 10 CSV, tổng dung lượng giải nén 20.281.921.579 byte (~18,89 GiB); ZIP là 4.399.919.847 byte (~4,10 GiB).
 Notebook 01 mới không tạo thêm bản CSV giải nén này. Nó đọc lần lượt từng CSV trong ZIP, mỗi lần 50.000 dòng, ép kiểu theo schema rồi ghi ngay vào Parquet nén ZSTD. Toàn bộ dòng được đọc; không lấy mẫu. CSV có sẵn vẫn được hỗ trợ và không bị xóa.
 
+Mỗi Parquet của một shard được tạo và đóng hoàn chỉnh trong `/content/temp/batch_ingest`, sau đó mới chép sang Drive dưới tên `.uploading`, kiểm tra kích thước và SHA256 rồi đổi sang tên chính thức. Cách này tránh giữ file `.partial` mở nhiều giờ qua Google Drive shortcut. File tạm cục bộ được xóa sau khi công bố hoặc khi cell lỗi.
+
 Shard hoàn tất mới được công bố và ghi checksum vào `data/interim/staging_shards/batch_manifest.json`. Khi chạy lại, shard đúng checksum được dùng lại; shard bị ngắt hoặc hỏng được chuyển đổi lại từ đầu. File `.partial` không được notebook 02/04 đọc. Không mở hai phiên cùng ghi vào một thư mục staging.
 
 Notebook 02/04 dùng danh sách shard trong manifest, tránh đọc lặp các Parquet cũ còn trong thư mục. Làm sạch, loại trùng và tổng hợp theo trận vẫn xét tất cả shard; không tính riêng từng batch rồi ghép các thống kê sai. All-in-One giải phóng DataFrame của stage trước khi khởi tạo stage tiếp theo.
@@ -40,5 +42,6 @@ Dữ liệu trong runtime không bền vững khi máy ảo bị xóa. Dùng `dr
 - Các notebook 05–07 và 09–10 vẫn có phép đọc toàn bảng bằng pandas và mô hình cần dữ liệu trong RAM. Thay đổi này chưa biến toàn bộ phân tích/huấn luyện thành thuật toán streaming; giảm batch không khắc phục thiếu RAM ở những bước đó.
 - Dữ liệu raw và staging từ lần chạy cũ không bị tự động xóa. Vì vậy cập nhật code không tự thu hồi dung lượng đã dùng trước đó. Chỉ dọn bản CSV giải nén cũ sau khi xác minh ZIP gốc còn nguyên và notebook 01 mới hoàn tất; giữ các output cần dùng tiếp.
 - Checkpoint hiện tại theo **shard**, không theo từng batch 50.000 dòng. Nếu một shard đang chạy bị ngắt, chỉ shard đó phải đọc lại (các shard hoàn tất được kiểm tra và dùng lại).
+- Ổ đĩa runtime phải còn đủ chỗ cho một Parquet shard nén và Drive phải còn đủ chỗ cho file đích. Dòng `Converted ...` chỉ báo tiến độ trong shard; checkpoint chỉ được ghi sau khi file đã chép và kiểm tra xong.
 
 Không tự thay mô hình hoặc lấy mẫu để che giới hạn tài nguyên, vì điều đó làm thay đổi thí nghiệm nghiên cứu.

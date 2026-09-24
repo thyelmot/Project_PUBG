@@ -14,7 +14,8 @@
 - Chạy cả 13 notebook lần lượt bằng 13 tiến trình Python riêng với Drive mô phỏng. Không chia sẻ biến Python giữa notebook; chỉ dùng tệp trong project chung. Sau từng cell, kiểm tra raw/interim/processed/tables/manifests/experiments vẫn nằm trong project Drive, kể cả sau khi nạp lại config.
 - Chạy toàn bộ All-in-One với Drive mô phỏng và kiểm tra final manifest.
 - Chạy notebook 00–06 trên 10.000 dòng aggregate và 10.000 dòng deaths lấy từ các CSV thật hiện có. Đây chỉ là kiểm thử thực thi, không dùng kết quả mẫu này làm kết luận nghiên cứu.
-- Bộ unittest: **26/26 đạt**, gồm các kiểm tra dữ liệu, feature, mô hình, download, checkpoint, checksum và hồi quy notebook.
+- Bộ unittest: **27/27 đạt**, gồm các kiểm tra dữ liệu, feature, mô hình, download, checkpoint, checksum và hồi quy notebook.
+- Kiểm tra hồi quy Drive shortcut xác nhận `ParquetWriter` chỉ ghi vào thư mục runtime cục bộ; file đã đóng được chép, kiểm tra rồi mới công bố vào thư mục Drive.
 - Bản batch: kiểm tra đọc ZIP không tạo CSV trên đĩa, nhiều batch trong một shard, tên file trùng ở hai thư mục, alias cột, ID có số 0 đầu và tên `NA`, dòng CSV có xuống dòng trong dấu nháy, lỗi giữa chừng, resume, output hỏng và manifest chưa hoàn tất.
 - Chuyển đổi 120.000 dòng aggregate và 120.000 dòng deaths từ ZIP thật, mỗi batch 10.000 dòng. Kết quả tương đương cách chuyển đổi cũ sau khi chuẩn hóa cột ngày sang UTC để so sánh (bản mới giữ nguyên chuỗi ngày nguồn; cách cũ tự suy luận timestamp rồi đổi theo múi giờ máy).
 

@@ -236,6 +236,7 @@ staging_dir = paths["interim"] / "staging_shards"
 inventory = ingest_sources(
     con, paths["raw_root"], staging_dir, cfg["data"], cfg["schema"],
     batch_rows=globals().get("PUBG_BATCH_ROWS", 50000),
+    work_dir=paths["temp_dir"] / "batch_ingest",
 )
 atomic_write_json(paths["manifests"] / "source_inventory.json", inventory)
 print(f"Đã xử lý đầy đủ {len(inventory['shards'])} shards, {sum(s['rows'] for s in inventory['shards']):,} dòng.")
