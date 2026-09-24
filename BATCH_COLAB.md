@@ -9,6 +9,8 @@ Mỗi Parquet của một shard được tạo và đóng hoàn chỉnh trong `/
 
 Shard hoàn tất mới được công bố và ghi checksum vào `data/interim/staging_shards/batch_manifest.json`. Khi chạy lại, shard đúng checksum được dùng lại; shard bị ngắt hoặc hỏng được chuyển đổi lại từ đầu. File `.partial` không được notebook 02/04 đọc. Không mở hai phiên cùng ghi vào một thư mục staging.
 
+Các bước SQL tạo dữ liệu sạch, metadata, combat timing và historical features cũng tạo Parquet cục bộ rồi mới chép/kiểm tra trên Drive. Vì vậy đĩa runtime phải đủ cho file kết quả của bước đó và file tạm DuckDB, không chỉ một shard đầu vào. Nếu chép thất bại, output cũ được giữ nhưng bước đang chạy cần chạy lại; đây không phải resume giữa chừng một câu SQL. Manifest ingest giữ các checkpoint shard đã có kể cả khi bị ngắt trong lúc kiểm tra lại.
+
 Notebook 02/04 dùng danh sách shard trong manifest, tránh đọc lặp các Parquet cũ còn trong thư mục. Làm sạch, loại trùng và tổng hợp theo trận vẫn xét tất cả shard; không tính riêng từng batch rồi ghép các thống kê sai. All-in-One giải phóng DataFrame của stage trước khi khởi tạo stage tiếp theo.
 
 ## Cập nhật và chạy

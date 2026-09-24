@@ -28,6 +28,8 @@ def train_and_predict_experiment(
         raise ValueError(f"Target column '{target_name}' not in dataset.")
     if "split" not in df.columns:
         raise ValueError("Dataset missing 'split' column (train/validation/test).")
+    if not df["split"].isin(["train", "validation", "test"]).all():
+        raise ValueError("Missing or invalid split assignments. Rebuild notebook 02 for the current dataset.")
 
     # Filter out rows with invalid target
     valid_df = df[df[target_name].notna()].copy()

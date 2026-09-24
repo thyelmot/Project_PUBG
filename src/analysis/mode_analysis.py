@@ -42,8 +42,13 @@ def analyze_behavior_by_mode(
             for m in ["Solo", "Duo", "Squad"]
             if (clean_df["game_mode_label"] == m).sum() >= 20
         ]
+        mode_samples = [s for s in mode_samples if len(s) >= 20]
         if len(mode_samples) >= 2:
-            kw_stat, kw_p = stats.kruskal(*mode_samples)
+            all_values = np.concatenate(mode_samples)
+            if np.all(all_values == all_values[0]):
+                kw_stat, kw_p = 0.0, 1.0
+            else:
+                kw_stat, kw_p = stats.kruskal(*mode_samples)
             differences[col] = {
                 "kruskal_statistic": float(kw_stat),
                 "p_value": float(kw_p),

@@ -13,7 +13,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 from src.data.download_data import resolve_archive, resolve_local_sources
-from src.data.io import atomic_write_json, read_json
+from src.data.io import atomic_write_json, read_json, publish_file
 from src.data.schema import validate_shard_schema
 from src.utils.hashing import hash_file
 
@@ -27,7 +27,6 @@ def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=
     local_dir = Path(work_dir) if work_dir else Path(tempfile.gettempdir()) / "pubg_batch_ingest"
     local_dir.mkdir(parents=True, exist_ok=True)
     partial = local_dir / f"{output.name}.{os.getpid()}.partial"
-    uploading = output.with_suffix(".parquet.uploading")
     rows = 0
     writer = None
     try:
@@ -65,23 +64,17 @@ def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=
             raise ValueError("CSV contains no data rows")
         writer.close()
         writer = None
-        if pq.ParquetFile(partial).metadata.num_rows != rows:
-            raise ValueError("Parquet row count does not match CSV batches")
+        with pq.ParquetFile(partial) as parquet:
+            if parquet.metadata.num_rows != rows:
+                raise ValueError("Parquet row count does not match CSV batches")
         # Google Drive shortcut/FUSE paths are unreliable for a file held open for hours.
         # Copy only after ParquetWriter is closed, then atomically publish on the target.
-        shutil.copyfile(partial, uploading)
-        if partial.stat().st_size != uploading.stat().st_size or hash_file(partial) != hash_file(uploading):
-            raise IOError("Published Parquet does not match the local completed file")
-        uploading.replace(output)
+        publish_file(partial, output)
         return rows
     finally:
         if writer is not None:
             writer.close()
         partial.unlink(missing_ok=True)
-        try:
-            uploading.unlink(missing_ok=True)
-        except OSError:
-            pass
 
 
 def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=50000, work_dir=None):
@@ -132,6 +125,9 @@ def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=
                                     path.stat().st_size, hash_file(path), path))
         if not all(any(e[0] == kind for e in entries) for kind, _ in groups):
             raise FileNotFoundError("Missing aggregate/deaths CSV. Check the ZIP or raw_root; no partial dataset is accepted.")
+        # Keep prior records during revalidation so another interruption cannot erase them.
+        manifest["shards"] = [s for s in old.get("shards", [])
+                              if s["source"] in {entry[1] for entry in entries}]
         atomic_write_json(manifest_path, manifest)
         for index, (kind, name, size, checksum, handle) in enumerate(entries, 1):
             signature = hashlib.sha256(json.dumps(
@@ -152,7 +148,7 @@ def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=
                 record = {"source": name, "kind": kind, "signature": signature,
                           "file": output.name, "rows": rows, "source_bytes": size,
                           "sha256": hash_file(output)}
-            manifest["shards"].append(record)
+            manifest["shards"] = [s for s in manifest["shards"] if s["source"] != name] + [record]
             atomic_write_json(manifest_path, manifest)
             print(f"[{index}/{len(entries)}] {'Reused' if reusable else 'Saved'} {rows:,} rows: {output.name}", flush=True)
         manifest["complete"] = True

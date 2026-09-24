@@ -45,12 +45,9 @@ def compute_hierarchical_metrics(pred_df: pd.DataFrame) -> Dict[str, Dict[str, f
 
     # 2. Match-aware
     if "match_id" in clean_df.columns:
-        match_metrics = clean_df.groupby("match_id")[["target_actual", "target_predicted"]].apply(
-            lambda g: pd.Series({
-                "mae": np.mean(np.abs(g["target_actual"] - g["target_predicted"])),
-                "mse": np.mean((g["target_actual"] - g["target_predicted"]) ** 2),
-            }),
-        )
+        residual = clean_df["target_actual"] - clean_df["target_predicted"]
+        match_metrics = pd.DataFrame({"match_id": clean_df["match_id"],
+                                      "mae": residual.abs(), "mse": residual ** 2}).groupby("match_id").mean()
         match_aware_res = {
             "mae": float(match_metrics["mae"].mean()),
             "rmse": float(np.sqrt(match_metrics["mse"].mean())),

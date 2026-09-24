@@ -70,7 +70,7 @@ def run_chronology_audit(meta_df: pd.DataFrame) -> Dict[str, Any]:
     if "match_date" not in meta_df.columns:
         return {"grade": "Grade C", "reason": "No match_date column found in metadata."}
 
-    dates = pd.to_datetime(meta_df["match_date"], errors="coerce")
+    dates = pd.to_datetime(meta_df["match_date"], errors="coerce", utc=True, format="mixed")
     null_dates = dates.isna().sum()
 
     if null_dates > 0:

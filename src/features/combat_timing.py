@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import duckdb
 import pandas as pd
-from src.data.io import atomic_write_json
+from src.data.io import copy_query_to_parquet
 from src.utils.logging import get_logger
 
 logger = get_logger("pubg_combat_timing")
@@ -27,10 +27,11 @@ def extract_and_aggregate_combat_timing(
     """
     output_timing_parquet.parent.mkdir(parents=True, exist_ok=True)
     audit_output_dir.mkdir(parents=True, exist_ok=True)
+    if not death_parquet_paths:
+        raise FileNotFoundError("No death Parquet shards. Complete notebook 01 first.")
 
     safe_deaths = ", ".join("'" + p.resolve().as_posix().replace("'", "''") + "'" for p in death_parquet_paths)
-    safe_meta = str(match_metadata_parquet.resolve()).replace("\\", "/")
-    safe_out = str(output_timing_parquet.resolve()).replace("\\", "/")
+    safe_meta = match_metadata_parquet.resolve().as_posix().replace("'", "''")
 
     # Create view over death shards and match metadata
     con.execute(f"CREATE OR REPLACE VIEW raw_deaths_view AS SELECT * FROM read_parquet([{safe_deaths}]);")
@@ -42,12 +43,12 @@ def extract_and_aggregate_combat_timing(
     valid_events_query = """
     CREATE OR REPLACE VIEW valid_kill_events_view AS
     SELECT
-        d.match_id,
+        trim(d.match_id) AS match_id,
         trim(d.killer_name) AS killer_name,
         d.time,
         m.estimated_match_duration
     FROM raw_deaths_view d
-    JOIN match_metadata_view m ON d.match_id = m.match_id
+    JOIN match_metadata_view m ON trim(d.match_id) = m.match_id
     WHERE d.killer_name IS NOT NULL
       AND length(trim(d.killer_name)) > 0
       AND d.victim_name IS NOT NULL
@@ -60,7 +61,6 @@ def extract_and_aggregate_combat_timing(
 
     # Global aggregation per (match_id, killer_name)
     timing_aggregation_query = f"""
-    COPY (
         SELECT
             match_id,
             killer_name,
@@ -77,11 +77,8 @@ def extract_and_aggregate_combat_timing(
             true AS has_kill
         FROM valid_kill_events_view
         GROUP BY match_id, killer_name
-    ) TO '{safe_out}' (FORMAT PARQUET, COMPRESSION 'SNAPPY');
     """
-    con.execute(timing_aggregation_query)
-
-    unique_killer_matches = con.execute(f"SELECT count(*) FROM read_parquet('{safe_out}');").fetchone()[0]
+    unique_killer_matches = copy_query_to_parquet(con, timing_aggregation_query, output_timing_parquet)
 
     audit_summary = {
         "total_death_events": total_death_events,
@@ -112,16 +109,15 @@ def merge_player_match_and_timing(
     output_player_match_parquet.parent.mkdir(parents=True, exist_ok=True)
     discrepancy_log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    safe_agg = str(cleaned_aggregate_parquet.resolve()).replace("\\", "/")
-    safe_meta = str(match_metadata_parquet.resolve()).replace("\\", "/")
-    safe_time = str(combat_timing_parquet.resolve()).replace("\\", "/")
-    safe_out = str(output_player_match_parquet.resolve()).replace("\\", "/")
+    safe_agg = cleaned_aggregate_parquet.resolve().as_posix().replace("'", "''")
+    safe_meta = match_metadata_parquet.resolve().as_posix().replace("'", "''")
+    safe_time = combat_timing_parquet.resolve().as_posix().replace("'", "''")
+    safe_out = output_player_match_parquet.resolve().as_posix().replace("'", "''")
 
     # Check input row count
     initial_rows = con.execute(f"SELECT count(*) FROM read_parquet('{safe_agg}');").fetchone()[0]
 
     join_query = f"""
-    COPY (
         SELECT
             a.match_id,
             a.player_name,
@@ -143,7 +139,7 @@ def merge_player_match_and_timing(
             a.team_placement,
             -- Derived Placement
             CASE
-                WHEN m.observed_team_count > 1 AND a.team_placement >= 1
+                WHEN m.observed_team_count > 1 AND a.team_placement BETWEEN 1 AND m.observed_team_count
                 THEN 1.0 - (CAST(a.team_placement - 1 AS DOUBLE) / (m.observed_team_count - 1))
                 ELSE NULL
             END AS normalized_placement,
@@ -174,14 +170,10 @@ def merge_player_match_and_timing(
         FROM read_parquet('{safe_agg}') a
         LEFT JOIN read_parquet('{safe_meta}') m ON a.match_id = m.match_id
         LEFT JOIN read_parquet('{safe_time}') t ON a.match_id = t.match_id AND a.player_name = t.killer_name
-    ) TO '{safe_out}' (FORMAT PARQUET, COMPRESSION 'SNAPPY');
     """
 
-    con.execute(join_query)
-    final_rows = con.execute(f"SELECT count(*) FROM read_parquet('{safe_out}');").fetchone()[0]
-
-    if final_rows != initial_rows:
-        raise ValueError(f"Left join invariant violated! Initial rows: {initial_rows}, Final joined rows: {final_rows}")
+    final_rows = copy_query_to_parquet(con, join_query, output_player_match_parquet,
+                                     expected_rows=initial_rows)
 
     # Generate discrepancy audit
     discrepancy_df = con.execute(f"""

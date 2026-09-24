@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import duckdb
 import numpy as np
 import pandas as pd
-from src.data.io import atomic_write_json, atomic_write_parquet
+from src.data.io import copy_query_to_parquet
 from src.utils.logging import get_logger
 
 logger = get_logger("pubg_historical")
@@ -33,21 +33,20 @@ def build_historical_features(
         }
 
     output_historical_parquet.parent.mkdir(parents=True, exist_ok=True)
-    safe_input = str(player_match_parquet.resolve()).replace("\\", "/")
-    safe_out = str(output_historical_parquet.resolve()).replace("\\", "/")
+    safe_input = player_match_parquet.resolve().as_posix().replace("'", "''")
+    safe_out = output_historical_parquet.resolve().as_posix().replace("'", "''")
 
     # We build expanding features using DuckDB SQL window functions
     if chronology_grade == "Grade A":
         # Sort strictly by timestamp within player history
-        window_clause = "OVER (PARTITION BY player_name ORDER BY date, match_id ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)"
+        window_clause = "OVER (PARTITION BY player_name ORDER BY epoch_us(CAST(date AS TIMESTAMPTZ)) RANGE BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)"
     else:
         # Grade B: Group prior matches strictly by date < current match date
         # Window ordered by date, excluding current date
-        window_clause = "OVER (PARTITION BY player_name ORDER BY CAST(date AS DATE) RANGE BETWEEN UNBOUNDED PRECEDING AND INTERVAL 1 DAY PRECEDING)"
+        window_clause = "OVER (PARTITION BY player_name ORDER BY CAST(timezone('UTC', CAST(date AS TIMESTAMPTZ)) AS DATE) RANGE BETWEEN UNBOUNDED PRECEDING AND INTERVAL 1 DAY PRECEDING)"
 
     # Build historical query
     hist_query = f"""
-    COPY (
         SELECT
             match_id,
             player_name,
@@ -73,11 +72,9 @@ def build_historical_features(
             END AS has_sufficient_history
         FROM read_parquet('{safe_input}')
         WHERE player_name IS NOT NULL AND length(trim(player_name)) > 0
-    ) TO '{safe_out}' (FORMAT PARQUET, COMPRESSION 'SNAPPY');
     """
 
-    con.execute(hist_query)
-    total_records = con.execute(f"SELECT count(*) FROM read_parquet('{safe_out}');").fetchone()[0]
+    total_records = copy_query_to_parquet(con, hist_query, output_historical_parquet)
     eligible_records = con.execute(f"SELECT count(*) FROM read_parquet('{safe_out}') WHERE has_sufficient_history = true;").fetchone()[0]
 
     summary = {

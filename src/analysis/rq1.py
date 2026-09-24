@@ -63,6 +63,8 @@ def run_rq1_analysis(
                 target_col=outcome,
                 target_derived_set=derived_set,
             )
+            if assoc_df.empty:
+                continue
             assoc_df["mode"] = mode
             # Attach feature group
             assoc_df["group"] = assoc_df["feature"].apply(
@@ -71,7 +73,9 @@ def run_rq1_analysis(
             all_results.append(assoc_df)
 
     if not all_results:
-        final_table = pd.DataFrame()
+        final_table = pd.DataFrame(columns=[
+            "feature", "group", "target", "mode", "n_observations", "pearson_r", "pearson_pvalue",
+            "spearman_rho", "spearman_pvalue", "is_primary_valid", "target_derived", "notes"])
     else:
         final_table = pd.concat(all_results, ignore_index=True)
         # Reorder columns

@@ -5,6 +5,7 @@ import pandas as pd
 from sklearn.cluster import AgglomerativeClustering, KMeans, MiniBatchKMeans
 from sklearn.metrics import adjusted_rand_score, davies_bouldin_score, silhouette_score
 from sklearn.preprocessing import RobustScaler, StandardScaler
+from sklearn.impute import SimpleImputer
 from src.utils.logging import get_logger
 
 logger = get_logger("pubg_clustering")
@@ -16,6 +17,18 @@ CORE_PROFILE_FEATURES = [
     "avg_early_kill_ratio", "avg_mid_kill_ratio", "avg_late_kill_ratio",
     "early_combat_match_ratio",
 ]
+
+
+def prepare_clustering_matrix(profile_df, scaler_type="standard"):
+    columns = [c for c in CORE_PROFILE_FEATURES if c in profile_df]
+    if not columns:
+        raise ValueError("No behavioral profile columns available for clustering")
+    values = profile_df[columns].replace([np.inf, -np.inf], np.nan).to_numpy(dtype=float)
+    if len(values) == 0:
+        return values
+    values = SimpleImputer(strategy="mean", keep_empty_features=True).fit_transform(values)
+    scaler = StandardScaler() if scaler_type == "standard" else RobustScaler()
+    return scaler.fit_transform(values)
 
 
 def run_k_diagnostics(
@@ -61,7 +74,8 @@ def run_k_diagnostics(
             "max_cluster_share": float(max_size),
         })
 
-    return pd.DataFrame(results)
+    return pd.DataFrame(results, columns=["k", "inertia", "silhouette_score",
+                                         "davies_bouldin_score", "min_cluster_share", "max_cluster_share"])
 
 
 def execute_rq2_clustering(
@@ -74,14 +88,30 @@ def execute_rq2_clustering(
 ) -> Dict[str, Any]:
     """Execute complete RQ2 experimental suite: C1 (main), C2 (hierarchical), C3 (games_played), C5 (outcomes)."""
     output_dir.mkdir(parents=True, exist_ok=True)
+    profile_df = profile_df.copy()
+    keys = ["player_name"] + (["match_mode"] if "match_mode" in profile_df else [])
+    outcome_df = profile_df[keys].merge(outcome_df, on=keys, how="left", validate="one_to_one", indicator=True)
+    if (outcome_df["_merge"] != "both").any():
+        raise ValueError("Missing outcome profile for a player")
+    outcome_df = outcome_df.drop(columns="_merge")
 
     # Invariant: Features MUST NOT include games_played or outcomes in C1!
     feature_cols = [c for c in CORE_PROFILE_FEATURES if c in profile_df.columns]
-    X_raw = profile_df[feature_cols].values
-
-    # 1. Scaling
-    scaler = StandardScaler() if scaler_type == "standard" else RobustScaler()
-    X_scaled = scaler.fit_transform(X_raw)
+    X_scaled = prepare_clustering_matrix(profile_df, scaler_type)
+    if n_clusters < 2:
+        raise ValueError("n_clusters must be at least 2")
+    if len(X_scaled) < n_clusters or len(np.unique(X_scaled, axis=0)) < n_clusters:
+        centers = pd.DataFrame(columns=["cluster_label", *feature_cols, "profile_count", "profile_percentage"])
+        outcomes = pd.DataFrame(columns=["cluster_label", "n_players", "mean_survival", "median_survival",
+                                         "mean_placement", "median_placement", "win_rate"])
+        robustness = pd.DataFrame(columns=["comparison", "metric", "value", "n_sample"])
+        centers.to_csv(output_dir / "cluster_profile.csv", index=False)
+        pd.DataFrame(columns=["cluster_id", *feature_cols]).to_csv(output_dir / "cluster_centers_standardized.csv", index=False)
+        outcomes.to_csv(output_dir / "c5_outcome_comparison.csv", index=False)
+        robustness.to_csv(output_dir / "clustering_robustness.csv", index=False)
+        logger.warning("Clustering skipped: insufficient distinct eligible profiles for K=%s", n_clusters)
+        return {"status": "skipped_insufficient_profiles", "centers_raw": centers,
+                "robustness": robustness, "outcome_comparison": outcomes}
 
     # 2. C1 Main Clustering (K-Means)
     km = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
@@ -110,7 +140,7 @@ def execute_rq2_clustering(
     c2_ari = adjusted_rand_score(labels[sub_indices], agg_labels)
 
     # 4. C3 games_played sensitivity (clustering with games_played included)
-    X_c3_raw = profile_df[feature_cols + ["games_played"]].values
+    X_c3_raw = np.column_stack([X_scaled, profile_df["games_played"].values])
     X_c3_scaled = StandardScaler().fit_transform(X_c3_raw)
     km_c3 = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
     c3_labels = km_c3.fit_predict(X_c3_scaled)

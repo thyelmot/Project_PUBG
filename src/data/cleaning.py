@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import duckdb
 import pandas as pd
-from src.data.io import atomic_write_json
+from src.data.io import copy_query_to_parquet
 from src.utils.logging import get_logger
 
 logger = get_logger("pubg_cleaning")
@@ -24,7 +24,7 @@ def audit_and_clean_aggregate_data(
     removal_log_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Union all aggregate parquet shards as a single view
-    parquet_globs = [str(p.resolve()).replace("\\", "/") for p in aggregate_parquet_paths]
+    parquet_globs = [p.resolve().as_posix().replace("'", "''") for p in aggregate_parquet_paths]
     paths_sql = ", ".join([f"'{p}'" for p in parquet_globs])
 
     con.execute(f"CREATE OR REPLACE VIEW raw_aggregate_view AS SELECT * FROM read_parquet([{paths_sql}]);")
@@ -36,7 +36,7 @@ def audit_and_clean_aggregate_data(
         SELECT count(*) - count(DISTINCT (
             match_id, player_name, team_id, date, match_mode, party_size,
             player_kills, player_dmg, player_dist_walk, player_dist_ride,
-            player_survive_time, team_placement
+            player_survive_time, team_placement, game_size, player_assists, player_dbno
         ))
         FROM raw_aggregate_view;
     """).fetchone()[0]
@@ -55,9 +55,7 @@ def audit_and_clean_aggregate_data(
 
     # 4. Filter clean rows into typed validated aggregate table
     # Canonicalize string identifiers: trim whitespace
-    safe_out = str(output_cleaned_parquet.resolve()).replace("\\", "/")
     cleaning_query = f"""
-    COPY (
         SELECT DISTINCT
             trim(match_id) AS match_id,
             CASE WHEN player_name IS NOT NULL AND length(trim(player_name)) > 0 THEN trim(player_name) ELSE NULL END AS player_name,
@@ -83,11 +81,9 @@ def audit_and_clean_aggregate_data(
           AND player_dist_ride >= 0
           AND player_survive_time >= 0
           AND team_placement > 0
-    ) TO '{safe_out}' (FORMAT PARQUET, COMPRESSION 'SNAPPY');
     """
 
-    con.execute(cleaning_query)
-    clean_rows = con.execute(f"SELECT count(*) FROM read_parquet('{safe_out}');").fetchone()[0]
+    clean_rows = copy_query_to_parquet(con, cleaning_query, output_cleaned_parquet)
     dropped_rows = total_rows - clean_rows
 
     # Record removal log

@@ -299,7 +299,7 @@ meta_pq = paths["interim"] / "match_metadata.parquet"
 total_matches = build_match_metadata(con, cleaned_pq, meta_pq)
 
 # 3. Đánh giá Chronology Grade
-meta_df = con.execute(f"SELECT * FROM read_parquet('{str(meta_pq).replace(chr(92), '/')}') LIMIT 50000;").df()
+meta_df = con.execute("SELECT match_date FROM read_parquet(?)", [str(meta_pq)]).df()
 chrono_report = run_chronology_audit(meta_df)
 print(f"Chronology Grade: {chrono_report['grade']} - {chrono_report.get('description', chrono_report.get('reason'))}")
 atomic_write_json(paths["manifests"] / "chronology_report.json", chrono_report)
@@ -390,8 +390,8 @@ print(f"Hoàn thành xuất player_match_features: {final_rows} dòng.")
 # 05_eda.ipynb
 create_notebook(
     "05_eda.ipynb",
-    "05 — Khám phá dữ liệu chuyên sâu 8 Pha (Full EDA)",
-    "Thực hiện đầy đủ 8 pha EDA: cấu trúc, chất lượng, phân bố thô, biến phái sinh, chế độ chơi, quan hệ, thời điểm giao tranh và khả thi lịch sử.",
+    "05 — Phân bố đặc trưng và so sánh chế độ chơi",
+    "Tóm tắt phân bố đặc trưng và khác biệt Solo/Duo/Squad; lưu bảng thống kê và khuyến nghị chế độ phân tích.",
     [
 """
 import sys
@@ -408,7 +408,7 @@ from src.analysis.mode_analysis import analyze_behavior_by_mode
 cfg = load_config(str(PROJECT_ROOT / "configs"))
 paths = resolve_paths(cfg)
 
-# Đọc mẫu đại diện hợp lệ cho EDA
+# Đọc dữ liệu đầy đủ cho EDA; không lấy mẫu
 final_pq = paths["processed"] / "player_match_features.parquet"
 df_sample = read_parquet_df(final_pq)
 
@@ -426,6 +426,11 @@ print(dist_summary[["feature", "mean", "std", "median", "skewness", "zero_rate"]
 
 # Phase 5: Phân tích theo chế độ chơi
 mode_res = analyze_behavior_by_mode(df_sample, behavior_cols)
+mode_res["summary_table"].to_csv(paths["tables"] / "mode_summary.csv", index=False)
+atomic_write_json(paths["manifests"] / "mode_analysis.json", {
+    "mode_differences": mode_res["mode_differences"],
+    "recommended_rq2_strategy": mode_res["recommended_rq2_strategy"],
+})
 print(f"Khuyến nghị chiến lược RQ2 Mode: {mode_res['recommended_rq2_strategy']}")
 """
     ]
@@ -479,7 +484,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.utils.config import load_config, resolve_paths
 from src.data.io import read_parquet_df
 from src.features.profiles import build_player_behavioral_profiles, filter_profiles_by_retention
-from src.analysis.clustering import run_k_diagnostics, execute_rq2_clustering
+from src.analysis.clustering import run_k_diagnostics, execute_rq2_clustering, prepare_clustering_matrix
 
 cfg = load_config(str(PROJECT_ROOT / "configs"))
 paths = resolve_paths(cfg)
@@ -489,18 +494,20 @@ df = read_parquet_df(final_pq)
 
 # 1. Xây dựng hồ sơ hành vi người chơi
 profiles, outcomes = build_player_behavioral_profiles(df)
-filtered_profiles, filtered_outcomes = filter_profiles_by_retention(profiles, outcomes, min_games=5)
+filtered_profiles, filtered_outcomes = filter_profiles_by_retention(
+    profiles, outcomes, min_games=cfg["rq2"].get("minimum_games_threshold") or 5)
 
 # 2. Chẩn đoán K
-feature_cols = [c for c in filtered_profiles.columns if c.startswith("mean_") or c.startswith("avg_") or c.endswith("_ratio")]
-X = filtered_profiles[feature_cols].values
+X = prepare_clustering_matrix(filtered_profiles, cfg["rq2"].get("scaler", "standard"))
 k_diag = run_k_diagnostics(X, k_range=[2, 3, 4, 5, 6])
 print("--- CHẨN ĐOÁN SỐ CỤM K ---")
 print(k_diag)
+k_diag.to_csv(paths["tables"] / "k_diagnostics.csv", index=False)
 
 # 3. Phân cụm chính thức C1 và đánh giá C2-C5
 selected_k = cfg["rq2"]["n_clusters"] or 4
-res = execute_rq2_clustering(filtered_profiles, filtered_outcomes, n_clusters=selected_k, output_dir=paths["reports"] / "tables")
+res = execute_rq2_clustering(filtered_profiles, filtered_outcomes, n_clusters=selected_k,
+                             scaler_type=cfg["rq2"].get("scaler", "standard"), output_dir=paths["reports"] / "tables")
 print("--- ĐỐI CHIẾU OUTCOME THEO CỤM (C5) ---")
 print(res["outcome_comparison"])
 """
@@ -541,8 +548,8 @@ print(f"Kết quả xây dựng lịch sử: {h_res}")
 # 09_rq3_prediction.ipynb
 create_notebook(
     "09_rq3_prediction.ipynb",
-    "09 — Trả lời RQ3: Huấn luyện mô hình Dự đoán (S1, S2, P1, P2, P3, T0, T1)",
-    "Huấn luyện Baselines, Linear và Gradient Boosting trên tập Train, dự đoán trên Test và lưu lại kết quả kiểm chứng.",
+    "09 — RQ3: Dự đoán placement bằng Linear P1 và P2",
+    "Huấn luyện Linear có/không có survival trên Train, lưu dự đoán theo split và đánh giá Test. Chưa triển khai các thí nghiệm S1/S2/P3/T0/T1 trong notebook này.",
     [
 """
 import sys
@@ -569,7 +576,7 @@ split_pq = paths["interim"] / "split_assignments.parquet"
 
 df = read_parquet_df(final_pq)
 splits = read_parquet_df(split_pq)
-df = df.merge(splits[["match_id", "split"]], on="match_id", how="left")
+df = df.merge(splits[["match_id", "split"]], on="match_id", how="left", validate="many_to_one")
 
 # Thí nghiệm P1 (với survival) vs P2 (bỏ survival trực tiếp)
 p1_feats = registry.get_allowed_features("p1")
@@ -593,8 +600,8 @@ print(f"P1 Test Micro MAE: {compute_hierarchical_metrics(p1_test)['micro']['mae'
 # 10_ablation_error_analysis.ipynb
 create_notebook(
     "10_ablation_error_analysis.ipynb",
-    "10 — Đóng góp đặc trưng, Phân tích nhóm cắt bỏ (Ablation), Sai số và Bất định",
-    "So sánh T0/T1, phân tích cắt bỏ nhóm biến (Ablation), ước lượng khoảng tin cậy 95% Bootstrap theo match và phân tích lát cắt sai số.",
+    "10 — Đóng góp nhóm đặc trưng và phân tích sai số",
+    "Chạy group ablation cho Linear P2 và phân tích lát cắt sai số. Notebook hiện chưa tính khoảng tin cậy bootstrap hoặc thí nghiệm T0/T1.",
     [
 """
 import sys
@@ -616,7 +623,7 @@ registry = FeatureRegistry()
 
 final_pq = paths["processed"] / "player_match_features.parquet"
 split_pq = paths["interim"] / "split_assignments.parquet"
-df = read_parquet_df(final_pq).merge(read_parquet_df(split_pq)[["match_id", "split"]], on="match_id", how="left")
+df = read_parquet_df(final_pq).merge(read_parquet_df(split_pq)[["match_id", "split"]], on="match_id", how="left", validate="many_to_one")
 
 # 1. Group Ablation Study
 p2_feats = registry.get_allowed_features("p2")
@@ -661,7 +668,9 @@ official_runs = {
 import pandas as pd
 cluster_table = paths["tables"] / "cluster_profile.csv"
 if cluster_table.is_file():
-    official_runs["rq2"] = f"rq2_kmeans_k{len(pd.read_csv(cluster_table))}"
+    cluster_count = len(pd.read_csv(cluster_table))
+    if cluster_count:
+        official_runs["rq2"] = f"rq2_kmeans_k{cluster_count}"
 for required in [paths["tables"] / "rq1_relationship_summary.csv",
                  paths["experiments"] / "predictions_p1_linear.parquet",
                  paths["experiments"] / "predictions_p2_linear.parquet",
