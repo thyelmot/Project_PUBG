@@ -6,7 +6,7 @@
 
 1. Mở [PUBG_COLAB_ALL_IN_ONE.ipynb](notebooks/PUBG_COLAB_ALL_IN_ONE.ipynb) bằng **Colab → File → Upload notebook**.
 2. Trong cell **Chọn nơi lưu dữ liệu**, giữ `PUBG_STORAGE_MODE = "runtime"`.
-3. Chạy các cell từ trên xuống trong cùng notebook và cùng runtime.
+3. Chạy các cell từ trên xuống trong cùng notebook và cùng runtime. Bootstrap chỉ cài các thư viện còn thiếu, không cài lại toàn bộ môi trường Colab.
 4. Cell cuối tải `PUBG_results.zip` về máy trước khi runtime bị reset.
 
 **Nhóm chỉ cần chia sẻ notebook tổng hợp.** Mỗi người chạy runtime riêng, không truy cập Drive cá nhân của người khác. Notebook chứa snapshot code/config lúc sinh; sau khi sửa code cần chạy lại generator.

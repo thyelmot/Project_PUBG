@@ -130,6 +130,26 @@ print(scope["paths"]["data_root"])
             self.assertTrue((drive_project / "data").is_dir())
             self.assertIn(str(drive_project / "data"), run.stdout)
 
+    def test_bootstrap_installs_only_missing_runtime_packages(self):
+        notebook = ROOT / "notebooks/00_setup.ipynb"
+        with tempfile.TemporaryDirectory() as directory:
+            program = '''import importlib.util, json, subprocess, sys
+nb = json.load(open(sys.argv[1], encoding="utf-8"))
+real_find_spec = importlib.util.find_spec
+importlib.util.find_spec = lambda name: None if name == "duckdb" else real_find_spec(name)
+subprocess.check_call = lambda command: print("PIP_COMMAND", command)
+scope = {"PUBG_INSTALL_DEPENDENCIES": True, "PUBG_STORAGE_MODE": "runtime", "__name__": "__main__"}
+cell = next(c for c in nb["cells"] if "bootstrap" in c.get("metadata", {}).get("tags", []))
+exec(compile("".join(cell["source"]), "bootstrap", "exec"), scope)
+'''
+            run = subprocess.run([sys.executable, "-c", program, str(notebook)], cwd=directory,
+                                 capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+            pip_line = next(line for line in run.stdout.splitlines() if line.startswith("PIP_COMMAND"))
+            self.assertIn("duckdb>=0.9.0", pip_line)
+            self.assertNotIn("xgboost", pip_line)
+            self.assertNotIn("jupyter", pip_line)
+
     def test_all_cells_on_synthetic_data_in_fresh_workspace(self):
         """Execute the actual distributed notebook, not a second mini pipeline."""
         notebook = ROOT / "notebooks/PUBG_COLAB_ALL_IN_ONE.ipynb"

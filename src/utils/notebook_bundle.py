@@ -28,6 +28,7 @@ def bootstrap_source(project_root: Path) -> str:
     payload = base64.b64encode(stream.getvalue()).decode("ascii")
     return '''# Bootstrap: runtime mode needs no Drive; drive mode persists stage outputs.
 import base64
+import importlib.util
 import io
 import os
 from pathlib import Path
@@ -72,7 +73,16 @@ os.chdir(PROJECT_ROOT)
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 if globals().get("PUBG_INSTALL_DEPENDENCIES", IN_COLAB) and not globals().get("_PUBG_PACKAGES_READY", False):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "-r", str(PROJECT_ROOT / "requirements.txt")])
+    _requirements = {
+        "numpy": "numpy>=1.24.0", "pandas": "pandas>=2.0.0",
+        "pyarrow": "pyarrow>=12.0.0", "duckdb": "duckdb>=0.9.0",
+        "scipy": "scipy>=1.10.0", "sklearn": "scikit-learn>=1.3.0",
+        "yaml": "pyyaml>=6.0",
+    }
+    _missing = [spec for module, spec in _requirements.items() if importlib.util.find_spec(module) is None]
+    if _missing:
+        print("Installing missing packages:", ", ".join(_missing))
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--prefer-binary", *_missing])
     _PUBG_PACKAGES_READY = True
 
 from src.utils.config import load_config, resolve_paths
