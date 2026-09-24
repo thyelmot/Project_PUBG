@@ -1,16 +1,24 @@
-# PUBG — Chạy từng cell, không cấp quyền Google Drive
+# PUBG — Hai chế độ chạy notebook trên Google Colab
 
 ## Cách chạy cho nhóm
 
+### Cách 1 — All-in-One, không dùng Drive
+
 1. Mở [PUBG_COLAB_ALL_IN_ONE.ipynb](notebooks/PUBG_COLAB_ALL_IN_ONE.ipynb) bằng **Colab → File → Upload notebook**.
-2. Chạy các cell từ trên xuống trong **cùng notebook và cùng runtime**.
-3. Cell đầu giải nén mã nguồn/config đã nhúng và cài `requirements.txt`. Không cần upload thư mục Python, clone repository, mount Drive hoặc nhập token.
-4. Bước 01 tải ZIP dataset qua URL public trong `configs/data.yaml`, kiểm tra SHA256 rồi giải nén. Nếu CSV đã tồn tại, dùng dữ liệu hiện có.
-5. Cell cuối tải `PUBG_results.zip` về máy để chia sẻ cho nhóm.
+2. Trong cell **Chọn nơi lưu dữ liệu**, giữ `PUBG_STORAGE_MODE = "runtime"`.
+3. Chạy các cell từ trên xuống trong cùng notebook và cùng runtime.
+4. Cell cuối tải `PUBG_results.zip` về máy trước khi runtime bị reset.
 
 **Nhóm chỉ cần chia sẻ notebook tổng hợp.** Mỗi người chạy runtime riêng, không truy cập Drive cá nhân của người khác. Notebook chứa snapshot code/config lúc sinh; sau khi sửa code cần chạy lại generator.
 
-Notebook 00–12 vẫn được giữ với bootstrap riêng. Mở notebook khác trên Colab không đảm bảo cùng máy ảo hoặc file với notebook trước; dùng bản tổng hợp để tránh phải chuyển dữ liệu giữa các notebook.
+### Cách 2 — 13 notebook riêng, dùng chung Google Drive
+
+1. Upload toàn bộ `Project_PUBG` lên Drive hoặc để bootstrap tạo mã nguồn trong thư mục Drive đã chọn.
+2. Mở từng notebook từ `00_setup.ipynb` đến `12_final_results_summary.ipynb`.
+3. Trong cell **Chọn nơi lưu dữ liệu**, chọn `drive` và dùng cùng một `PUBG_DRIVE_PROJECT_ROOT`, mặc định `/content/drive/MyDrive/Project_PUBG`.
+4. Chấp nhận quyền mount Drive, rồi chạy notebook hiện tại từ trên xuống. Chỉ chuyển sang notebook sau khi notebook trước đã hoàn tất.
+
+Mỗi tab Colab vẫn có biến Python riêng. Dữ liệu nối tiếp qua `data/`, `artifacts/` và `reports/` trong cùng thư mục Drive. Không chạy đồng thời hai notebook ghi vào cùng artifact.
 
 ## Dataset public
 
@@ -24,24 +32,24 @@ Ngày 24/09/2026 đã kiểm tra URL tải ẩn danh: HTTP 200, `application/oct
 
 ## Lưu kết quả và reset runtime
 
-`configs/paths.yaml` mặc định `active_environment: auto`:
+`configs/paths.yaml` mặc định `active_environment: auto`. Bootstrap thêm môi trường `drive` trong bộ nhớ khi người dùng chọn Drive:
 
-| Dữ liệu | Local | Colab |
-|---|---|---|
-| Raw | `../Data_PUBG` | `/content/data/raw` |
-| Interim/processed | `Project_PUBG/data/` | `/content/data/` |
-| Artifacts/checkpoints | `Project_PUBG/artifacts/` | `/content/Project_PUBG/artifacts/` |
-| Reports | `Project_PUBG/reports/` | `/content/Project_PUBG/reports/` |
-| Figures | `Project_PUBG/figures/` | `/content/Project_PUBG/figures/` |
+| Dữ liệu | Local | Colab runtime | Colab Drive |
+|---|---|---|---|
+| Raw | `../Data_PUBG` | `/content/data/raw` | `<PROJECT_ROOT>/data/raw` |
+| Interim/processed | `Project_PUBG/data/` | `/content/data/` | `<PROJECT_ROOT>/data/` |
+| Artifacts/checkpoints | `Project_PUBG/artifacts/` | `/content/Project_PUBG/artifacts/` | `<PROJECT_ROOT>/artifacts/` |
+| Reports | `Project_PUBG/reports/` | `/content/Project_PUBG/reports/` | `<PROJECT_ROOT>/reports/` |
+| Figures | `Project_PUBG/figures/` | `/content/Project_PUBG/figures/` | `<PROJECT_ROOT>/figures/` |
 
-Không có đường dẫn `/content/drive`. Có thể chọn `local` hoặc `colab` rõ ràng trong YAML.
+DuckDB temp vẫn dùng `/content/temp` trong chế độ Drive để tránh ghi file tạm nặng lên Drive. Dữ liệu raw/interim/processed và kết quả chính thức được lưu bền vững trong dự án Drive.
 
 Đĩa Colab là tạm thời, file có thể mất khi runtime reset/bị thu hồi. Lưu notebook không đồng nghĩa đã lưu dữ liệu máy ảo. [Colab FAQ](https://research.google.com/colaboratory/faq.html).
 
 - ZIP mặc định chứa configs/reports/figures/artifacts; không chứa raw hoặc DuckDB temp.
 - Đặt `INCLUDE_DATA_CHECKPOINTS = True` ở cell export nếu cần thêm interim/processed; ZIP có thể rất lớn. Có thể chạy riêng cell export trước khi hoàn tất nghiên cứu.
 - ZIP mặc định chia sẻ được kết quả đã có nhưng không đủ phục hồi mọi bước dữ liệu nặng.
-- Sau reset: mở lại notebook, upload backup qua bảng Files; giải nén reports/artifacts/configs vào `/content/Project_PUBG`, interim/processed vào `/content/data`. Chỉ dùng backup của nhóm và không ghi đè kết quả mới hơn.
+- Sau reset ở chế độ runtime: mở lại notebook và chạy lại hoặc phục hồi từ ZIP đã tải. Ở chế độ Drive: mount lại đúng thư mục và chạy notebook tiếp theo.
 - Manifest kết quả mới dùng đường dẫn tương đối nên checksum verification hoạt động khi chuyển máy. Checkpoint cũ có absolute paths cần kiểm tra lại; metadata không thay thế dữ liệu thực.
 
 ## Chạy local và cập nhật notebook
@@ -94,7 +102,7 @@ RQ1 nghiên cứu hành vi–outcome; RQ2 phân nhóm hành vi; RQ3 dự đoán 
 - Streaming model fallback, đủ tám pha EDA/biểu đồ, experiment registry và tự động resume toàn pipeline cần tiếp tục đối chiếu kế hoạch.
 - Bước 11 khóa integrity của file hiện có, không chứng nhận mọi yêu cầu G5. Không còn ghi S1 như run đã chạy khi notebook 09 chưa tạo S1.
 
-Lần chỉnh sửa này phục vụ chạy notebook không cần Drive và sửa lỗi thực thi trong luồng đó. Chưa chạy full dataset hoặc tạo metric nghiên cứu thật.
+Notebook hỗ trợ cả runtime tạm không cần Drive và thư mục Drive dùng chung giữa các stage. Chưa chạy full dataset hoặc tạo metric nghiên cứu thật.
 
 ## Config và xử lý lỗi
 

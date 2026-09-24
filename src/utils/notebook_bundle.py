@@ -6,6 +6,14 @@ from pathlib import Path
 import zipfile
 
 
+STORAGE_OPTIONS_CELL = '''# @title Chọn nơi lưu dữ liệu { display-mode: "form" }
+# @markdown `runtime`: không cần Drive, phù hợp notebook All-in-One.
+# @markdown `drive`: lưu nối tiếp 13 notebook trong cùng thư mục Google Drive.
+PUBG_STORAGE_MODE = "runtime"  # @param ["runtime", "drive"]
+PUBG_DRIVE_PROJECT_ROOT = "/content/drive/MyDrive/Project_PUBG"  # @param {type:"string"}
+'''
+
+
 def bootstrap_source(project_root: Path) -> str:
     """Embed only code/config/docs; no raw data, credentials or research outputs."""
     files = [project_root / "requirements.txt", project_root / "README.md"]
@@ -18,7 +26,7 @@ def bootstrap_source(project_root: Path) -> str:
             info.compress_type = zipfile.ZIP_DEFLATED
             archive.writestr(info, path.read_bytes())
     payload = base64.b64encode(stream.getvalue()).decode("ascii")
-    return '''# Bootstrap: bundled project code, no Google Drive authorization.
+    return '''# Bootstrap: runtime mode needs no Drive; drive mode persists stage outputs.
 import base64
 import io
 import os
@@ -28,12 +36,27 @@ import sys
 import zipfile
 
 IN_COLAB = "google.colab" in sys.modules or bool(os.environ.get("COLAB_RELEASE_TAG"))
-_candidates = [Path.cwd(), *Path.cwd().parents, Path("/content/Project_PUBG")]
-_candidates += [p / "Project_PUBG" for p in list(_candidates)]
-PROJECT_ROOT = next((p.resolve() for p in _candidates
-                     if (p / "configs/data.yaml").is_file() and (p / "src/utils/config.py").is_file()), None)
+PUBG_STORAGE_MODE = globals().get("PUBG_STORAGE_MODE", "runtime").strip().lower()
+if PUBG_STORAGE_MODE not in {"runtime", "drive"}:
+    raise ValueError("PUBG_STORAGE_MODE must be 'runtime' or 'drive'")
+
+if PUBG_STORAGE_MODE == "drive":
+    if not IN_COLAB:
+        raise RuntimeError("Drive mode is available only on Google Colab")
+    from google.colab import drive
+    drive.mount("/content/drive")
+    PROJECT_ROOT = Path(globals().get(
+        "PUBG_DRIVE_PROJECT_ROOT", "/content/drive/MyDrive/Project_PUBG"
+    )).expanduser().resolve()
+else:
+    _candidates = [Path.cwd(), *Path.cwd().parents, Path("/content/Project_PUBG")]
+    _candidates += [p / "Project_PUBG" for p in list(_candidates)]
+    PROJECT_ROOT = next((p.resolve() for p in _candidates
+                         if (p / "configs/data.yaml").is_file() and (p / "src/utils/config.py").is_file()), None)
 if PROJECT_ROOT is None:
     PROJECT_ROOT = (Path("/content") if IN_COLAB else Path.cwd()) / "Project_PUBG"
+
+if not (PROJECT_ROOT / "configs/data.yaml").is_file() or not (PROJECT_ROOT / "src/utils/config.py").is_file():
     PROJECT_ROOT.mkdir(parents=True, exist_ok=True)
     _bundle = zipfile.ZipFile(io.BytesIO(base64.b64decode(BUNDLE_PAYLOAD)))
     for _entry in _bundle.infolist():
@@ -54,12 +77,25 @@ if globals().get("PUBG_INSTALL_DEPENDENCIES", IN_COLAB) and not globals().get("_
 
 from src.utils.config import load_config, resolve_paths
 cfg = load_config(str(PROJECT_ROOT / "configs"))
+if PUBG_STORAGE_MODE == "drive":
+    cfg["paths"]["environments"]["drive"] = {
+        "raw_root": str(PROJECT_ROOT / "data/raw"),
+        "data_root": str(PROJECT_ROOT / "data"),
+        "artifacts_root": str(PROJECT_ROOT / "artifacts"),
+        "figures_root": str(PROJECT_ROOT / "figures"),
+        "reports_root": str(PROJECT_ROOT / "reports"),
+        "temp_dir": globals().get("PUBG_RUNTIME_TEMP_DIR", "/content/temp"),
+    }
+    cfg["paths"]["active_environment"] = "drive"
 paths = resolve_paths(cfg)
 for _path in paths.values():
     _path.mkdir(parents=True, exist_ok=True)
 print("Project:", PROJECT_ROOT)
 print("Storage:", paths["data_root"], "| Results:", paths["reports_root"])
-print("No Drive mount or account token required. Export results before resetting the runtime.")
+if PUBG_STORAGE_MODE == "drive":
+    print("Storage mode: Google Drive. Stage outputs persist for the next notebook.")
+else:
+    print("Storage mode: runtime. No Drive authorization required; export before reset.")
 '''.replace("BUNDLE_PAYLOAD", repr(payload))
 
 

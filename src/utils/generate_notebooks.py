@@ -6,7 +6,7 @@ from pathlib import Path
 NOTEBOOKS_DIR = Path(__file__).resolve().parent.parent.parent / "notebooks"
 NOTEBOOKS_DIR.mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(NOTEBOOKS_DIR.parent))
-from src.utils.notebook_bundle import bootstrap_source, EXPORT_CELL
+from src.utils.notebook_bundle import bootstrap_source, EXPORT_CELL, STORAGE_OPTIONS_CELL
 
 BOOTSTRAP = bootstrap_source(NOTEBOOKS_DIR.parent)
 GENERATED_NOTEBOOKS = []
@@ -20,9 +20,10 @@ def create_notebook(filename: str, title: str, description: str, cells_data: lis
         }
     ]
     cells.append({"cell_type": "markdown", "metadata": {}, "source": [
-        "Chạy cell khởi tạo bên dưới: notebook có sẵn mã nguồn và cấu hình. Không cần mount Drive. "
-        "Trên Colab, dùng `PUBG_COLAB_ALL_IN_ONE.ipynb` để giữ các bước trong cùng runtime; "
-        "notebook riêng cần dữ liệu đầu ra của bước trước trong runtime hiện tại.\n"]})
+        "Chọn `runtime` để chạy không cần Drive, hoặc `drive` để 13 notebook dùng chung dữ liệu bền vững. "
+        "Với `drive`, mọi notebook phải dùng cùng `PUBG_DRIVE_PROJECT_ROOT` và chạy theo thứ tự.\n"]})
+    cells.append({"cell_type": "code", "execution_count": None, "metadata": {"tags": ["storage-options"]},
+                  "outputs": [], "source": STORAGE_OPTIONS_CELL.splitlines(keepends=True)})
     cells.append({"cell_type": "code", "execution_count": None, "metadata": {"tags": ["bootstrap"]},
                   "outputs": [], "source": BOOTSTRAP.splitlines(keepends=True)})
     for item in cells_data:
@@ -75,7 +76,7 @@ from pathlib import Path
 IN_COLAB = "google.colab" in sys.modules
 if IN_COLAB:
     print("[Colab] Đang chạy trên Google Colab runtime.")
-    print("Dữ liệu và kết quả nằm trên đĩa runtime /content.")
+    print(f"Dữ liệu và kết quả: {paths['data_root']} | {paths['reports_root']}")
 else:
     print("[Local] Đang chạy trên máy cục bộ.")
 
@@ -736,21 +737,23 @@ if abl_path.is_file():
     ]
 )
 all_cells = [{"cell_type": "markdown", "metadata": {}, "source": [
-    "# PUBG — Chạy từng cell trên Colab, không cấp quyền Drive\n\n"
-    "Mở một notebook này và chạy từ trên xuống. Cell đầu tự tạo mã nguồn/cấu hình và cài thư viện. "
-    "Bước 01 tải dataset qua liên kết công khai. Không cần tải thư mục code hoặc dùng tài khoản Drive của thành viên khác.\n\n"
-    "Kết quả nằm trên runtime tạm; tải ZIP ở cell cuối trước khi ngắt phiên. "
+    "# PUBG — Hai chế độ chạy trên Colab\n\n"
+    "Chọn `runtime` để chạy All-in-One không cần Drive, hoặc `drive` để lưu trực tiếp vào thư mục dự án trên Drive. "
+    "Sau đó chạy notebook từ trên xuống; bước 01 tải dataset qua liên kết công khai nếu raw chưa tồn tại.\n\n"
+    "Ở chế độ runtime, kết quả là tạm thời; tải ZIP ở cell cuối trước khi ngắt phiên. "
     "Đây là cách chạy code hiện có, không phải chứng nhận đã hoàn tất mọi thí nghiệm trong đặc tả. "
     "Một số bước dùng pandas toàn bộ dữ liệu nên cần đủ RAM.\n"]}]
-bootstrap_added = False
+special_cells_added = set()
 for notebook in GENERATED_NOTEBOOKS:
     for cell in notebook["cells"]:
-        if "bootstrap" in cell.get("metadata", {}).get("tags", []):
-            if bootstrap_added:
+        special_tag = next((tag for tag in ("storage-options", "bootstrap")
+                            if tag in cell.get("metadata", {}).get("tags", [])), None)
+        if special_tag:
+            if special_tag in special_cells_added:
                 continue
-            bootstrap_added = True
+            special_cells_added.add(special_tag)
         # Omit instructions aimed at opening a separate notebook.
-        if cell["cell_type"] == "markdown" and "notebook riêng cần" in "".join(cell["source"]):
+        if cell["cell_type"] == "markdown" and "PUBG_DRIVE_PROJECT_ROOT" in "".join(cell["source"]):
             continue
         all_cells.append(dict(cell))
 all_cells.extend([
@@ -762,4 +765,4 @@ for i, cell in enumerate(all_cells):
     cell["id"] = f"cell-{i:03d}"
 combined = {"cells": all_cells, "metadata": GENERATED_NOTEBOOKS[0]["metadata"], "nbformat": 4, "nbformat_minor": 5}
 (NOTEBOOKS_DIR / "PUBG_COLAB_ALL_IN_ONE.ipynb").write_text(json.dumps(combined, indent=2), encoding="utf-8")
-print("Generated 13 stage notebooks and PUBG_COLAB_ALL_IN_ONE.ipynb (no Drive authorization).")
+print("Generated 13 stage notebooks and PUBG_COLAB_ALL_IN_ONE.ipynb (runtime/Drive modes).")

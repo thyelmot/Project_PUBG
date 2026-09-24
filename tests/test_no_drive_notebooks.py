@@ -83,17 +83,52 @@ class TestNoDriveNotebooks(unittest.TestCase):
             original.rename(moved)
             self.assertEqual(verify_final_manifest_integrity(moved / manifest_rel), (True, []))
 
-    def test_generated_notebooks_compile_without_drive_auth(self):
+    def test_generated_notebooks_offer_runtime_and_drive_modes(self):
         import nbformat
         for path in sorted((ROOT / "notebooks").glob("*.ipynb")):
             nb = nbformat.read(path, as_version=4)
             nbformat.validate(nb)
+            storage_cells = [cell for cell in nb.cells if "storage-options" in cell.metadata.get("tags", [])]
+            bootstrap_cells = [cell for cell in nb.cells if "bootstrap" in cell.metadata.get("tags", [])]
+            self.assertEqual(len(storage_cells), 1, path.name)
+            self.assertEqual(len(bootstrap_cells), 1, path.name)
+            self.assertIn('PUBG_STORAGE_MODE = "runtime"', storage_cells[0].source)
+            self.assertIn('drive.mount("/content/drive")', bootstrap_cells[0].source)
             for index, cell in enumerate(nb.cells):
                 if cell.cell_type != "code":
                     continue
-                self.assertNotIn("drive.mount(", cell.source)
                 self.assertNotIn("auth.authenticate_user", cell.source)
                 compile(cell.source, f"{path.name}:cell{index}", "exec")
+
+    def test_drive_mode_uses_shared_project_root(self):
+        notebook = ROOT / "notebooks/00_setup.ipynb"
+        with tempfile.TemporaryDirectory() as directory:
+            drive_project = Path(directory) / "MyDrive/Project_PUBG"
+            program = '''import json, sys, types
+nb = json.load(open(sys.argv[1], encoding="utf-8"))
+drive = types.ModuleType("google.colab.drive")
+drive.mount = lambda path: print("MOUNT", path)
+colab = types.ModuleType("google.colab")
+colab.drive = drive
+google = types.ModuleType("google")
+google.colab = colab
+sys.modules.update({"google": google, "google.colab": colab, "google.colab.drive": drive})
+scope = {"PUBG_INSTALL_DEPENDENCIES": False, "PUBG_STORAGE_MODE": "drive",
+         "PUBG_DRIVE_PROJECT_ROOT": sys.argv[2], "PUBG_RUNTIME_TEMP_DIR": sys.argv[3],
+         "__name__": "__main__"}
+cell = next(c for c in nb["cells"] if "bootstrap" in c.get("metadata", {}).get("tags", []))
+exec(compile("".join(cell["source"]), "bootstrap", "exec"), scope)
+print(scope["PROJECT_ROOT"])
+print(scope["paths"]["data_root"])
+'''
+            run = subprocess.run([sys.executable, "-c", program, str(notebook), str(drive_project),
+                                  str(Path(directory) / "runtime-temp")],
+                                 capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+            self.assertIn("MOUNT /content/drive", run.stdout)
+            self.assertTrue((drive_project / "src/utils/config.py").is_file())
+            self.assertTrue((drive_project / "data").is_dir())
+            self.assertIn(str(drive_project / "data"), run.stdout)
 
     def test_all_cells_on_synthetic_data_in_fresh_workspace(self):
         """Execute the actual distributed notebook, not a second mini pipeline."""
