@@ -11,6 +11,8 @@ STORAGE_OPTIONS_CELL = '''# @title Chọn nơi lưu dữ liệu { display-mode: 
 # @markdown `drive`: lưu nối tiếp 13 notebook trong cùng thư mục Google Drive.
 PUBG_STORAGE_MODE = "runtime"  # @param ["runtime", "drive"]
 PUBG_DRIVE_PROJECT_ROOT = "/content/drive/MyDrive/PUBG_Project/Project_PUBG"  # @param {type:"string"}
+# @markdown Nhóm dùng cùng thư mục đã chia sẻ: bật True để tránh tạo nhầm project riêng khi thiếu shortcut.
+PUBG_REQUIRE_EXISTING_PROJECT = False  # @param {type:"boolean"}
 # @markdown Số dòng mỗi batch khi đọc CSV trong ZIP; giảm nếu RAM ít. Không lấy mẫu dữ liệu.
 PUBG_BATCH_ROWS = 50000  # @param {type:"integer"}
 '''
@@ -18,7 +20,7 @@ PUBG_BATCH_ROWS = 50000  # @param {type:"integer"}
 
 def bootstrap_source(project_root: Path) -> str:
     """Embed only code/config/docs; no raw data, credentials or research outputs."""
-    files = [project_root / "requirements.txt", project_root / "README.md"]
+    files = [project_root / name for name in ("requirements.txt", "README.md", "TEAM_DRIVE.md", "BATCH_COLAB.md")]
     for directory, pattern in [("src", "*.py"), ("configs", "*.yaml"), ("tests", "test_*.py")]:
         files.extend(sorted((project_root / directory).rglob(pattern)))
     stream = io.BytesIO()
@@ -51,6 +53,15 @@ if PUBG_STORAGE_MODE == "drive":
     PROJECT_ROOT = Path(globals().get(
         "PUBG_DRIVE_PROJECT_ROOT", "/content/drive/MyDrive/PUBG_Project/Project_PUBG"
     )).expanduser().resolve()
+    if globals().get("PUBG_REQUIRE_EXISTING_PROJECT", False) and not (
+        (PROJECT_ROOT / "configs/data.yaml").is_file()
+        and (PROJECT_ROOT / "src/utils/config.py").is_file()
+    ):
+        raise FileNotFoundError(
+            "Shared project not found: " + str(PROJECT_ROOT)
+            + ". Check Editor access and the PUBG_Project shortcut in My Drive. "
+            "No private project was created."
+        )
 else:
     _candidates = ([Path("/content/Project_PUBG")] if IN_COLAB else
                    [Path.cwd(), *Path.cwd().parents])

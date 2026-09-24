@@ -13,6 +13,10 @@
 
 ### Cách 2 — 13 notebook riêng, dùng chung Google Drive
 
+**Nhiều thành viên chạy nối tiếp trên một thư mục:** xem [TEAM_DRIVE.md](TEAM_DRIVE.md).
+Chủ thư mục chia sẻ `PUBG_Project` với quyền Editor; thành viên thêm shortcut vào My Drive và bật `PUBG_REQUIRE_EXISTING_PROJECT = True`.
+Cùng một chuỗi đường dẫn chưa đủ: mọi người phải trỏ đến cùng thư mục gốc được chia sẻ, không dùng các bản sao riêng.
+
 1. Upload toàn bộ `Project_PUBG` lên Drive hoặc để bootstrap tạo mã nguồn trong thư mục Drive đã chọn.
 2. Mở từng notebook từ `00_setup.ipynb` đến `12_final_results_summary.ipynb`.
 3. Trong cell **Chọn nơi lưu dữ liệu**, chọn `drive` và dùng cùng một `PUBG_DRIVE_PROJECT_ROOT`, mặc định `/content/drive/MyDrive/PUBG_Project/Project_PUBG`.

@@ -21,7 +21,14 @@ def create_notebook(filename: str, title: str, description: str, cells_data: lis
     ]
     cells.append({"cell_type": "markdown", "metadata": {}, "source": [
         "Chọn `runtime` để chạy không cần Drive, hoặc `drive` để 13 notebook dùng chung dữ liệu bền vững. "
-        "Với `drive`, mọi notebook phải dùng cùng `PUBG_DRIVE_PROJECT_ROOT` và chạy theo thứ tự.\n"]})
+        "Với `drive`, mọi notebook phải dùng cùng `PUBG_DRIVE_PROJECT_ROOT` và chạy theo thứ tự.\n\n"
+        "**Chạy nhóm:** chủ thư mục chia sẻ `PUBG_Project` với quyền Editor. Mỗi thành viên thêm shortcut "
+        "của chính thư mục đó vào My Drive, chọn `drive` và bật `PUBG_REQUIRE_EXISTING_PROJECT = True`. "
+        "Mỗi người mount Drive của mình; kết quả phải nằm trong cùng thư mục gốc được chia sẻ. "
+        "Chạy xong notebook, chờ file hiện trên Drive rồi bàn giao cho người tiếp theo; mỗi lần chỉ một người ghi. "
+        "Người nhận chạy cell cấu hình, Bootstrap và khởi tạo của notebook tiếp theo. "
+        "Biến trong RAM không được chuyển sang phiên mới; cell đang chạy dở có thể phải chạy lại. "
+        "Xem `TEAM_DRIVE.md` để thiết lập và xác nhận đường dẫn.\n"]})
     cells.append({"cell_type": "code", "execution_count": None, "metadata": {"tags": ["storage-options"]},
                   "outputs": [], "source": STORAGE_OPTIONS_CELL.splitlines(keepends=True)})
     cells.append({"cell_type": "code", "execution_count": None, "metadata": {"tags": ["bootstrap"]},

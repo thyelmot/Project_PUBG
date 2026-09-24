@@ -122,20 +122,30 @@ google.colab = colab
 sys.modules.update({"google": google, "google.colab": colab, "google.colab.drive": drive})
 scope = {"PUBG_INSTALL_DEPENDENCIES": False, "PUBG_STORAGE_MODE": "drive",
          "PUBG_DRIVE_PROJECT_ROOT": sys.argv[2], "PUBG_RUNTIME_TEMP_DIR": sys.argv[3],
+         "PUBG_REQUIRE_EXISTING_PROJECT": bool(int(sys.argv[4])),
          "__name__": "__main__"}
 cell = next(c for c in nb["cells"] if "bootstrap" in c.get("metadata", {}).get("tags", []))
 exec(compile("".join(cell["source"]), "bootstrap", "exec"), scope)
 print(scope["PROJECT_ROOT"])
 print(scope["paths"]["data_root"])
 '''
-            run = subprocess.run([sys.executable, "-c", program, str(notebook), str(drive_project),
-                                  str(Path(directory) / "runtime-temp")],
+            command = [sys.executable, "-c", program, str(notebook), str(drive_project),
+                       str(Path(directory) / "runtime-temp")]
+            missing = subprocess.run(command + ["1"], capture_output=True, text=True,
+                                     encoding="utf-8", errors="replace", timeout=30)
+            self.assertNotEqual(missing.returncode, 0)
+            self.assertIn("Shared project not found", missing.stderr)
+            self.assertFalse(drive_project.exists())
+            run = subprocess.run(command + ["0"],
                                  capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
             self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
             self.assertIn("MOUNT /content/drive", run.stdout)
             self.assertTrue((drive_project / "src/utils/config.py").is_file())
             self.assertTrue((drive_project / "data").is_dir())
             self.assertIn(str(drive_project / "data"), run.stdout)
+            resumed = subprocess.run(command + ["1"], capture_output=True, text=True,
+                                     encoding="utf-8", errors="replace", timeout=30)
+            self.assertEqual(resumed.returncode, 0, resumed.stdout + resumed.stderr)
 
     def test_bootstrap_installs_only_missing_runtime_packages(self):
         notebook = ROOT / "notebooks/00_setup.ipynb"
