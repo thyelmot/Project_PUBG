@@ -78,6 +78,7 @@ def get_duckdb_connection(
     con = duckdb.connect(database=":memory:")
     con.execute(f"SET threads TO {threads};")
     con.execute(f"SET max_memory TO '{memory_limit}';")
+    con.execute("SET preserve_insertion_order = false;")
     if temp_dir:
         temp_path = Path(temp_dir)
         temp_path.mkdir(parents=True, exist_ok=True)

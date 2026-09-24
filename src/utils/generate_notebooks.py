@@ -42,6 +42,14 @@ def create_notebook(filename: str, title: str, description: str, cells_data: lis
                                   "metadata": {}, "outputs": [],
                                   "source": block.strip().splitlines(keepends=True)})
     for i, cell in enumerate(cells):
+        if cell["cell_type"] == "code" and not cell.get("metadata", {}).get("tags"):
+            source = "".join(cell["source"])
+            # A fresh kernel must restore imports and paths before stage cells.
+            guard = ('if "paths" not in globals() or "PROJECT_ROOT" not in globals():\n'
+                     '    raise RuntimeError("Runtime đã mất trạng thái. Chạy lại cell Chọn nơi lưu dữ liệu và Bootstrap, rồi cell khởi tạo stage trước khi tiếp tục.")\n')
+            source = source.replace('con = get_duckdb_connection(',
+                                    'if "con" in globals():\n    con.close()\ncon = get_duckdb_connection(')
+            cell["source"] = (guard + source).splitlines(keepends=True)
         cell["id"] = f"cell-{i:03d}"
     nb_json = {
         "cells": cells,
@@ -315,6 +323,10 @@ clean_summary = audit_and_clean_aggregate_data(con, agg_shards, cleaned_pq, remo
 print(f"Làm sạch: Giữ lại {clean_summary['clean_rows']} dòng hợp lệ.")
 
 # 2. Xây dựng Match Metadata (N_teams, duration proxy)
+from src.data.match_metadata import build_match_metadata
+cleaned_pq = paths["interim"] / "cleaned_aggregate.parquet"
+if not cleaned_pq.is_file():
+    raise FileNotFoundError(f"Chưa có dữ liệu sạch: {cleaned_pq}. Chạy cell làm sạch trước.")
 meta_pq = paths["interim"] / "match_metadata.parquet"
 total_matches = build_match_metadata(con, cleaned_pq, meta_pq)
 

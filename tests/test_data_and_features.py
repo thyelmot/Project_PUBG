@@ -110,6 +110,14 @@ class TestDataAndFeaturesPipeline(unittest.TestCase):
         m1_meta = meta_df[meta_df["match_id"] == "m1"].iloc[0]
         self.assertEqual(m1_meta["observed_team_count"], 2)
         self.assertEqual(m1_meta["estimated_match_duration"], 600.0)
+        # Splitting matches into multiple buckets must preserve exact statistics.
+        from unittest.mock import patch
+        with patch("src.data.match_metadata.math.ceil", return_value=3):
+            build_match_metadata(self.con, cleaned_pq, meta_pq)
+        pd.testing.assert_frame_equal(
+            meta_df.sort_values("match_id").reset_index(drop=True),
+            pd.read_parquet(meta_pq).sort_values("match_id").reset_index(drop=True),
+        )
 
         # 4. Split Assignments
         split_pq = self.test_dir / "splits.parquet"

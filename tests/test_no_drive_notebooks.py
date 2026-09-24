@@ -100,6 +100,13 @@ class TestNoDriveNotebooks(unittest.TestCase):
                 self.assertNotIn("auth.authenticate_user", cell.source)
                 compile(cell.source, f"{path.name}:cell{index}", "exec")
 
+    def test_stage_after_kernel_reset_requests_bootstrap(self):
+        nb = json.loads((ROOT / "notebooks/02_data_quality_and_structure.ipynb").read_text(encoding="utf-8"))
+        for cell in nb["cells"]:
+            if cell["cell_type"] == "code" and not cell.get("metadata", {}).get("tags"):
+                with self.assertRaisesRegex(RuntimeError, "Bootstrap"):
+                    exec("".join(cell["source"]), {})
+
     def test_drive_mode_uses_shared_project_root(self):
         notebook = ROOT / "notebooks/00_setup.ipynb"
         with tempfile.TemporaryDirectory() as directory:

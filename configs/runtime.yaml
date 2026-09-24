@@ -7,8 +7,8 @@ storage_backend: "local" # "local" or "colab"
 resume: true
 
 duckdb:
-  threads: 4
-  memory_limit: "4GB"
+  threads: 2
+  memory_limit: "2GB"
   temp_directory: "./artifacts/logs/temp"
 
 logging:
