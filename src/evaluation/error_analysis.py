@@ -1,4 +1,5 @@
 from pathlib import Path
+from src.data.io import atomic_write_csv
 from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
@@ -15,10 +16,13 @@ def analyze_prediction_errors(
     """Analyze regression residuals across non-overlapping contextual slices (mode, placement tier, survival)."""
     output_table_path.parent.mkdir(parents=True, exist_ok=True)
     test_df = pred_df[pred_df["split"] == "test"].copy()
+    columns = ["slice_category", "slice_value", "n_observations", "mae", "rmse", "r2", "mean_residual"]
 
     if len(test_df) == 0:
         logger.warning("No test split records found for error analysis.")
-        return pd.DataFrame()
+        result = pd.DataFrame(columns=columns)
+        atomic_write_csv(output_table_path, result)
+        return result
 
     records = []
 
@@ -75,7 +79,7 @@ def analyze_prediction_errors(
                     "mean_residual": float(np.mean(grp["residual"])),
                 })
 
-    error_df = pd.DataFrame(records)
-    error_df.to_csv(output_table_path, index=False)
+    error_df = pd.DataFrame(records, columns=columns)
+    atomic_write_csv(output_table_path, error_df)
     logger.info(f"Error analysis table saved: {len(error_df)} slice records -> {output_table_path.name}")
     return error_df

@@ -1,4 +1,5 @@
 from pathlib import Path
+from src.data.io import atomic_write_csv
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
@@ -105,10 +106,10 @@ def execute_rq2_clustering(
         outcomes = pd.DataFrame(columns=["cluster_label", "n_players", "mean_survival", "median_survival",
                                          "mean_placement", "median_placement", "win_rate"])
         robustness = pd.DataFrame(columns=["comparison", "metric", "value", "n_sample"])
-        centers.to_csv(output_dir / "cluster_profile.csv", index=False)
-        pd.DataFrame(columns=["cluster_id", *feature_cols]).to_csv(output_dir / "cluster_centers_standardized.csv", index=False)
-        outcomes.to_csv(output_dir / "c5_outcome_comparison.csv", index=False)
-        robustness.to_csv(output_dir / "clustering_robustness.csv", index=False)
+        atomic_write_csv(output_dir / "cluster_profile.csv", centers)
+        atomic_write_csv(output_dir / "cluster_centers_standardized.csv", pd.DataFrame(columns=["cluster_id", *feature_cols]))
+        atomic_write_csv(output_dir / "c5_outcome_comparison.csv", outcomes)
+        atomic_write_csv(output_dir / "clustering_robustness.csv", robustness)
         logger.warning("Clustering skipped: insufficient distinct eligible profiles for K=%s", n_clusters)
         return {"status": "skipped_insufficient_profiles", "centers_raw": centers,
                 "robustness": robustness, "outcome_comparison": outcomes}
@@ -128,8 +129,8 @@ def execute_rq2_clustering(
     centers_raw["profile_count"] = profile_df.groupby("cluster_label").size()
     centers_raw["profile_percentage"] = (centers_raw["profile_count"] / len(profile_df)) * 100.0
 
-    centers_raw.to_csv(output_dir / "cluster_profile.csv")
-    centers_scaled.to_csv(output_dir / "cluster_centers_standardized.csv")
+    atomic_write_csv(output_dir / "cluster_profile.csv", centers_raw, index=True)
+    atomic_write_csv(output_dir / "cluster_centers_standardized.csv", centers_scaled, index=True)
 
     # 3. C2 Hierarchical validation (on representative subset if large)
     subset_size = min(3000, len(X_scaled))
@@ -156,7 +157,7 @@ def execute_rq2_clustering(
         {"comparison": "C3_Games_Played_Sensitivity", "metric": "Adjusted_Rand_Index", "value": float(c3_ari), "n_sample": len(labels)},
         {"comparison": "Seed_Stability", "metric": "Adjusted_Rand_Index", "value": float(seed_ari), "n_sample": len(labels)},
     ])
-    robustness_df.to_csv(output_dir / "clustering_robustness.csv", index=False)
+    atomic_write_csv(output_dir / "clustering_robustness.csv", robustness_df)
 
     # 5. C5 Outcome comparison (strictly descriptive post-hoc!)
     c5_table = outcome_df.groupby("cluster_label").agg(
@@ -167,7 +168,7 @@ def execute_rq2_clustering(
         median_placement=("mean_normalized_placement", "median"),
         win_rate=("win_rate", "mean"),
     ).reset_index()
-    c5_table.to_csv(output_dir / "c5_outcome_comparison.csv", index=False)
+    atomic_write_csv(output_dir / "c5_outcome_comparison.csv", c5_table)
 
     logger.info(f"RQ2 Clustering C1-C5 completed for K={n_clusters}. Output saved to {output_dir}")
 

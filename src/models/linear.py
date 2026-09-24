@@ -37,7 +37,7 @@ class LinearModelWrapper(BaseEstimator, RegressorMixin):
             )
 
         self.pipeline = Pipeline([
-            ("imputer", SimpleImputer(strategy="mean")),
+            ("imputer", SimpleImputer(strategy="mean", keep_empty_features=True)),
             ("scaler", StandardScaler()),
             ("regressor", reg),
         ])

@@ -23,17 +23,22 @@ def create_split_assignments(
     random_state: int = 42,
 ) -> Dict[str, Any]:
     """Create strict match-isolated train/validation/test split assignments."""
+    if strategy not in {"chronological", "group_by_match"}:
+        raise ValueError(f"Unknown split strategy: {strategy}")
+    ratios = np.asarray([train_ratio, val_ratio, test_ratio], dtype=float)
+    if not np.isfinite(ratios).all() or (ratios < 0).any() or train_ratio <= 0 or not np.isclose(ratios.sum(), 1):
+        raise ValueError("Split ratios must be finite, nonnegative, sum to 1, and train_ratio > 0.")
     output_assignments_parquet.parent.mkdir(parents=True, exist_ok=True)
     output_manifest_json.parent.mkdir(parents=True, exist_ok=True)
 
-    safe_meta = str(match_metadata_parquet.resolve()).replace("\\", "/")
-
     # Fetch unique match metadata
-    df_matches = con.execute(f"""
+    df_matches = con.execute("""
         SELECT match_id, match_date, observed_player_count
-        FROM read_parquet('{safe_meta}')
+        FROM read_parquet(?)
         ORDER BY match_date ASC, match_id ASC;
-    """).df()
+    """, [str(match_metadata_parquet)]).df()
+    if df_matches["match_id"].isna().any() or df_matches["match_id"].duplicated().any():
+        raise ValueError("Match metadata must contain one non-null row per match_id.")
 
     total_matches = len(df_matches)
     if total_matches == 0:
@@ -42,8 +47,13 @@ def create_split_assignments(
     n_train = int(total_matches * train_ratio)
     n_val = int(total_matches * val_ratio)
     n_test = total_matches - n_train - n_val
+    if n_train == 0:
+        raise ValueError("Not enough matches for the requested train ratio.")
 
     if strategy == "chronological":
+        df_matches["match_date"] = pd.to_datetime(df_matches["match_date"], utc=True, format="mixed", errors="coerce")
+        if df_matches["match_date"].isna().any():
+            raise ValueError("Chronological split requires valid dates for every match.")
         # Sort strictly by match_date
         df_matches = df_matches.sort_values(by=["match_date", "match_id"]).reset_index(drop=True)
         train_matches = set(df_matches.iloc[:n_train]["match_id"])
@@ -84,7 +94,7 @@ def create_split_assignments(
         "estimated_player_counts": player_counts,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
-    manifest_data["config_hash"] = hash_dict(manifest_data)
+    manifest_data["config_hash"] = hash_dict({k: v for k, v in manifest_data.items() if k != "created_at"})
 
     atomic_write_json(output_manifest_json, manifest_data)
     logger.info(f"Split assignments published: {split_counts} matches.")

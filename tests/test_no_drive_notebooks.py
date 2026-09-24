@@ -232,6 +232,8 @@ for i, cell in enumerate(nb["cells"]):
         continue
     print("EXECUTING", sys.argv[1], i, flush=True)
     exec(compile("".join(cell["source"]), f"cell-{i}", "exec"), scope)
+    if not cell.get("metadata", {}).get("tags"):
+        exec(compile("".join(cell["source"]), f"cell-{i}-rerun", "exec"), scope)
     if "storage-options" in cell.get("metadata", {}).get("tags", []):
         scope.update(PUBG_STORAGE_MODE="drive", PUBG_DRIVE_PROJECT_ROOT=str(root),
                      PUBG_RUNTIME_TEMP_DIR=str(root.parent / "temp"))
@@ -255,6 +257,10 @@ for i, cell in enumerate(nb["cells"]):
                         self.assertEqual(run.returncode, 0, (run.stdout + run.stderr)[-10000:])
                         if run.returncode:
                             break
+                        if mode == "separate" and current.name == "04_combat_timing.ipynb":
+                            next_member = workspace / "second_member/MyDrive/PUBG_Project/Project_PUBG"
+                            shutil.copytree(drive_project, next_member)
+                            drive_project = next_member
                 self.assertTrue((drive_project / "artifacts/manifests/final_results_manifest.json").is_file())
 
 

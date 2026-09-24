@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import duckdb
 import pandas as pd
-from src.data.io import copy_query_to_parquet
+from src.data.io import copy_query_to_parquet, atomic_write_csv
 from src.utils.logging import get_logger
 
 logger = get_logger("pubg_cleaning")
@@ -95,7 +95,7 @@ def audit_and_clean_aggregate_data(
         {"stage": "cleaning", "reason": "total_dropped_records", "rows_affected": dropped_rows},
         {"stage": "cleaning", "reason": "validated_clean_records", "rows_affected": clean_rows},
     ]
-    pd.DataFrame(removal_records).to_csv(removal_log_path, index=False)
+    atomic_write_csv(removal_log_path, pd.DataFrame(removal_records))
 
     summary = {
         "total_raw_rows": total_rows,

@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import duckdb
 import pandas as pd
-from src.data.io import copy_query_to_parquet
+from src.data.io import copy_query_to_parquet, atomic_write_csv
 from src.utils.logging import get_logger
 
 logger = get_logger("pubg_combat_timing")
@@ -86,7 +86,7 @@ def extract_and_aggregate_combat_timing(
         "excluded_events": total_death_events - valid_enemy_kills,
         "unique_killer_match_pairs": unique_killer_matches,
     }
-    pd.DataFrame([audit_summary]).to_csv(audit_output_dir / "event_join_audit.csv", index=False)
+    atomic_write_csv(audit_output_dir / "event_join_audit.csv", pd.DataFrame([audit_summary]))
     logger.info(f"Combat timing aggregated: {unique_killer_matches} (match, killer) profiles -> {output_timing_parquet.name}")
     return audit_summary
 
@@ -187,7 +187,7 @@ def merge_player_match_and_timing(
         ORDER BY kill_discrepancy ASC
         LIMIT 20;
     """).df()
-    discrepancy_df.to_csv(discrepancy_log_path, index=False)
+    atomic_write_csv(discrepancy_log_path, discrepancy_df)
 
     logger.info(f"Successfully constructed final player_match_features: {final_rows} rows.")
     return final_rows

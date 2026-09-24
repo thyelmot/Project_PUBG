@@ -10,6 +10,19 @@ from src.utils.notebook_bundle import bootstrap_source, EXPORT_CELL, STORAGE_OPT
 
 BOOTSTRAP = bootstrap_source(NOTEBOOKS_DIR.parent)
 GENERATED_NOTEBOOKS = []
+NOTEBOOK_DEPENDENCIES = {
+    "01_download_validate.ipynb": [],
+    "02_data_quality_and_structure.ipynb": ["01_download_validate.ipynb"],
+    "03_build_player_match.ipynb": ["02_data_quality_and_structure.ipynb"],
+    "04_combat_timing.ipynb": ["01_download_validate.ipynb", "02_data_quality_and_structure.ipynb"],
+    "05_eda.ipynb": ["04_combat_timing.ipynb"],
+    "06_rq1_analysis.ipynb": ["04_combat_timing.ipynb"],
+    "07_rq2_clustering.ipynb": ["04_combat_timing.ipynb"],
+    "08_build_historical.ipynb": ["02_data_quality_and_structure.ipynb", "04_combat_timing.ipynb"],
+    "09_rq3_prediction.ipynb": ["02_data_quality_and_structure.ipynb", "04_combat_timing.ipynb"],
+    "10_ablation_error_analysis.ipynb": ["09_rq3_prediction.ipynb"],
+    "11_finalize_results.ipynb": ["06_rq1_analysis.ipynb", "07_rq2_clustering.ipynb", "09_rq3_prediction.ipynb", "10_ablation_error_analysis.ipynb"],
+}
 
 def create_notebook(filename: str, title: str, description: str, cells_data: list):
     cells = [
@@ -48,6 +61,8 @@ def create_notebook(filename: str, title: str, description: str, cells_data: lis
                     cells.append({"cell_type": "code", "execution_count": None,
                                   "metadata": {}, "outputs": [],
                                   "source": block.strip().splitlines(keepends=True)})
+    previous_code_cell = None
+    last_code_cell = max(i for i, c in enumerate(cells) if c["cell_type"] == "code" and not c["metadata"].get("tags"))
     for i, cell in enumerate(cells):
         if cell["cell_type"] == "code" and not cell.get("metadata", {}).get("tags"):
             source = "".join(cell["source"])
@@ -61,9 +76,28 @@ def create_notebook(filename: str, title: str, description: str, cells_data: lis
             # A fresh kernel must restore imports and paths before stage cells.
             guard = ('if "paths" not in globals() or "PROJECT_ROOT" not in globals():\n'
                      '    raise RuntimeError("Runtime đã mất trạng thái. Chạy lại cell Chọn nơi lưu dữ liệu và Bootstrap, rồi cell khởi tạo stage trước khi tiếp tục.")\n')
+            guard += '_pubg_progress = globals().setdefault("_PUBG_CELL_PROGRESS", {})\n'
+            if previous_code_cell is not None:
+                guard += (f'if _pubg_progress.get({filename!r}, -1) < {previous_code_cell}:\n'
+                          f'    raise RuntimeError("{filename}: Chạy thành công cell trước trước khi tiếp tục; không bỏ qua cell bị lỗi.")\n')
+            guard += f'_pubg_progress[{filename!r}] = {previous_code_cell if previous_code_cell is not None else -1}\n'
+            if filename in NOTEBOOK_DEPENDENCIES:
+                guard += ('from src.data.checkpoints import CheckpointManager\n'
+                          '_pubg_checkpoint = CheckpointManager(paths["checkpoints"] / "checkpoint_manifest.json")\n'
+                          f'_pubg_checkpoint.begin_notebook({filename!r}, {NOTEBOOK_DEPENDENCIES[filename]!r})\n')
+            elif filename == "12_final_results_summary.ipynb":
+                guard += ('from src.data.io import read_json\n'
+                          '_pubg_run_manifest = paths["checkpoints"] / "checkpoint_manifest.json"\n'
+                          'if _pubg_run_manifest.is_file():\n'
+                          '    _pubg_stages = read_json(_pubg_run_manifest).get("stages", {})\n'
+                          '    if any(k.startswith("notebook/") and v.get("status") != "completed" for k, v in _pubg_stages.items()):\n'
+                          '        raise RuntimeError("Có notebook chưa hoàn tất; chạy xong rồi khóa lại notebook 11 trước khi đọc kết quả.")\n')
             source = source.replace('con = get_duckdb_connection(',
                                     'if "con" in globals():\n    con.close()\ncon = get_duckdb_connection(')
-            cell["source"] = (guard + source).splitlines(keepends=True)
+            if filename in NOTEBOOK_DEPENDENCIES and i == last_code_cell:
+                source += f'\n_pubg_checkpoint.commit({"notebook/" + filename!r}, "notebook_v1", {{}})\n'
+            cell["source"] = (guard + source + f'\n_pubg_progress[{filename!r}] = {i}\n').splitlines(keepends=True)
+            previous_code_cell = i
         cell["id"] = f"cell-{i:03d}"
     nb_json = {
         "cells": cells,
@@ -223,7 +257,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.utils.config import load_config, resolve_paths
 from src.data.io import get_duckdb_connection, atomic_write_json
-from src.data.batch_ingest import ingest_sources
+from src.data.batch_ingest import ingest_sources, staged_paths
 from src.data.checkpoints import CheckpointManager
 
 cfg = load_config(str(PROJECT_ROOT / "configs"))
@@ -242,6 +276,8 @@ atomic_write_json(paths["manifests"] / "source_inventory.json", inventory)
 print(f"Đã xử lý đầy đủ {len(inventory['shards'])} shards, {sum(s['rows'] for s in inventory['shards']):,} dòng.")
 
 # 2. Khóa checkpoint sau khi tất cả shard đã hoàn tất
+for kind in ("aggregate", "deaths"):
+    staged_paths(staging_dir, kind)  # Reject an incomplete manifest even if cell 1 failed.
 ckpt_mgr.commit("schema", "schema_batch_v1", {"converted_agg_shards": staging_dir / "batch_manifest.json"})
 print("Gate G1 Hoàn tất: Shards đã được kiểm kê và chuẩn hóa sang Parquet.")
 """
@@ -401,7 +437,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.utils.config import load_config, resolve_paths
-from src.data.io import read_parquet_df, atomic_write_json
+from src.data.io import read_parquet_df, atomic_write_json, atomic_write_csv
 from src.analysis.eda import run_structural_eda, compute_distribution_summary
 from src.analysis.mode_analysis import analyze_behavior_by_mode
 
@@ -420,13 +456,13 @@ behavior_cols = [
     "player_survive_time", "normalized_placement"
 ]
 dist_summary = compute_distribution_summary(df_sample, behavior_cols)
-dist_summary.to_csv(paths["tables"] / "data_quality_summary.csv", index=False)
+atomic_write_csv(paths["tables"] / "data_quality_summary.csv", dist_summary)
 print("--- TÓM TẮT PHÂN BỐ ĐẶC TRƯNG HÀNH VI ---")
 print(dist_summary[["feature", "mean", "std", "median", "skewness", "zero_rate"]])
 
 # Phase 5: Phân tích theo chế độ chơi
 mode_res = analyze_behavior_by_mode(df_sample, behavior_cols)
-mode_res["summary_table"].to_csv(paths["tables"] / "mode_summary.csv", index=False)
+atomic_write_csv(paths["tables"] / "mode_summary.csv", mode_res["summary_table"])
 atomic_write_json(paths["manifests"] / "mode_analysis.json", {
     "mode_differences": mode_res["mode_differences"],
     "recommended_rq2_strategy": mode_res["recommended_rq2_strategy"],
@@ -484,6 +520,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.utils.config import load_config, resolve_paths
 from src.data.io import read_parquet_df
 from src.features.profiles import build_player_behavioral_profiles, filter_profiles_by_retention
+from src.data.io import atomic_write_csv
 from src.analysis.clustering import run_k_diagnostics, execute_rq2_clustering, prepare_clustering_matrix
 
 cfg = load_config(str(PROJECT_ROOT / "configs"))
@@ -502,7 +539,7 @@ X = prepare_clustering_matrix(filtered_profiles, cfg["rq2"].get("scaler", "stand
 k_diag = run_k_diagnostics(X, k_range=[2, 3, 4, 5, 6])
 print("--- CHẨN ĐOÁN SỐ CỤM K ---")
 print(k_diag)
-k_diag.to_csv(paths["tables"] / "k_diagnostics.csv", index=False)
+atomic_write_csv(paths["tables"] / "k_diagnostics.csv", k_diag)
 
 # 3. Phân cụm chính thức C1 và đánh giá C2-C5
 selected_k = cfg["rq2"]["n_clusters"] or 4
@@ -528,7 +565,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.utils.config import load_config, resolve_paths
-from src.data.io import get_duckdb_connection, read_json
+from src.data.io import get_duckdb_connection, read_json, atomic_write_json
 from src.features.historical import build_historical_features
 
 cfg = load_config(str(PROJECT_ROOT / "configs"))
@@ -536,10 +573,11 @@ paths = resolve_paths(cfg)
 con = get_duckdb_connection(temp_dir=paths["temp_dir"], **{k: cfg["runtime"]["duckdb"][k] for k in ("memory_limit", "threads")})
 
 chrono_report = read_json(paths["manifests"] / "chronology_report.json")
-grade = chrono_report.get("grade", "Grade B")
+grade = chrono_report.get("grade", "Grade C")
 
 hist_pq = paths["processed"] / "historical_player_match_features.parquet"
 h_res = build_historical_features(con, paths["processed"] / "player_match_features.parquet", hist_pq, chronology_grade=grade)
+atomic_write_json(paths["manifests"] / "historical_status.json", h_res)
 print(f"Kết quả xây dựng lịch sử: {h_res}")
 """
     ]

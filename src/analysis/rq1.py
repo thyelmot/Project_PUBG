@@ -1,4 +1,5 @@
 from pathlib import Path
+from src.data.io import atomic_write_csv
 from typing import Any, Dict, List, Optional
 import pandas as pd
 from src.analysis.correlation import compute_bivariate_associations
@@ -86,6 +87,6 @@ def run_rq1_analysis(
         ]
         final_table = final_table[[c for c in cols if c in final_table.columns]]
 
-    final_table.to_csv(output_table_path, index=False)
+    atomic_write_csv(output_table_path, final_table)
     logger.info(f"RQ1 relationship analysis saved: {len(final_table)} association records -> {output_table_path.name}")
     return final_table

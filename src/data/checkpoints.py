@@ -67,7 +67,13 @@ class CheckpointManager:
         # Verify all committed artifacts exist on disk
         artifacts = stage_record.get("artifacts", {})
         for art_name, art_path in artifacts.items():
-            if not Path(art_path).exists():
+            path = Path(art_path)
+            if not path.is_absolute():
+                path = self.manifest_path.parent / path
+            if not path.is_file():
+                return False
+            checksum = stage_record.get("checksums", {}).get(art_name)
+            if checksum and hash_file(path) != checksum:
                 return False
 
         return True
@@ -85,6 +91,30 @@ class CheckpointManager:
         self.save_manifest(manifest)
         log_stage(stage, "started", signature=signature)
 
+    def begin_notebook(self, name: str, dependencies: List[str]) -> None:
+        """Block cross-runtime use of outputs from a notebook interrupted mid-run."""
+        manifest = self.load_manifest()
+        stages = manifest.setdefault("stages", {})
+        for dependency in dependencies:
+            record = stages.get("notebook/" + dependency)
+            # Legacy outputs have no notebook-level record; their file checks still apply.
+            if record and record.get("status") != "completed":
+                raise RuntimeError(f"{dependency} chưa hoàn tất. Chạy lại notebook đó trước {name}.")
+        stage = "notebook/" + name
+        invalidated = {stage}
+        while True:
+            added = {key for key, record in stages.items()
+                     if key not in invalidated and invalidated.intersection(record.get("dependencies", []))}
+            if not added:
+                break
+            invalidated.update(added)
+        for key in invalidated - {stage}:
+            stages[key]["status"] = "stale"
+        stages[stage] = {"status": "running", "signature": "notebook_v1",
+                         "dependencies": ["notebook/" + d for d in dependencies], "artifacts": {},
+                         "started_at": datetime.now(timezone.utc).isoformat()}
+        self.save_manifest(manifest)
+
     def commit(
         self,
         stage: str,
@@ -95,18 +125,23 @@ class CheckpointManager:
         """Publish completed checkpoint with verified artifacts."""
         # Check files exist
         verified_artifacts = {}
+        checksums = {}
         for name, path_val in artifacts.items():
             path = Path(path_val).resolve()
-            if not path.exists():
+            if not path.is_file():
                 raise FileNotFoundError(f"Cannot commit missing artifact for stage '{stage}': {path}")
-            verified_artifacts[name] = str(path)
+            verified_artifacts[name] = Path(os.path.relpath(path, self.manifest_path.parent.resolve())).as_posix()
+            checksums[name] = hash_file(path)
 
         manifest = self.load_manifest()
+        dependencies = manifest.get("stages", {}).get(stage, {}).get("dependencies", [])
         manifest["stages"][stage] = {
             "status": "completed",
             "signature": signature,
             "completed_at": datetime.now(timezone.utc).isoformat(),
             "artifacts": verified_artifacts,
+            "checksums": checksums,
+            "dependencies": dependencies,
             "metadata": metadata or {},
         }
         self.save_manifest(manifest)
@@ -139,6 +174,10 @@ class CheckpointManager:
         """Retrieve completed checkpoint record if valid."""
         manifest = self.load_manifest()
         record = manifest.get("stages", {}).get(stage)
-        if record and record.get("status") == "completed":
+        if record and self.is_compatible(stage, record.get("signature")):
+            record["artifacts"] = {
+                name: str((self.manifest_path.parent / path).resolve())
+                for name, path in record.get("artifacts", {}).items()
+            }
             return record
         return None

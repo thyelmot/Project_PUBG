@@ -42,7 +42,8 @@ def compute_distribution_summary(df: pd.DataFrame, columns: List[str]) -> pd.Dat
             "p95": float(series.quantile(0.95)),
             "skewness": skew_val,
         })
-    return pd.DataFrame(records)
+    return pd.DataFrame(records, columns=["feature", "count", "missing_count", "missing_pct",
+                                         "zero_rate", "mean", "std", "median", "p25", "p75", "p95", "skewness"])
 
 
 def run_structural_eda(df: pd.DataFrame, meta_df: pd.DataFrame) -> Dict[str, Any]:

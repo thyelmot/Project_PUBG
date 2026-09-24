@@ -24,6 +24,8 @@ def build_historical_features(
       3. Grade B: Cross-day aggregation. Trận ngày D chỉ dùng dữ liệu ngày < D. Matches on same day excluded from each other's history.
       4. Cold-start players (< min_history_threshold) are flagged with has_sufficient_history = False.
     """
+    if chronology_grade not in {"Grade A", "Grade B", "Grade C"}:
+        raise ValueError("Unknown chronology grade. Rerun notebook 02 chronology audit.")
     if chronology_grade == "Grade C":
         logger.warning("Historical features blocked: Chronology Grade is C. S2 and P3 tasks disabled.")
         return {

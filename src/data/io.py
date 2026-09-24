@@ -1,7 +1,9 @@
 import json
-import os
+import errno
 import shutil
 import tempfile
+import time
+import uuid
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Union
 import duckdb
@@ -12,15 +14,69 @@ from src.utils.hashing import hash_file
 
 
 def publish_file(local_path: Path, output: Path) -> None:
-    """Publish a closed local file only after verifying the destination copy."""
+    """Verify publication, including mounts where rename fails or reports late.
+
+    Only a NEW destination may fall back to an exclusive direct copy. Existing
+    checkpoints must never be truncated to work around an unsupported rename.
+    Single writer required; a direct copy is not atomic on a remote mount.
+    """
+    local_path = Path(local_path)
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    uploading = output.with_name(output.name + f".uploading_{os.getpid()}")
+    size, checksum = local_path.stat().st_size, hash_file(local_path)
+    uploading = output.with_name(output.name + f".uploading_{uuid.uuid4().hex}")
+
+    def verified(path):
+        try:
+            return path.stat().st_size == size and hash_file(path) == checksum
+        except FileNotFoundError:
+            return False
+
+    transient = {errno.ENOENT, errno.EIO, errno.EBUSY, errno.ETIMEDOUT, errno.ESTALE,
+                 errno.EXDEV, errno.ENOTSUP}
     try:
-        shutil.copyfile(local_path, uploading)
-        if local_path.stat().st_size != uploading.stat().st_size or hash_file(local_path) != hash_file(uploading):
-            raise IOError(f"Destination copy failed checksum verification: {output}")
-        uploading.replace(output)
+        for attempt in range(3):
+            try:
+                if verified(output):
+                    return  # Includes a rename which succeeded despite raising ENOENT.
+                if not verified(uploading):
+                    shutil.copyfile(local_path, uploading)
+                    if not verified(uploading):
+                        raise OSError(errno.EIO, f"Destination copy failed checksum verification: {output}")
+                try:
+                    uploading.replace(output)
+                except OSError as error:
+                    if verified(output):
+                        return
+                    if error.errno not in transient:
+                        raise
+                    if attempt < 2:
+                        raise
+                    # FUSE may reject rename even after the temporary copy was read
+                    # back successfully. Exclusive create cannot overwrite old data.
+                    created = False
+                    try:
+                        with output.open("xb") as destination:
+                            created = True
+                            with local_path.open("rb") as source:
+                                shutil.copyfileobj(source, destination, length=1024 * 1024)
+                        if not verified(output):
+                            raise OSError(errno.EIO, f"Direct copy failed checksum verification: {output}")
+                    except BaseException:
+                        if created:
+                            try:
+                                output.unlink(missing_ok=True)
+                            except OSError:
+                                pass
+                        raise
+                if verified(output):
+                    return
+                raise OSError(errno.EIO, f"Published file failed checksum verification: {output}")
+            except OSError as error:
+                if error.errno not in transient or attempt == 2:
+                    raise
+                print(f"Storage operation failed; retry {attempt + 1}/2: {output.name}", flush=True)
+                time.sleep(attempt + 1)
     finally:
         try:
             uploading.unlink(missing_ok=True)
@@ -45,18 +101,30 @@ def copy_query_to_parquet(con, query: str, output: Path, expected_rows=None) -> 
 
 
 def atomic_write_json(file_path: Union[str, Path], data: Any, indent: int = 2) -> None:
-    """Write data to a JSON file atomically using a temporary file."""
-    path = Path(file_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temp_path = path.with_suffix(f"{path.suffix}.tmp_{os.getpid()}")
-
-    try:
-        with open(temp_path, "w", encoding="utf-8") as f:
+    """Use the same verified publication rules as Parquet checkpoints."""
+    with tempfile.TemporaryDirectory(prefix="pubg_json_") as directory:
+        temp_path = Path(directory) / "result.json"
+        with temp_path.open("w", encoding="utf-8") as f:
             json.dump(data, f, indent=indent, default=str)
-        temp_path.replace(path)
+        publish_file(temp_path, Path(file_path))
+
+
+def check_storage_writable(directory: Path) -> None:
+    """Fail before a long conversion if creation or checkpoint replacement fails."""
+    probe = Path(directory) / f".pubg_write_check_{uuid.uuid4().hex}.json"
+    try:
+        atomic_write_json(probe, {"probe": 1})
+        atomic_write_json(probe, {"probe": 2})
+    except OSError as error:
+        raise OSError(
+            f"Cannot create/replace checkpoints in {directory}. Check Drive connection, "
+            "Editor access and free storage, then rerun this cell. No CSV conversion started."
+        ) from error
     finally:
-        if temp_path.exists():
-            temp_path.unlink()
+        try:
+            probe.unlink(missing_ok=True)
+        except OSError:
+            pass
 
 
 def read_json(file_path: Union[str, Path]) -> Any:
@@ -73,7 +141,7 @@ def atomic_write_parquet(
     df_or_table: Union[pd.DataFrame, pa.Table],
     compression: str = "zstd",
 ) -> None:
-    """Write a DataFrame or PyArrow Table to a Parquet file atomically."""
+    """Write locally, then publish using verified checkpoint rules."""
     with tempfile.TemporaryDirectory(prefix="pubg_parquet_") as directory:
         temp_path = Path(directory) / "result.parquet"
         if isinstance(df_or_table, pd.DataFrame):
@@ -83,6 +151,14 @@ def atomic_write_parquet(
 
         pq.write_table(table, temp_path, compression=compression)
         publish_file(temp_path, Path(file_path))
+
+
+def atomic_write_csv(file_path: Union[str, Path], df: pd.DataFrame, *, index=False) -> None:
+    """Close and verify reports before replacing the previous result."""
+    with tempfile.TemporaryDirectory(prefix="pubg_csv_") as directory:
+        local = Path(directory) / "result.csv"
+        df.to_csv(local, index=index)
+        publish_file(local, Path(file_path))
 
 
 def read_parquet_table(file_path: Union[str, Path], columns: Optional[List[str]] = None) -> pa.Table:

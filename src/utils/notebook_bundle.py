@@ -111,6 +111,7 @@ paths = resolve_paths(cfg)
 for _path in paths.values():
     _path.mkdir(parents=True, exist_ok=True)
 print("Project:", PROJECT_ROOT)
+_PUBG_CELL_PROGRESS = {}  # Re-bootstrap invalidates prior cell state, even within one kernel.
 print("Storage:", paths["data_root"], "| Results:", paths["reports_root"])
 if PUBG_STORAGE_MODE == "drive":
     print("Storage mode: Google Drive. Stage outputs persist for the next notebook.")

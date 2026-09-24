@@ -25,6 +25,7 @@ def build_final_results_manifest(
         "tables": {},
         "figures": {},
         "models": {},
+        "predictions": {},
     }
 
     # Verify tables
@@ -41,12 +42,21 @@ def build_final_results_manifest(
     models_dir = artifacts_root / "models"
     if models_dir.is_dir():
         for mod_file in models_dir.glob("*.*"):
+            if not mod_file.is_file() or ".uploading_" in mod_file.name or ".tmp_" in mod_file.name:
+                continue
             manifest["models"][mod_file.name] = {
                 "path": Path(os.path.relpath(mod_file.resolve(), output_manifest_path.parent.resolve())).as_posix(),
                 "sha256": hash_file(mod_file),
                 "byte_size": mod_file.stat().st_size,
             }
 
+    for run_id in official_run_ids.values():
+        prediction = artifacts_root / "experiments" / f"predictions_{run_id}.parquet"
+        if prediction.is_file():
+            manifest["predictions"][prediction.name] = {
+                "path": Path(os.path.relpath(prediction.resolve(), output_manifest_path.parent.resolve())).as_posix(),
+                "sha256": hash_file(prediction), "byte_size": prediction.stat().st_size,
+            }
     atomic_write_json(output_manifest_path, manifest)
     logger.info(f"Final results manifest locked: {len(manifest['tables'])} tables -> {output_manifest_path.name}")
     return manifest
@@ -58,7 +68,7 @@ def verify_final_manifest_integrity(manifest_path: Path) -> Tuple[bool, List[str
     all_valid = True
     mismatches = []
 
-    for category in ["tables", "figures", "models"]:
+    for category in ["tables", "figures", "models", "predictions"]:
         items = manifest.get(category, {})
         for name, item_meta in items.items():
             f_path = Path(item_meta["path"])

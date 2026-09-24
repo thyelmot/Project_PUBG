@@ -1,4 +1,5 @@
 from pathlib import Path
+from src.data.io import atomic_write_csv
 from typing import Any, Dict, List, Optional
 import pandas as pd
 from src.evaluation.metrics import compute_regression_metrics
@@ -73,6 +74,6 @@ def run_group_ablation_study(
         })
 
     ablation_df = pd.DataFrame(records)
-    ablation_df.to_csv(output_table_path, index=False)
+    atomic_write_csv(output_table_path, ablation_df)
     logger.info(f"Ablation study saved -> {output_table_path.name}")
     return ablation_df

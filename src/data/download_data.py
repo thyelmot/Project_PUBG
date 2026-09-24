@@ -3,12 +3,14 @@ from html.parser import HTMLParser
 import os
 import re
 import shutil
+import tempfile
 import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from src.utils.hashing import hash_file
+from src.data.io import publish_file
 from src.utils.logging import get_logger
 
 logger = get_logger("pubg_download")
@@ -89,7 +91,8 @@ def download_file_with_checksum(
 ) -> Path:
     """Safely download a file via streaming to a temporary .part file and verify integrity."""
     target_path.parent.mkdir(parents=True, exist_ok=True)
-    part_path = target_path.with_suffix(f"{target_path.suffix}.part")
+    with tempfile.NamedTemporaryFile(prefix="pubg_download_", suffix=".part", delete=False) as local_file:
+        part_path = Path(local_file.name)
 
     logger.info(f"Starting download: {url} -> {target_path.name}")
 
@@ -108,8 +111,13 @@ def download_file_with_checksum(
                     "This usually indicates an expired link or authentication page."
                 )
 
+            received = 0
             while chunk := response.read(chunk_size):
                 out_file.write(chunk)
+                received += len(chunk)
+            expected_length = response.headers.get("Content-Length")
+            if expected_length is not None and received != int(expected_length):
+                raise ValueError(f"Incomplete download: expected {expected_length} bytes, received {received}")
 
         # Checksum validation if provided
         if expected_checksum:
@@ -120,15 +128,15 @@ def download_file_with_checksum(
                     f"Expected: {expected_checksum}, Actual: {actual_checksum}"
                 )
 
-        part_path.replace(target_path)
+        publish_file(part_path, target_path)
         logger.info(f"Download complete and verified: {target_path.name}")
         return target_path
 
     except Exception as e:
-        if part_path.exists():
-            part_path.unlink()
         logger.error(f"Download failed for {url}: {e}")
-        raise e
+        raise
+    finally:
+        part_path.unlink(missing_ok=True)
 
 
 def resolve_archive(

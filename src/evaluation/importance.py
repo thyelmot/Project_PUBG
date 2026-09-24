@@ -1,4 +1,5 @@
 from pathlib import Path
+from src.data.io import atomic_write_csv
 from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
@@ -62,7 +63,7 @@ def extract_feature_importance(
 
     if output_table_path:
         output_table_path.parent.mkdir(parents=True, exist_ok=True)
-        df_imp.to_csv(output_table_path, index=False)
+        atomic_write_csv(output_table_path, df_imp)
         logger.info(f"Saved feature importance table -> {output_table_path.name}")
 
     return df_imp
