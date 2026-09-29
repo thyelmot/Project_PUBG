@@ -473,3 +473,14 @@ markdown\, ...)\ chuẩn theo tài liệu. Mỗi pha đều có mục đích, in
 - Research impact: Zero protocol deviation. Code sinh notebook nay hoàn thiện chính xác đến từng cell markdown giải thích và bám sát DoD.
 - Testing & verification: 13 notebook được regenerate thành công. Unit tests tiếp tục pass do logic chính không thay đổi, chỉ cấu trúc hiển thị notebook được bổ sung đúng thỏa thuận.
 
+
+## 2026-09-29 - Revert all implementation checklists
+
+- Request: 'thôi bỏ tích hết các check list trong giai đoạn cho tôi'
+- Sources compared: `AGENTS.md`, `PUBG_RESEARCH_SPEC.md` v3.0 và quy tắc nghiệm thu trong `PUBG_IMPLEMENTATION_PLAN.md`.
+- Files changed:
+  - `PUBG_IMPLEMENTATION_PLAN.md`: Chuyển toàn bộ checklist đã tích về `[ ]` để buộc tái rà soát từ trên xuống.
+- Research impact: Khởi tạo lại tiến trình nghiệm thu. Người dùng sẽ chủ động đối chiếu và tích lại từ đầu theo đúng chuẩn DoD.
+- Testing & verification: Code và generator không bị ảnh hưởng.
+- Remaining limits: Checklist trống nghĩa là chưa tái nghiệm thu, không khẳng định code chưa tồn tại. Bắt đầu lại từ INV-08 và chỉ tích khi đủ bằng chứng logic, tích hợp và khả năng đọc.
+
