@@ -2,6 +2,7 @@
 
 minimum_history_threshold: null # TBD: Decided in Notebook 08 (e.g., 5 or 10 matches)
 chronology_required_for_historical: true
+device: "cuda" # GPU OLS for notebook 09 and paired ablation in notebook 10
 
 split:
   strategy: "auto" # "chronological" if Grade A/B, "group_by_match" if Grade C

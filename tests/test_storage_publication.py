@@ -11,7 +11,7 @@ import duckdb
 import pyarrow.parquet as pq
 
 from src.data.io import publish_file, atomic_write_json, check_storage_writable
-from src.data.batch_ingest import convert_csv_batches, ingest_sources, staged_paths
+from src.data.batch_ingest import convert_csv_batches, ingest_sources, staged_paths, finalize_ingest
 
 
 class TestStoragePublication(unittest.TestCase):
@@ -153,7 +153,9 @@ class TestStoragePublication(unittest.TestCase):
                         if c["cell_type"] == "code" and 'ckpt_mgr.commit("schema"' in "".join(c["source"]))
             manager = Mock()
             with self.assertRaisesRegex(RuntimeError, "01"):
-                exec(gate, {"paths": {"checkpoints": root / "checkpoints"}, "PROJECT_ROOT": root, "staging_dir": stage,
+                exec(gate, {"paths": {"checkpoints": root / "checkpoints", "raw_root": root / "raw", "temp_dir": root / "temp"},
+                            "PROJECT_ROOT": root, "staging_dir": stage, "con": con,
+                            "cfg": {"data": {}, "schema": {}}, "finalize_ingest": finalize_ingest,
                             "_PUBG_CELL_PROGRESS": {"01_download_validate.ipynb": 5},
                             "staged_paths": staged_paths, "ckpt_mgr": manager})
             manager.commit.assert_not_called()

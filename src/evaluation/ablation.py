@@ -17,6 +17,7 @@ def run_group_ablation_study(
     base_feature_set: List[str],
     target_col: str,
     output_table_path: Path,
+    device: str = 'cpu',
 ) -> pd.DataFrame:
     """Execute ablation experiments: FULL, -Combat, -Movement, -Support, -Timing."""
     output_table_path.parent.mkdir(parents=True, exist_ok=True)
@@ -42,7 +43,7 @@ def run_group_ablation_study(
             features_to_use = registry.remove_group_and_descendants(base_feature_set, grp)
 
         logger.info(f"Running {exp_name} with {len(features_to_use)} features...")
-        model = LinearModelWrapper(model_type="exact")
+        model = LinearModelWrapper(model_type="exact", device=device)
         _, pred_df = train_and_predict_experiment(
             df=df,
             feature_names=features_to_use,
@@ -67,6 +68,7 @@ def run_group_ablation_study(
             "ablation_experiment": exp_name,
             "removed_group": grp or "none",
             "features_count": len(features_to_use),
+            "device": device,
             "test_mae": metrics["mae"],
             "test_rmse": metrics["rmse"],
             "test_r2": metrics["r2"],

@@ -9,18 +9,24 @@ import zipfile
 STORAGE_OPTIONS_CELL = '''# @title Chọn nơi lưu dữ liệu { display-mode: "form" }
 # @markdown `runtime`: không cần Drive, phù hợp notebook All-in-One.
 # @markdown `drive`: lưu nối tiếp 13 notebook trong cùng thư mục Google Drive.
-PUBG_STORAGE_MODE = "runtime"  # @param ["runtime", "drive"]
+PUBG_STORAGE_MODE = "drive"  # @param ["runtime", "drive"]
 PUBG_DRIVE_PROJECT_ROOT = "/content/drive/MyDrive/PUBG_Project/Project_PUBG"  # @param {type:"string"}
 # @markdown Nhóm dùng cùng thư mục đã chia sẻ: bật True để tránh tạo nhầm project riêng khi thiếu shortcut.
-PUBG_REQUIRE_EXISTING_PROJECT = False  # @param {type:"boolean"}
+PUBG_REQUIRE_EXISTING_PROJECT = True  # @param {type:"boolean"}
 # @markdown Số dòng mỗi batch khi đọc CSV trong ZIP; giảm nếu RAM ít. Không lấy mẫu dữ liệu.
 PUBG_BATCH_ROWS = 50000  # @param {type:"integer"}
 '''
 
+ALL_IN_ONE_STORAGE_OPTIONS_CELL = (
+    STORAGE_OPTIONS_CELL
+    .replace('PUBG_STORAGE_MODE = "drive"', 'PUBG_STORAGE_MODE = "runtime"')
+    .replace('PUBG_REQUIRE_EXISTING_PROJECT = True', 'PUBG_REQUIRE_EXISTING_PROJECT = False')
+)
+
 
 def bootstrap_source(project_root: Path) -> str:
     """Embed only code/config/docs; no raw data, credentials or research outputs."""
-    files = [project_root / name for name in ("requirements.txt", "README.md", "TEAM_DRIVE.md", "BATCH_COLAB.md")]
+    files = [project_root / name for name in ("requirements.txt", "README.md", "TEAM_DRIVE.md")]
     for directory, pattern in [("src", "*.py"), ("configs", "*.yaml"), ("tests", "test_*.py")]:
         files.extend(sorted((project_root / directory).rglob(pattern)))
     stream = io.BytesIO()

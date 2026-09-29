@@ -88,10 +88,14 @@ def download_file_with_checksum(
     target_path: Path,
     expected_checksum: Optional[str] = None,
     chunk_size: int = 1048576,  # 1MB
+    temp_dir: Optional[Path] = None,
 ) -> Path:
     """Safely download a file via streaming to a temporary .part file and verify integrity."""
     target_path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(prefix="pubg_download_", suffix=".part", delete=False) as local_file:
+    temp_dir = temp_dir or os.environ.get("PUBG_SESSION_TEMP_DIR")
+    if temp_dir is not None:
+        Path(temp_dir).mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(dir=temp_dir, prefix="pubg_download_", suffix=".part", delete=False) as local_file:
         part_path = Path(local_file.name)
 
     logger.info(f"Starting download: {url} -> {target_path.name}")

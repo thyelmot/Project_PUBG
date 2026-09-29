@@ -25,6 +25,7 @@ def publish_file(local_path: Path, output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     size, checksum = local_path.stat().st_size, hash_file(local_path)
     uploading = output.with_name(output.name + f".uploading_{uuid.uuid4().hex}")
+    renamed = False
 
     def verified(path):
         try:
@@ -45,8 +46,10 @@ def publish_file(local_path: Path, output: Path) -> None:
                         raise OSError(errno.EIO, f"Destination copy failed checksum verification: {output}")
                 try:
                     uploading.replace(output)
+                    renamed = True
                 except OSError as error:
                     if verified(output):
+                        renamed = True
                         return
                     if error.errno not in transient:
                         raise
@@ -79,7 +82,10 @@ def publish_file(local_path: Path, output: Path) -> None:
                 time.sleep(attempt + 1)
     finally:
         try:
-            uploading.unlink(missing_ok=True)
+            # Do not unlink the old name after rename: a mount may still resolve
+            # that cached name to the newly published file. Rename already consumed it.
+            if not renamed:
+                uploading.unlink(missing_ok=True)
         except OSError:
             pass  # A disconnected mount must not mask the original publish error.
 

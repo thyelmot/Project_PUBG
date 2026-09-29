@@ -107,17 +107,69 @@ def resolve_paths(cfg: Dict[str, Any]) -> Dict[str, Path]:
 
 
 def validate_config(cfg: Dict[str, Any], stage: Optional[str] = None) -> None:
-    """Validate config integrity and fail-fast if critical preconditions or schema are violated."""
+    """Validate config integrity and fail-fast if critical preconditions or schema are violated.
+
+    Also validates field types and values for required fields, and distinguishes
+    required fields (must be set) from pending fields (allowed to be null/blocked
+    until evidence is available, e.g. K for RQ2 before diagnostics run).
+    """
     for required_section in ["data", "schema", "paths", "preprocessing", "features", "runtime"]:
         if required_section not in cfg:
             raise ValueError(f"Missing required configuration section: '{required_section}'")
 
+    # --- Required field type/value checks ---
+    runtime = cfg.get("runtime", {})
+    random_state = runtime.get("random_state")
+    if not isinstance(random_state, int):
+        raise ValueError(
+            f"runtime.random_state must be an integer (got {type(random_state).__name__}={random_state!r}). "
+            "Fix in configs/runtime.yaml: set random_state to 42 or another integer."
+        )
+    mode = runtime.get("mode")
+    if mode not in ("full", "sample"):
+        raise ValueError(
+            f"runtime.mode must be 'full' or 'sample' (got {mode!r}). "
+            "Full-data runs use 'full'. Set 'sample' only for smoke tests with explicit documentation."
+        )
+    chunk_size = runtime.get("chunk_size")
+    if not isinstance(chunk_size, int) or chunk_size < 1:
+        raise ValueError(
+            f"runtime.chunk_size must be a positive integer (got {chunk_size!r}). "
+            "Set in configs/runtime.yaml; default is 50000."
+        )
+    duckdb_cfg = runtime.get("duckdb", {})
+    if not isinstance(duckdb_cfg.get("threads"), int) or duckdb_cfg.get("threads", 0) < 1:
+        raise ValueError(
+            "runtime.duckdb.threads must be a positive integer. Fix in configs/runtime.yaml."
+        )
+    if not isinstance(duckdb_cfg.get("memory_limit"), str):
+        raise ValueError(
+            "runtime.duckdb.memory_limit must be a string (e.g. '2GB'). Fix in configs/runtime.yaml."
+        )
+
+    # --- RQ2 required fields ---
+    rq2 = cfg.get("rq2", {})
+    mode_strategy = rq2.get("mode_strategy")
+    if mode_strategy not in ("overall", "player_mode", "per_mode"):
+        raise ValueError(
+            f"rq2.mode_strategy must be one of 'overall', 'player_mode', 'per_mode' (got {mode_strategy!r}). "
+            "Project has locked per_mode. Fix in configs/rq2.yaml."
+        )
+    mode_decision_reason = rq2.get("mode_decision_reason", "")
+    if not mode_decision_reason or not isinstance(mode_decision_reason, str):
+        raise ValueError(
+            "rq2.mode_decision_reason must be a non-empty string explaining why mode_strategy was chosen. "
+            "Fix in configs/rq2.yaml."
+        )
+
     # Validate specific execution stage gates
     if stage == "rq2_clustering_final":
-        k = cfg.get("rq2", {}).get("n_clusters")
-        if k is None:
+        rq2 = cfg.get('rq2', {})
+        k = rq2.get('n_clusters_by_mode') if rq2.get('mode_strategy') == 'per_mode' else rq2.get('n_clusters')
+        values = list(k.values()) if isinstance(k, dict) else [k]
+        if not values or any(type(value) is not int or value < 2 for value in values):
             raise ValueError(
-                "Gate G3 Violated: 'n_clusters' in configs/rq2.yaml is null. "
+                "Gate G3 Violated: set n_clusters_by_mode for per_mode, or n_clusters otherwise. "
                 "You must inspect clustering diagnostics in Notebook 07 and select K before running final fit."
             )
         min_games = cfg.get("rq2", {}).get("minimum_games_threshold")
@@ -131,3 +183,54 @@ def validate_config(cfg: Dict[str, Any], stage: Optional[str] = None) -> None:
         split_cfg = cfg.get("rq3", {}).get("split", {})
         if split_cfg.get("train_ratio") is None:
             raise ValueError("Gate G4 Violated: Train split ratio is null before test evaluation.")
+
+
+def describe_config_status(cfg: Dict[str, Any]) -> list:
+    """Return a list of dicts describing each key config field with type, value, and status.
+
+    Status is one of:
+      'required' — must be set to a non-null value before any notebook runs.
+      'pending'  — allowed to be null/blocked until evidence from a specific notebook is available.
+      'ok'       — set and validated.
+
+    Callers (notebook 00) print or display this as a table.
+    """
+    runtime = cfg.get("runtime", {})
+    rq2 = cfg.get("rq2", {})
+    rq3 = cfg.get("rq3", {})
+    split_cfg = rq3.get("split", {})
+
+    def _row(field: str, value: Any, status: str, note: str = "") -> Dict[str, Any]:
+        return {"field": field, "value": str(value) if value is not None else "null",
+                "type": type(value).__name__, "status": status, "note": note}
+
+    def _req(field: str, value: Any, note: str = "") -> Dict[str, Any]:
+        s = "ok" if value is not None else "required"
+        return _row(field, value, s, note)
+
+    def _pend(field: str, value: Any, gate: str) -> Dict[str, Any]:
+        s = "ok" if value is not None else "pending"
+        return _row(field, value, s, f"Set after {gate}")
+
+    rows = [
+        _req("runtime.mode", runtime.get("mode"), "full=official run; sample=smoke test only"),
+        _req("runtime.random_state", runtime.get("random_state"), "Seed for all stochastic steps"),
+        _req("runtime.chunk_size", runtime.get("chunk_size"), "Batch rows for CSV ingest"),
+        _req("runtime.duckdb.threads", runtime.get("duckdb", {}).get("threads"), ""),
+        _req("runtime.duckdb.memory_limit", runtime.get("duckdb", {}).get("memory_limit"), ""),
+        _req("rq2.mode_strategy", rq2.get("mode_strategy"), "Locked to per_mode"),
+        _req("rq2.mode_decision_reason", rq2.get("mode_decision_reason"), ""),
+        _req("rq2.device", rq2.get("device"), "cuda=GPU required; cpu=local"),
+        _req("rq3.device", rq3.get("device"), "cuda=GPU required; cpu=local"),
+        _pend("rq2.minimum_games_threshold", rq2.get("minimum_games_threshold"), "notebook 05 EDA"),
+        _pend("rq2.n_clusters_by_mode (Solo)", (rq2.get("n_clusters_by_mode") or {}).get("Solo"),
+              "notebook 07 diagnostics (Gate G3)"),
+        _pend("rq2.n_clusters_by_mode (Duo)", (rq2.get("n_clusters_by_mode") or {}).get("Duo"),
+              "notebook 07 diagnostics (Gate G3)"),
+        _pend("rq2.n_clusters_by_mode (Squad)", (rq2.get("n_clusters_by_mode") or {}).get("Squad"),
+              "notebook 07 diagnostics (Gate G3)"),
+        _pend("rq3.split.train_ratio", split_cfg.get("train_ratio"), "notebook 02 split (Gate G4)"),
+        _pend("rq3.split.val_ratio", split_cfg.get("val_ratio"), "notebook 02 split (Gate G4)"),
+    ]
+    return rows
+

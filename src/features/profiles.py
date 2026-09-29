@@ -7,6 +7,10 @@ from src.utils.logging import get_logger
 logger = get_logger("pubg_profiles")
 
 
+def profile_keys(frame):
+    return ["player_name"] + (["team_size_mode"] if "team_size_mode" in frame else [])
+
+
 def build_player_behavioral_profiles(
     df: pd.DataFrame,
     group_by_mode: bool = False,
@@ -19,7 +23,9 @@ def build_player_behavioral_profiles(
     """
     clean_df = df[df["player_name"].notna() & (df["player_name"].str.strip().str.len() > 0)].copy()
 
-    group_cols = ["player_name", "match_mode"] if group_by_mode and "match_mode" in clean_df.columns else ["player_name"]
+    if group_by_mode and ("team_size_mode" not in clean_df or clean_df["team_size_mode"].isna().any()):
+        raise ValueError("Verified team_size_mode is required for mode profiles")
+    group_cols = ["player_name", "team_size_mode"] if group_by_mode else ["player_name"]
 
     # 1. Base aggregations per player
     grouped = clean_df.groupby(group_cols)
@@ -55,9 +61,22 @@ def build_player_behavioral_profiles(
     early_match_count = clean_df[clean_df["early_kills"] > 0].groupby(group_cols).size()
     early_combat_ratio = (early_match_count / games_played).fillna(0.0).rename("early_combat_match_ratio")
 
+    # Denominator tracking
+    kill_active_count = clean_df[clean_df["player_kills"] > 0].groupby(group_cols).size()
+    kill_active_matches = kill_active_count.reindex(games_played.index, fill_value=0).rename("kill_active_matches")
+
+    support_active_count = clean_df[(clean_df["player_assists"] > 0) | (clean_df["player_dbno"] > 0)].groupby(group_cols).size()
+    support_active_matches = support_active_count.reindex(games_played.index, fill_value=0).rename("support_active_matches")
+
+    timing_active_count = clean_df[clean_df["early_kill_ratio"].notna() | (clean_df["early_kills"] > 0)].groupby(group_cols).size()
+    timing_observed_matches = timing_active_count.reindex(games_played.index, fill_value=0).rename("timing_observed_matches")
+
     # Assemble behavioral features
     profile_features = pd.concat([
         games_played,
+        kill_active_matches,
+        support_active_matches,
+        timing_observed_matches,
         mean_kills, std_kills, mean_dmg, std_dmg, mean_dpk,
         mean_walk, mean_ride, mean_walk_ratio,
         mean_assists, mean_dbno, mean_assist_ratio,
@@ -95,11 +114,8 @@ def filter_profiles_by_retention(
     filtered_profiles = profile_df[eligible_mask].reset_index(drop=True)
 
     # Align outcomes
-    if "match_mode" in profile_df.columns:
-        keys = ["player_name", "match_mode"]
-    else:
-        keys = ["player_name"]
+    keys = profile_keys(profile_df)
 
-    filtered_outcomes = outcome_df.merge(filtered_profiles[keys], on=keys, how="inner")
+    filtered_outcomes = filtered_profiles[keys].merge(outcome_df, on=keys, how="left", validate="one_to_one")
     logger.info(f"Retention filter (min_games={min_games}): {len(filtered_profiles)}/{len(profile_df)} profiles retained.")
     return filtered_profiles, filtered_outcomes

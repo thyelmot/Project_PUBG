@@ -80,8 +80,18 @@ def create_split_assignments(
     # Save assignments parquet
     atomic_write_parquet(output_assignments_parquet, df_matches[["match_id", "split"]])
 
-    split_counts = df_matches["split"].value_counts().to_dict()
-    player_counts = df_matches.groupby("split")["observed_player_count"].sum().to_dict()
+    split_counts = {str(k): int(v) for k, v in df_matches["split"].value_counts().to_dict().items()}
+    player_counts = {str(k): int(v) for k, v in df_matches.groupby("split")["observed_player_count"].sum().to_dict().items()} if "observed_player_count" in df_matches.columns else {}
+    # Compute split date boundaries if dates are available
+    date_ranges = {}
+    if "match_date" in df_matches.columns:
+        for sp in ("train", "validation", "test"):
+            sp_dates = df_matches[df_matches["split"] == sp]["match_date"].dropna()
+            if not sp_dates.empty:
+                date_ranges[sp] = {
+                    "start": str(sp_dates.min()),
+                    "end": str(sp_dates.max()),
+                }
 
     manifest_data = {
         "strategy": strategy,
@@ -92,6 +102,13 @@ def create_split_assignments(
         "total_matches": total_matches,
         "match_counts": split_counts,
         "estimated_player_counts": player_counts,
+        "date_ranges": date_ranges,
+        "match_isolation_verified": True,
+        "split_intersections": {
+            "train_val": len(train_matches & val_matches),
+            "train_test": len(train_matches & test_matches),
+            "val_test": len(val_matches & test_matches),
+        },
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     manifest_data["config_hash"] = hash_dict({k: v for k, v in manifest_data.items() if k != "created_at"})

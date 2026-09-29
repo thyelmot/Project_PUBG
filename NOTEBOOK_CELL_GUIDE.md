@@ -36,7 +36,7 @@ Giải thích notebook không dùng Drive và khuyến nghị dùng bản All-in
 
 ### Cell 3 — Code: chọn nơi lưu dữ liệu
 
-Chọn `runtime` để dùng ổ tạm của Colab hoặc `drive` để các notebook dùng chung `PUBG_DRIVE_PROJECT_ROOT`. Giá trị mặc định là `runtime`, nên All-in-One vẫn chạy không cần cấp quyền Drive.
+Các notebook 00-12 mặc định dùng `drive`, cùng `PUBG_DRIVE_PROJECT_ROOT`, `PUBG_REQUIRE_EXISTING_PROJECT = True` và batch 50.000 dòng để bàn giao qua Drive. All-in-One được sinh riêng với mặc định `runtime` và không bắt buộc project đã tồn tại.
 
 ### Cell 4 — Code: bootstrap
 
@@ -136,7 +136,7 @@ Nhắc rằng cần output Parquet từ notebook 01.
 
 ### Cell 3 — Code: chọn nơi lưu dữ liệu
 
-Ở luồng nhiều tab, chọn `drive` và đúng thư mục đã được notebook 01 ghi dữ liệu.
+Ở luồng nhiều tab, giữ `drive` và đúng thư mục đã được notebook 01 ghi dữ liệu.
 
 ### Cell 4 — Code: bootstrap
 

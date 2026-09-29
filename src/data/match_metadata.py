@@ -1,7 +1,7 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import math
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import duckdb
 from src.data.io import copy_query_to_parquet
 from src.utils.logging import get_logger
@@ -13,8 +13,9 @@ def build_match_metadata(
     con: duckdb.DuckDBPyConnection,
     cleaned_aggregate_parquet: Path,
     output_metadata_parquet: Path,
+    audit_report_path: Optional[Path] = None,
 ) -> int:
-    """Build match-level metadata roster statistics and duration proxy before task cohort filtering."""
+    """Build match-level metadata roster statistics, duration proxy, and conflict audits before task filtering."""
     output_metadata_parquet.parent.mkdir(parents=True, exist_ok=True)
     safe_clean = cleaned_aggregate_parquet.resolve().as_posix().replace("'", "''")
     # Aggregate one hash bucket at a time: every player in a match stays together.
@@ -38,7 +39,11 @@ def build_match_metadata(
                  AND ABS(COUNT(DISTINCT team_id) - MAX(team_placement)) <= 2
                 THEN true
                 ELSE false
-            END AS is_roster_complete
+            END AS is_roster_complete,
+            COUNT(DISTINCT date) > 1 AS has_date_conflict,
+            COUNT(DISTINCT match_mode) > 1 AS has_mode_conflict,
+            COUNT(DISTINCT party_size) > 1 AS has_party_size_conflict,
+            COUNT(DISTINCT game_size) > 1 AS has_game_size_conflict
         FROM read_parquet('{safe_clean}')
         WHERE hash(match_id) % {buckets} = {{bucket}}
         GROUP BY match_id
@@ -55,5 +60,22 @@ def build_match_metadata(
             logger.info(f"Match metadata: bucket {bucket + 1}/{buckets} completed")
         total_matches = copy_query_to_parquet(
             con, f"SELECT * FROM read_parquet([{','.join(parts)}])", output_metadata_parquet)
+
+    # Optional metadata conflict audit report
+    if audit_report_path:
+        audit_res = con.execute(f"""
+            SELECT
+                count(*) AS total_matches,
+                count(*) FILTER (WHERE has_date_conflict) AS date_conflicts,
+                count(*) FILTER (WHERE has_mode_conflict) AS mode_conflicts,
+                count(*) FILTER (WHERE has_party_size_conflict) AS party_size_conflicts,
+                count(*) FILTER (WHERE is_roster_complete) AS roster_complete_matches,
+                avg(observed_player_count) AS avg_players_per_match,
+                avg(observed_team_count) AS avg_teams_per_match
+            FROM read_parquet('{output_metadata_parquet.resolve().as_posix().replace("'", "''")}')
+        """).df().to_dict(orient="records")[0]
+        from src.data.io import atomic_write_json
+        atomic_write_json(Path(audit_report_path), audit_res)
+
     logger.info(f"Built match metadata for {total_matches} unique matches -> {output_metadata_parquet.name}")
     return total_matches

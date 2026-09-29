@@ -1,4 +1,5 @@
-# Exploratory Data Analysis & Visualization Catalog
+# Exploratory Data Analysis & Visualization Catalog (A01 - I03)
+# Aligned with PUBG_RESEARCH_SPEC.md Section 26 & Section 27
 
 sampling:
   viz_sample_size: 50000
@@ -19,36 +20,117 @@ catalog:
       name: "teams_per_match_distribution"
     - id: "A06"
       name: "temporal_coverage_and_match_frequency"
+
   raw_distributions:
     - id: "B01"
       name: "kills_distribution"
     - id: "B02"
       name: "damage_distribution"
     - id: "B03"
-      name: "walk_distance_distribution"
-    - id: "B04"
-      name: "ride_distance_distribution"
-    - id: "B05"
       name: "assists_distribution"
-    - id: "B06"
+    - id: "B04"
       name: "dbno_distribution"
+    - id: "B05"
+      name: "walk_distance_distribution"
+    - id: "B06"
+      name: "ride_distance_distribution"
     - id: "B07"
-      name: "survival_time_distribution"
+      name: "total_distance_distribution"
     - id: "B08"
-      name: "raw_placement_distribution"
+      name: "survival_time_distribution"
     - id: "B09"
+      name: "raw_placement_distribution"
+    - id: "B10"
       name: "normalized_placement_distribution"
+
   derived_ratios:
     - id: "C01"
-      name: "damage_per_kill_distribution"
+      name: "kills_per_minute_distribution"
     - id: "C02"
-      name: "walk_ratio_distribution"
+      name: "damage_per_minute_distribution"
     - id: "C03"
+      name: "damage_per_kill_distribution"
+    - id: "C04"
+      name: "walk_ratio_distribution"
+    - id: "C05"
       name: "assist_ratio_distribution"
-  timing:
+    - id: "C06"
+      name: "structural_missing_rates"
+
+  mode_comparison:
+    - id: "D01"
+      name: "kills_by_mode"
+    - id: "D02"
+      name: "damage_by_mode"
+    - id: "D03"
+      name: "assists_by_mode"
+    - id: "D04"
+      name: "dbno_by_mode"
+    - id: "D05"
+      name: "walk_distance_by_mode"
+    - id: "D06"
+      name: "ride_distance_by_mode"
+    - id: "D07"
+      name: "survival_time_by_mode"
+    - id: "D08"
+      name: "placement_by_mode"
+
+  correlation:
+    - id: "E01"
+      name: "pearson_correlation_heatmap"
+    - id: "E02"
+      name: "spearman_correlation_heatmap"
+
+  behavior_vs_survival:
+    - id: "F01"
+      name: "kills_vs_survival"
+    - id: "F02"
+      name: "damage_vs_survival"
+    - id: "F03"
+      name: "assists_vs_survival"
+    - id: "F04"
+      name: "dbno_vs_survival"
+    - id: "F05"
+      name: "walk_distance_vs_survival"
+    - id: "F06"
+      name: "ride_distance_vs_survival"
+    - id: "F07"
+      name: "total_distance_vs_survival"
+
+  behavior_vs_placement:
+    - id: "G01"
+      name: "kills_vs_placement"
+    - id: "G02"
+      name: "damage_vs_placement"
+    - id: "G03"
+      name: "assists_vs_placement"
+    - id: "G04"
+      name: "dbno_vs_placement"
+    - id: "G05"
+      name: "walk_distance_vs_placement"
+    - id: "G06"
+      name: "ride_distance_vs_placement"
+
+  combat_timing:
     - id: "H01"
-      name: "first_kill_time_distribution"
+      name: "kill_phase_distribution"
     - id: "H02"
-      name: "combat_phase_proportions_overall"
+      name: "kill_phase_ratio_distribution"
+    - id: "H03"
+      name: "first_kill_time_distribution"
+    - id: "H04"
+      name: "first_kill_time_vs_survival"
+    - id: "H05"
+      name: "first_kill_time_vs_placement"
     - id: "H06"
-      name: "combat_phase_by_placement_group" # Priority report chart
+      name: "combat_phase_by_placement_group" # High priority
+    - id: "H07"
+      name: "combat_timing_by_mode"
+
+  historical:
+    - id: "I01"
+      name: "historical_games_available_retention"
+    - id: "I02"
+      name: "historical_feature_stability"
+    - id: "I03"
+      name: "same_day_chronology_collision_rate"

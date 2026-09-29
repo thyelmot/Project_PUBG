@@ -1,5 +1,26 @@
 # PUBG — Hai chế độ chạy notebook trên Google Colab
 
+Mọi thay đổi của dự án được ghi tại [CHANGELOG_FIXES.md](CHANGELOG_FIXES.md). Trước khi sửa phải đối chiếu [đặc tả nghiên cứu](PUBG_RESEARCH_SPEC.md) và [kế hoạch triển khai](PUBG_IMPLEMENTATION_PLAN.md).
+
+## Tài liệu và đợt triển khai hiện hành, cập nhật 29/09/2026
+
+[Kế hoạch thống nhất](PUBG_IMPLEMENTATION_PLAN.md) chứa toàn bộ yêu cầu theo giai đoạn 0-16. Đọc [quy tắc tích theo bằng chứng](PUBG_IMPLEMENTATION_PLAN.md#tracking-rules), rồi kiểm tra từ [giai đoạn 0](PUBG_IMPLEMENTATION_PLAN.md#phase-0). Ô chưa tích nghĩa là chưa được tái nghiệm thu trong bản mới, không có nghĩa code chưa tồn tại.
+
+Hoàn thiện code và kiểm thử toàn bộ notebook 00-12 trước G0, sau đó chạy dữ liệu thật theo thứ tự. Dùng Drive, batch 50000, require-existing true, per_mode và GPU cho huấn luyện có hỗ trợ. Không chạy All-in-One, kể cả test gọi nó; chọn kiểm thử theo [giai đoạn 15](PUBG_IMPLEMENTATION_PLAN.md#phase-15). Hướng dẫn All-in-One và kết quả test cũ bên dưới là lịch sử, không áp dụng như lệnh thực thi của đợt hiện hành.
+
+| Tài liệu | Vai trò |
+|---|---|
+| Đặc tả nghiên cứu | Mục tiêu và protocol chính thức |
+| Kế hoạch triển khai thống nhất | Nguồn kế hoạch duy nhất, công việc và điều kiện nghiệm thu |
+| [TEAM_DRIVE.md](TEAM_DRIVE.md) | Chạy nối tiếp, bàn giao và phục hồi |
+| [NOTEBOOK_CELL_GUIDE.md](NOTEBOOK_CELL_GUIDE.md) | Giải thích cell |
+| [RQ2_RUN_GUIDE.md](RQ2_RUN_GUIDE.md) | Gates và cách chạy RQ2 |
+| [GPU_PER_MODE_GUIDE.md](GPU_PER_MODE_GUIDE.md) | Đồng bộ file, per_mode và GPU |
+| CHANGELOG_FIXES.md | Lịch sử thay đổi/kiểm thử, chỉ ghi nối tiếp |
+| literature_mapping và traceability_matrix | Căn cứ nghiên cứu và truy vết |
+
+Thông tin/test ngày 25/09 bên dưới là lịch sử. K=4/min_games=5 không phải lựa chọn nghiên cứu mặc định; dùng diagnostics và gates theo kế hoạch. Checklist cũ và kết quả synthetic không chứng minh full-data/Drive/GPU đã được xác minh.
+
 ## Cách chạy cho nhóm
 
 ### Cách 1 — All-in-One, không dùng Drive
@@ -17,9 +38,9 @@
 Chủ thư mục chia sẻ `PUBG_Project` với quyền Editor; thành viên thêm shortcut vào My Drive và bật `PUBG_REQUIRE_EXISTING_PROJECT = True`.
 Cùng một chuỗi đường dẫn chưa đủ: mọi người phải trỏ đến cùng thư mục gốc được chia sẻ, không dùng các bản sao riêng.
 
-1. Upload toàn bộ `Project_PUBG` lên Drive hoặc để bootstrap tạo mã nguồn trong thư mục Drive đã chọn.
+1. Upload toàn bộ `Project_PUBG` lên đúng thư mục Drive dùng chung trước khi mở notebook.
 2. Mở từng notebook từ `00_setup.ipynb` đến `12_final_results_summary.ipynb`.
-3. Trong cell **Chọn nơi lưu dữ liệu**, chọn `drive` và dùng cùng một `PUBG_DRIVE_PROJECT_ROOT`, mặc định `/content/drive/MyDrive/PUBG_Project/Project_PUBG`.
+3. Trong cell **Chọn nơi lưu dữ liệu**, giữ cấu hình mặc định `drive`, `PUBG_REQUIRE_EXISTING_PROJECT = True`, `PUBG_BATCH_ROWS = 50000` và cùng một `PUBG_DRIVE_PROJECT_ROOT`, mặc định `/content/drive/MyDrive/PUBG_Project/Project_PUBG`.
 4. Chấp nhận quyền mount Drive, rồi chạy notebook hiện tại từ trên xuống. Chỉ chuyển sang notebook sau khi notebook trước đã hoàn tất.
 
 Mỗi tab Colab vẫn có biến Python riêng. Dữ liệu nối tiếp qua `data/`, `artifacts/` và `reports/` trong cùng thư mục Drive. Không chạy đồng thời hai notebook ghi vào cùng artifact.
@@ -96,10 +117,11 @@ Generator sinh notebook riêng và tổng hợp từ cùng nội dung, chỉ nh�
 
 ## Phạm vi và giới hạn hiện tại
 
-RQ1 nghiên cứu hành vi–outcome; RQ2 phân nhóm hành vi; RQ3 dự đoán survival/placement. [Đặc tả](../PUBG_RESEARCH_SPEC.md) và [kế hoạch](../PUBG_IMPLEMENTATION_PLAN.md) nêu đầy đủ mục tiêu; mã hiện tại **chưa thực hiện toàn bộ** yêu cầu đó.
+RQ1 nghiên cứu hành vi–outcome; RQ2 phân nhóm hành vi; RQ3 dự đoán survival/placement. [Đặc tả](PUBG_RESEARCH_SPEC.md) và [kế hoạch](PUBG_IMPLEMENTATION_PLAN.md) nêu đầy đủ mục tiêu; mã hiện tại **chưa thực hiện toàn bộ** yêu cầu đó.
 
-- Notebook 05–07, 09–10 còn nạp Parquet vào pandas. Bỏ Drive không giải quyết nhu cầu RAM trên khoảng 20 GB CSV. Không tự giảm mẫu khi thiếu RAM.
-- `runtime.mode` chưa nối development cohort trong mọi notebook. Chọn `development` không đảm bảo chỉ xử lý dữ liệu nhỏ; tests dùng synthetic data riêng.
+- Notebook 05 đọc từng feature cùng `party_size`; notebook 06 đọc từng cặp feature–target. Cả hai vẫn dùng đủ dòng và công thức exact, nên bộ nhớ vẫn tăng theo số dòng và thời gian đọc từ Drive có thể tăng.
+- Notebook 07, 09–10 còn bước nạp dữ liệu lớn vào pandas hoặc mô hình. Bỏ Drive hay giảm `PUBG_BATCH_ROWS` không giải quyết RAM của các bước này. Không tự lấy mẫu để che giới hạn tài nguyên.
+- `runtime.mode: full` mô tả đúng đường chạy hiện tại; key này không tự cắt shard hoặc lấy mẫu.
 - Notebook 02 dùng group-by-match split, chronology diagnostic giới hạn 50.000 match; chưa phải audit chronology toàn bộ.
 - Notebook 07 đang dùng min-games 5, K mặc định 4 khi K null. Đây là lựa chọn chạy thử có sẵn, chưa phải quyết định theo retention/stability; cần hoàn thiện gates trước final research run.
 - Notebook 09 mới chạy P1/P2 linear, chưa orchestration đủ S1/S2/P3/T0/T1 và baselines. Có module không đồng nghĩa đã chạy thí nghiệm.
@@ -121,7 +143,9 @@ Notebook hỗ trợ cả runtime tạm không cần Drive và thư mục Drive d
 - Checkpoint metadata tại `artifacts/checkpoints/checkpoint_manifest.json`. Manager có API compatibility/invalidation nhưng notebook chưa tự skip/resume mọi stage.
 - **HTML/403/quota:** kiểm tra quyền public/quota hoặc thay URL/checksum; không cần cấp quyền Drive cá nhân.
 - **Thiếu CSV:** kiểm tra raw_root; discovery đệ quy cả ZIP có thêm thư mục `Data_PUBG/`.
-- **Hết RAM:** giảm DuckDB memory không sửa bước pandas nạp toàn bảng; cần đủ RAM hoặc triển khai streaming theo kế hoạch.
+- **Notebook 01 bị ngắt:** chạy lại cell cấu hình, Bootstrap, khởi tạo rồi cell batch. Manifest dùng lại shard đã hoàn tất đúng checksum; shard đang dở phải chuyển đổi lại.
+- **Mất runtime:** chế độ Drive giữ file đã công bố; biến Python và file trong `/content/temp` mất. Chế độ runtime phải chạy lại hoặc phục hồi artifact đã tải về.
+- **Hết RAM:** giảm `PUBG_BATCH_ROWS` chỉ giảm RAM khi chuyển CSV sang Parquet ở notebook 01; không sửa RAM của 07, 09–10.
 - **Hết disk:** ZIP/CSV/Parquet/temp có thể cùng tồn tại; chỉ dọn file đã sao lưu/tái tạo được, code không tự xóa raw.
 - **Missing artifact ở notebook riêng:** dùng notebook tổng hợp hoặc chuyển outputs bước trước vào runtime.
 - **Checksum sai:** dừng, xác minh nguồn/backup; không bỏ qua check.
@@ -129,6 +153,6 @@ Notebook hỗ trợ cả runtime tạm không cần Drive và thư mục Drive d
 
 ## Kiểm thử
 
-`tests/test_no_drive_notebooks.py` kiểm tra paths local/Colab, anonymous download/HTML rejection, ZIP/checksum validation, manifest sau di chuyển, notebook syntax và thực thi các cell notebook tổng hợp trong workspace mới với synthetic CSV. Các tests cũ vẫn chạy cùng suite.
+Lần kiểm tra cuối ngày 25/09/2026 chạy `python -m unittest discover -s tests -v`: **60/60 test đạt**. Suite kiểm tra notebook All-in-One trong runtime sạch, 13 notebook ở các process riêng, chạy lại cell, Drive mô phỏng, bàn giao project sang tài khoản thứ hai, ZIP/checksum, publication lỗi và tính tương đương của cách đọc từng cột ở 05/06.
 
-Synthetic smoke không tải lại dataset nhiều GB, không đo full-scale Colab và không phải kết quả nghiên cứu chính thức.
+Các tình huống Drive/FUSE là fault injection (mô phỏng lỗi), chưa phải kiểm thử mount Google Drive thật. Synthetic smoke không tải toàn bộ dataset nhiều GB, không đo peak RAM/đĩa trên Colab và không phải kết quả nghiên cứu chính thức.

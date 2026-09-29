@@ -5,6 +5,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression, SGDRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from src.models.compute import make_linear
 
 
 class LinearModelWrapper(BaseEstimator, RegressorMixin):
@@ -16,18 +17,22 @@ class LinearModelWrapper(BaseEstimator, RegressorMixin):
         alpha: float = 0.0001,
         max_iter: int = 1000,
         random_state: int = 42,
+        device: str = "cpu",
     ) -> None:
         self.model_type = model_type
         self.alpha = alpha
         self.max_iter = max_iter
         self.random_state = random_state
+        self.device = device
         self.pipeline: Optional[Pipeline] = None
         self._build_pipeline()
 
     def _build_pipeline(self) -> None:
         if self.model_type == "exact":
-            reg = LinearRegression()
+            reg = make_linear(self.device)
         else:
+            if self.device != 'cpu':
+                raise ValueError('SGD GPU is not implemented; exact linear regression supports cuda')
             reg = SGDRegressor(
                 loss="squared_error",
                 penalty="l2",

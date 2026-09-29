@@ -25,7 +25,7 @@ from src.data.io import get_duckdb_connection, atomic_write_parquet
 class TestRQ1RQ2RQ3Pipelines(unittest.TestCase):
     def test_k_diagnostics_with_one_sample_per_evaluated_cluster(self):
         from unittest.mock import patch
-        with patch("src.analysis.clustering.KMeans") as constructor:
+        with patch("src.models.compute.KMeans") as constructor:
             model = constructor.return_value
             model.fit_predict.return_value = np.array([0, 1, 0, 1])
             model.predict.return_value = np.array([0, 1])
@@ -43,11 +43,12 @@ class TestRQ1RQ2RQ3Pipelines(unittest.TestCase):
 
         # Create multi-player synthetic dataset with matches across 3 days
         np.random.seed(42)
-        n_rows = 120
-        players = [f"Player_{i%15}" for i in range(n_rows)]
-        matches = [f"m_{i%10}" for i in range(n_rows)]
-        teams = [f"t_{i%20}" for i in range(n_rows)]
-        dates = [f"2017-11-{20 + (i%3):02d}T12:00:00+0000" for i in range(n_rows)]
+        n_rows = 150
+        players = [f"Player_{i % 15}" for i in range(n_rows)]
+        matches = [f"m_{i // 15}" for i in range(n_rows)]
+        teams = [f"t_{(i // 15) * 4 + ((i % 15) // 4)}" for i in range(n_rows)]
+        dates = [f"2017-11-{20 + ((i // 15) % 3):02d}T12:00:00+0000" for i in range(n_rows)]
+
 
         kills = np.random.poisson(lam=1.5, size=n_rows)
         survive = np.random.uniform(100.0, 1500.0, size=n_rows)

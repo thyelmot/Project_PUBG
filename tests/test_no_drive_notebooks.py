@@ -83,22 +83,29 @@ class TestNoDriveNotebooks(unittest.TestCase):
             original.rename(moved)
             self.assertEqual(verify_final_manifest_integrity(moved / manifest_rel), (True, []))
 
-    def test_generated_notebooks_offer_runtime_and_drive_modes(self):
+    def test_generated_notebooks_use_safe_storage_defaults(self):
         import nbformat
-        for path in sorted((ROOT / "notebooks").glob("*.ipynb")):
+        for path in sorted((ROOT / "notebooks").glob("[0-1][0-9]_*.ipynb")):
             nb = nbformat.read(path, as_version=4)
             nbformat.validate(nb)
             storage_cells = [cell for cell in nb.cells if "storage-options" in cell.metadata.get("tags", [])]
             bootstrap_cells = [cell for cell in nb.cells if "bootstrap" in cell.metadata.get("tags", [])]
             self.assertEqual(len(storage_cells), 1, path.name)
             self.assertEqual(len(bootstrap_cells), 1, path.name)
-            self.assertIn('PUBG_STORAGE_MODE = "runtime"', storage_cells[0].source)
+            self.assertIn('PUBG_STORAGE_MODE = "drive"', storage_cells[0].source)
+            self.assertIn('PUBG_REQUIRE_EXISTING_PROJECT = True', storage_cells[0].source)
+            self.assertIn('PUBG_BATCH_ROWS = 50000', storage_cells[0].source)
             self.assertIn('drive.mount("/content/drive")', bootstrap_cells[0].source)
             for index, cell in enumerate(nb.cells):
                 if cell.cell_type != "code":
                     continue
                 self.assertNotIn("auth.authenticate_user", cell.source)
                 compile(cell.source, f"{path.name}:cell{index}", "exec")
+
+        combined = nbformat.read(ROOT / "notebooks/PUBG_COLAB_ALL_IN_ONE.ipynb", as_version=4)
+        storage = next(cell for cell in combined.cells if "storage-options" in cell.metadata.get("tags", []))
+        self.assertIn('PUBG_STORAGE_MODE = "runtime"', storage.source)
+        self.assertIn('PUBG_REQUIRE_EXISTING_PROJECT = False', storage.source)
 
     def test_stage_after_kernel_reset_requests_bootstrap(self):
         nb = json.loads((ROOT / "notebooks/02_data_quality_and_structure.ipynb").read_text(encoding="utf-8"))
@@ -167,8 +174,13 @@ exec(compile("".join(cell["source"]), "bootstrap", "exec"), scope)
             self.assertNotIn("xgboost", pip_line)
             self.assertNotIn("jupyter", pip_line)
 
+    @unittest.skipUnless(
+        os.environ.get("PUBG_TEST_ALL_IN_ONE") == "1",
+        "Skip full All-in-One notebook execution unless explicitly requested via PUBG_TEST_ALL_IN_ONE=1",
+    )
     def test_all_cells_on_synthetic_data_in_fresh_workspace(self):
         """Execute the actual distributed notebook, not a second mini pipeline."""
+
         notebook = ROOT / "notebooks/PUBG_COLAB_ALL_IN_ONE.ipynb"
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory)
@@ -245,6 +257,11 @@ for i, cell in enumerate(nb["cells"]):
 '''
             for mode in ["separate", "combined"]:
                 drive_project = workspace / mode / "MyDrive/PUBG_Project/Project_PUBG"
+                if mode == "separate":
+                    shutil.copytree(ROOT / "src", drive_project / "src", ignore=shutil.ignore_patterns("__pycache__"))
+                    shutil.copytree(ROOT / "configs", drive_project / "configs")
+                    for name in ("requirements.txt", "README.md", "TEAM_DRIVE.md"):
+                        shutil.copy2(ROOT / name, drive_project / name)
                 shutil.copytree(raw, drive_project / "data/raw")
                 notebooks = (sorted((ROOT / "notebooks").glob("[0-1][0-9]_*.ipynb"))
                              if mode == "separate" else [notebook])

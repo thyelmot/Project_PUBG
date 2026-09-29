@@ -1,9 +1,12 @@
 """Stream ZIP members/local CSVs to compressed staging, with per-file recovery."""
 
 from contextlib import ExitStack
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
+import errno
+import time
 from pathlib import Path, PurePosixPath
 import tempfile
 import zipfile
@@ -16,8 +19,11 @@ from src.data.io import atomic_write_json, read_json, publish_file, check_storag
 from src.data.schema import validate_shard_schema
 from src.utils.hashing import hash_file
 
+SENSITIVE_PLAYER_COLUMNS = {"player_name", "killer_name", "victim_name"}
 
-def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=None, resume_key=None):
+
+def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=None, resume_key=None,
+                        result_metadata=None, retain_local=False):
     """Build locally, then publish the closed Parquet file to persistent storage."""
     if not isinstance(batch_rows, int) or isinstance(batch_rows, bool) or batch_rows < 1:
         raise ValueError("batch_rows must be a positive integer")
@@ -27,6 +33,10 @@ def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=
     local_dir.mkdir(parents=True, exist_ok=True)
     partial = local_dir / f"{output.name}.{resume_key or os.getpid()}.partial"
     receipt = partial.with_suffix(".ready.json")
+    if retain_local and (not resume_key or result_metadata is None):
+        raise ValueError("retain_local requires resume_key and result_metadata")
+    if result_metadata is not None:
+        result_metadata.update(local_path=str(partial), receipt_path=str(receipt))
     rows = 0
     writer = None
     ready = False
@@ -44,8 +54,14 @@ def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=
     try:
         if ready:
             print(f"Retrying publication of {rows:,} converted rows: {output.name}", flush=True)
+            if result_metadata is not None:
+                result_metadata.update(sha256=saved["sha256"], byte_size=partial.stat().st_size)
+                if "parse_audit" in saved:
+                    result_metadata["parse_audit"] = saved["parse_audit"]
+                if "schema_validation" in saved:
+                    result_metadata["schema_validation"] = saved["schema_validation"]
             publish_file(partial, output)
-            ready = False
+            ready = retain_local
             return rows
         rows = 0
         receipt.unlink(missing_ok=True)
@@ -53,23 +69,84 @@ def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=
         with pd.read_csv(stream, chunksize=batch_rows, dtype=str,
                          keep_default_na=False, na_values=[""]) as chunks:
             expressions = None
+            col_sql_types = {}
+            parse_audit = {}
             for chunk in chunks:
                 if expressions is None:
                     validation = validate_shard_schema(
-                        list(chunk.columns), schema["required_columns"], schema.get("aliases", {}))
+                        list(chunk.columns),
+                        schema["required_columns"],
+                        schema.get("aliases", {}),
+                        optional_columns=schema.get("optional_columns"),
+                        units=schema.get("units"),
+                    )
                     if not validation["is_valid"]:
                         raise ValueError(f"Missing CSV columns: {validation['missing_columns']}")
                     expressions = []
+                    all_cols = {**schema.get("required_columns", {}), **schema.get("optional_columns", {})}
                     for original, canonical in validation["column_mapping"].items():
-                        dtype = schema["required_columns"][canonical].lower()
+                        dtype = all_cols.get(canonical, "string").lower()
                         sql_type = "BIGINT" if "int" in dtype else "DOUBLE" if any(
                             t in dtype for t in ("float", "double")) else "VARCHAR"
-                        original = original.replace('"', '""')
-                        canonical = canonical.replace('"', '""')
-                        expressions.append(f'TRY_CAST("{original}" AS {sql_type}) AS "{canonical}"')
+                        col_sql_types[canonical] = sql_type
+                        parse_audit[canonical] = {
+                            "original_missing": 0,
+                            "parse_errors": 0,
+                            "valid": 0,
+                            "sample_parse_errors": [],
+                        }
+                        original_quoted = original.replace('"', '""')
+                        canonical_quoted = canonical.replace('"', '""')
+                        expressions.append(f'TRY_CAST("{original_quoted}" AS {sql_type}) AS "{canonical_quoted}"')
+
+                # Audit types, parse errors, and integer validity per column
+                for original, canonical in validation["column_mapping"].items():
+                    col = chunk[original]
+                    is_missing = col.isna() | (col == "")
+                    n_missing = int(is_missing.sum())
+                    parse_audit[canonical]["original_missing"] += n_missing
+
+                    non_missing = col[~is_missing]
+                    if len(non_missing) > 0:
+                        sql_type = col_sql_types[canonical]
+                        if sql_type == "BIGINT":
+                            nums = pd.to_numeric(non_missing, errors="coerce")
+                            # Count must be strictly integer before cast to prevent silent rounding
+                            is_err = nums.isna() | (nums % 1 != 0)
+                            n_err = int(is_err.sum())
+                            n_valid = len(non_missing) - n_err
+                            if n_err > 0:
+                                chunk.loc[non_missing.index[is_err], original] = None
+                                if canonical not in SENSITIVE_PLAYER_COLUMNS:
+                                    rem = 5 - len(parse_audit[canonical]["sample_parse_errors"])
+                                    if rem > 0:
+                                        parse_audit[canonical]["sample_parse_errors"].extend(
+                                            non_missing[is_err].head(rem).tolist()
+                                        )
+                            parse_audit[canonical]["parse_errors"] += n_err
+                            parse_audit[canonical]["valid"] += n_valid
+                        elif sql_type == "DOUBLE":
+                            nums = pd.to_numeric(non_missing, errors="coerce")
+                            is_err = nums.isna()
+                            n_err = int(is_err.sum())
+                            n_valid = len(non_missing) - n_err
+                            if n_err > 0:
+                                chunk.loc[non_missing.index[is_err], original] = None
+                                if canonical not in SENSITIVE_PLAYER_COLUMNS:
+                                    rem = 5 - len(parse_audit[canonical]["sample_parse_errors"])
+                                    if rem > 0:
+                                        parse_audit[canonical]["sample_parse_errors"].extend(
+                                            non_missing[is_err].head(rem).tolist()
+                                        )
+                            parse_audit[canonical]["parse_errors"] += n_err
+                            parse_audit[canonical]["valid"] += n_valid
+                        else:
+                            parse_audit[canonical]["valid"] += len(non_missing)
+
                 con.register("_csv_batch", chunk)
                 try:
-                    table = con.execute("SELECT " + ", ".join(expressions) + " FROM _csv_batch").fetch_arrow_table()
+                    table_res = con.execute("SELECT " + ", ".join(expressions) + " FROM _csv_batch")
+                    table = table_res.to_arrow_table() if hasattr(table_res, "to_arrow_table") else table_res.fetch_arrow_table()
                 finally:
                     con.unregister("_csv_batch")
                 if writer is None:
@@ -88,24 +165,29 @@ def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=
                 raise ValueError("Parquet row count does not match CSV batches")
         # Keep a verified local copy after publication failure. The ingest signature
         # includes source identity and schema; never reuse arbitrary previous CSVs.
+        local_checksum = hash_file(partial)
+        if result_metadata is not None:
+            result_metadata.update(sha256=local_checksum, byte_size=partial.stat().st_size,
+                                   parse_audit=parse_audit, schema_validation=validation)
         if resume_key:
             atomic_write_json(receipt, {"resume_key": resume_key, "rows": rows,
-                                       "sha256": hash_file(partial)})
+                                       "sha256": local_checksum, "parse_audit": parse_audit,
+                                       "schema_validation": validation})
             ready = True
         publish_file(partial, output)
-        ready = False
+        ready = retain_local
         return rows
     finally:
         if writer is not None:
             writer.close()
         if ready:
-            print(f"Local shard retained: {partial}. Rerun this cell in the same runtime to retry saving.", flush=True)
+            print(f"Local recovery copy retained until checkpoint verification: {partial}", flush=True)
         else:
             partial.unlink(missing_ok=True)
             receipt.unlink(missing_ok=True)
 
 
-def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=50000, work_dir=None):
+def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=50000, work_dir=None, manifests_dir=None):
     """Prefer the ZIP when available; otherwise use existing CSVs without deleting them.
 
     Checkpoints become reusable only after a complete member and its checksum are saved.
@@ -163,28 +245,146 @@ def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=
                 [1, kind, name, size, checksum, schema_cfg[kind]], sort_keys=True).encode()).hexdigest()
             prefix = "agg" if kind == "aggregate" else "kill"
             output = staging_dir / f"{prefix}_{signature}.parquet"
+            recovery_dir = Path(work_dir) if work_dir else Path(tempfile.gettempdir()) / "pubg_batch_ingest"
+            local_path = recovery_dir / f"{output.name}.{signature}.partial"
+            receipt_path = local_path.with_suffix(".ready.json")
             record = cached.get(name, {})
-            reusable = (record.get("signature") == signature and output.is_file()
-                        and record.get("sha256") == hash_file(output))
+            reusable = record.get("signature") == signature
             if reusable:
-                with pq.ParquetFile(output) as parquet:
-                    rows = parquet.metadata.num_rows
-                reusable = rows == record.get("rows")
+                try:
+                    verify_staged_record(output, record)
+                    rows = record["rows"]
+                except StagingIntegrityError:
+                    reusable = False
             if not reusable:
                 print(f"[{index}/{len(entries)}] {name}: streaming {batch_rows:,} rows/batch", flush=True)
+                verified_local = {}
                 with (archive.open(handle) if archive else open(handle, "rb")) as stream:
                     rows = convert_csv_batches(
                         con, stream, output, schema_cfg[kind], batch_rows, work_dir=work_dir,
-                        resume_key=signature)
+                        resume_key=signature, result_metadata=verified_local, retain_local=True)
+                local_path = Path(verified_local.pop("local_path"))
+                receipt_path = Path(verified_local.pop("receipt_path"))
                 record = {"source": name, "kind": kind, "signature": signature,
                           "file": output.name, "rows": rows, "source_bytes": size,
-                          "sha256": hash_file(output)}
+                          **verified_local}
+                try:
+                    verify_staged_record(output, record)
+                except StagingIntegrityError:
+                    print(f"Re-publishing verified local shard without CSV conversion: {output.name}", flush=True)
+                    publish_file(local_path, output)
+                    verify_staged_record(output, record)
             manifest["shards"] = [s for s in manifest["shards"] if s["source"] != name] + [record]
             atomic_write_json(manifest_path, manifest)
+            # Also clean a recovery copy left by a prior commit that succeeded but
+            # reported an error: reusable shards have now been checked and committed.
+            local_path.unlink(missing_ok=True)
+            receipt_path.unlink(missing_ok=True)
             print(f"[{index}/{len(entries)}] {'Reused' if reusable else 'Saved'} {rows:,} rows: {output.name}", flush=True)
+
+        # Generate summary schema_parse_report across all shards
+        column_summary = {}
+        for s in manifest["shards"]:
+            for col, stat in s.get("parse_audit", {}).items():
+                if col not in column_summary:
+                    column_summary[col] = {
+                        "total_rows": 0,
+                        "original_missing": 0,
+                        "parse_errors": 0,
+                        "valid": 0,
+                        "sample_parse_errors": [],
+                    }
+                tot = stat.get("valid", 0) + stat.get("original_missing", 0) + stat.get("parse_errors", 0)
+                column_summary[col]["total_rows"] += tot
+                column_summary[col]["original_missing"] += stat.get("original_missing", 0)
+                column_summary[col]["parse_errors"] += stat.get("parse_errors", 0)
+                column_summary[col]["valid"] += stat.get("valid", 0)
+                for err in stat.get("sample_parse_errors", []):
+                    if err not in column_summary[col]["sample_parse_errors"] and len(column_summary[col]["sample_parse_errors"]) < 5:
+                        column_summary[col]["sample_parse_errors"].append(err)
+
+        for col, summary in column_summary.items():
+            tot = summary["total_rows"]
+            summary["missing_rate"] = round(summary["original_missing"] / tot, 6) if tot > 0 else 0.0
+            summary["parse_error_rate"] = round(summary["parse_errors"] / tot, 6) if tot > 0 else 0.0
+
+        parse_report = {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "total_shards": len(manifest["shards"]),
+            "total_rows": sum(s.get("rows", 0) for s in manifest["shards"]),
+            "column_summary": column_summary,
+        }
+        parse_report_path = staging_dir / "schema_parse_report.json"
+        atomic_write_json(parse_report_path, parse_report)
+        manifest["parse_report"] = parse_report_path.name
+
+        # Generate schema comparison report (expected vs actual contract)
+        shard_validations = {}
+        for s in manifest["shards"]:
+            val = s.get("schema_validation")
+            if val:
+                shard_validations[s["source"]] = {**val, "kind": s["kind"]}
+        if shard_validations:
+            from src.data.schema import generate_schema_report
+            schema_report = generate_schema_report(schema_cfg, shard_validations)
+            m_dir = Path(manifests_dir) if manifests_dir else (staging_dir.parent.parent / "artifacts" / "manifests")
+            m_dir.mkdir(parents=True, exist_ok=True)
+            schema_report_path = m_dir / "schema_report.json"
+            atomic_write_json(schema_report_path, schema_report)
+            manifest["schema_report"] = schema_report_path.name
+
         manifest["complete"] = True
         atomic_write_json(manifest_path, manifest)
     return manifest
+
+
+class StagingIntegrityError(ValueError):
+    """A shard could not be verified after bounded retries."""
+
+
+def verify_staged_record(path, record):
+    """Distinguish missing files, changed bytes and invalid Parquet metadata."""
+    path = Path(path)
+    expected = record.get("sha256")
+    if not isinstance(expected, str) or len(expected) != 64:
+        raise StagingIntegrityError(f"Missing/invalid expected SHA256 in manifest: {path.name}. Rerun notebook 01.")
+    for attempt in range(3):
+        try:
+            size = path.stat().st_size
+            if record.get("byte_size") is not None and size != record["byte_size"]:
+                reason = f"byte size mismatch: expected={record['byte_size']}, actual={size}"
+            else:
+                actual = hash_file(path)
+                if actual != expected:
+                    reason = f"checksum mismatch: expected={expected}, actual={actual}, bytes={size}"
+                else:
+                    with pq.ParquetFile(path) as parquet:
+                        rows = parquet.metadata.num_rows
+                    if rows == record.get("rows"):
+                        return
+                    reason = f"row count mismatch: expected={record.get('rows')}, actual={rows}"
+        except OSError as error:
+            if not isinstance(error, FileNotFoundError) and error.errno not in {errno.EIO, errno.ESTALE}:
+                raise
+            reason = f"file missing/unavailable: {error}"
+        except ValueError as error:
+            reason = f"invalid Parquet: {error}"
+        if attempt < 2:
+            time.sleep(attempt + 1)
+    raise StagingIntegrityError(f"Staging {reason}; path={path}. Rerun notebook 01 to repair this shard.")
+
+
+def finalize_ingest(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=50000, work_dir=None, manifests_dir=None):
+    """Gate G1: recheck both groups; repair failed shards from source once."""
+    try:
+        for kind in ("aggregate", "deaths"):
+            staged_paths(staging_dir, kind)
+    except StagingIntegrityError as error:
+        print(f"Final validation failed: {error}\nRepairing invalid shards from source once.", flush=True)
+        ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows, work_dir, manifests_dir=manifests_dir)
+        for kind in ("aggregate", "deaths"):
+            staged_paths(staging_dir, kind)
+    return read_json(Path(staging_dir) / "batch_manifest.json")
 
 
 def staged_paths(staging_dir, kind):
@@ -205,11 +405,7 @@ def staged_paths(staging_dir, kind):
         if len(paths) != len(set(paths)):
             raise ValueError("Duplicate shard in staging manifest; rerun notebook 01.")
         for path, record in zip(paths, records):
-            if not path.is_file() or hash_file(path) != record.get("sha256"):
-                raise ValueError(f"Staging checksum mismatch: {path.name}. Rerun notebook 01 to repair this shard.")
-            with pq.ParquetFile(path) as parquet:
-                if parquet.metadata.num_rows != record.get("rows"):
-                    raise ValueError(f"Staging row count mismatch: {path.name}. Rerun notebook 01.")
+            verify_staged_record(path, record)
     if not paths or any(not p.is_file() for p in paths):
         raise FileNotFoundError("Thiếu staging Parquet. Chạy lại notebook 01 với cùng thư mục lưu dữ liệu.")
     return paths

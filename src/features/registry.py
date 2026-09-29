@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
+import pandas as pd
 
 
 @dataclass
@@ -226,31 +228,34 @@ class FeatureRegistry:
             name="early_kill_ratio",
             group="combat_timing_phase",
             status="confirmed",
-            depends_on=["early_kills", "event_kill_count"],
+            depends_on=["early_kills", "mid_kills", "late_kills"],
             availability="post_match",
             target_derived=True,
+            aggregation_denominator="early_kills + mid_kills + late_kills",
             allowed_tasks=["rq1_placement", "rq2", "p1", "p2", "t1", "ablation"],
-            description="Early kills / total event kills",
+            description="Early kills / phase-eligible kills (NaN if 0 phase-eligible kills)",
         ))
         self.register(FeatureDefinition(
             name="mid_kill_ratio",
             group="combat_timing_phase",
             status="confirmed",
-            depends_on=["mid_kills", "event_kill_count"],
+            depends_on=["early_kills", "mid_kills", "late_kills"],
             availability="post_match",
             target_derived=True,
+            aggregation_denominator="early_kills + mid_kills + late_kills",
             allowed_tasks=["rq1_placement", "rq2", "p1", "p2", "t1", "ablation"],
-            description="Mid kills / total event kills",
+            description="Mid kills / phase-eligible kills (NaN if 0 phase-eligible kills)",
         ))
         self.register(FeatureDefinition(
             name="late_kill_ratio",
             group="combat_timing_phase",
             status="confirmed",
-            depends_on=["late_kills", "event_kill_count"],
+            depends_on=["early_kills", "mid_kills", "late_kills"],
             availability="post_match",
             target_derived=True,
+            aggregation_denominator="early_kills + mid_kills + late_kills",
             allowed_tasks=["rq1_placement", "rq2", "p1", "p2", "t1", "ablation"],
-            description="Late kills / total event kills",
+            description="Late kills / phase-eligible kills (NaN if 0 phase-eligible kills)",
         ))
 
         # Target-derived diagnostic features (Prohibited as primary predictors for survival)
@@ -274,6 +279,51 @@ class FeatureRegistry:
             allowed_tasks=["diagnostic"],
             description="Damage per minute of survival (Diagnostic only)",
         ))
+
+        # Contextual / Cohort descriptors
+        self.register(FeatureDefinition(
+            name="perspective_mode",
+            group="context",
+            status="confirmed",
+            depends_on=["match_mode"],
+            availability="pre_match",
+            allowed_tasks=["context", "eda", "rq2", "rq3"],
+            description="Perspective view: tpp, fpp, or unknown",
+        ))
+        self.register(FeatureDefinition(
+            name="team_size_mode",
+            group="context",
+            status="confirmed",
+            depends_on=["party_size"],
+            availability="pre_match",
+            allowed_tasks=["context", "eda", "rq2", "rq3"],
+            description="Team size category: solo, duo, squad, or unknown",
+        ))
+
+    def export_dictionary_dataframe(self) -> pd.DataFrame:
+        """Export comprehensive feature dictionary covering name, formula, source, unit,
+        aggregation denominator, missing semantics, and allowed task allowlists."""
+        records = []
+        for feat in self._registry.values():
+            records.append({
+                "feature_name": feat.name,
+                "group": feat.group,
+                "status": feat.status,
+                "source_columns": ", ".join(feat.depends_on) if feat.depends_on else feat.name,
+                "denominator": feat.aggregation_denominator or "-",
+                "missing_semantics": "NaN (division by zero / unobserved)" if feat.aggregation_denominator else "NULL preserved",
+                "target_derived": feat.target_derived,
+                "allowed_tasks": ", ".join(feat.allowed_tasks),
+                "description": feat.description,
+            })
+        return pd.DataFrame(records)
+
+    def export_dictionary_csv(self, output_path: Path) -> Path:
+        """Atomically write feature dictionary to CSV."""
+        from src.data.io import atomic_write_csv
+        df = self.export_dictionary_dataframe()
+        atomic_write_csv(Path(output_path), df)
+        return Path(output_path)
 
     def get_allowed_features(self, task: str) -> List[str]:
         """Return all features explicitly authorized for a task."""

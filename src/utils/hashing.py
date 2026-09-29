@@ -1,7 +1,7 @@
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 import pandas as pd
 
 
@@ -47,3 +47,39 @@ def compute_signature(**kwargs: Any) -> str:
     """Compute deterministic run/checkpoint signature from kwargs components."""
     clean_kwargs = {k: v for k, v in kwargs.items() if v is not None}
     return hash_dict(clean_kwargs)
+
+
+def hash_source_files(file_paths: Any, algorithm: str = "sha256") -> str:
+    """Compute deterministic combined hash across multiple source files."""
+    if not file_paths:
+        return ""
+    hasher = getattr(hashlib, algorithm)()
+    paths = [Path(p) for p in file_paths]
+    for p in sorted(paths, key=lambda x: x.as_posix()):
+        if p.is_file():
+            hasher.update(p.name.encode("utf-8"))
+            with open(p, "rb") as f:
+                while chunk := f.read(65536):
+                    hasher.update(chunk)
+        else:
+            hasher.update(str(p).encode("utf-8"))
+    return hasher.hexdigest()
+
+
+def compute_stage_signature(
+    stage_name: str,
+    data_files: Optional[Any] = None,
+    config: Optional[Dict[str, Any]] = None,
+    code_files: Optional[Any] = None,
+    **kwargs: Any,
+) -> str:
+    """Compute deterministic stage signature from stage name, input files, config, and code files."""
+    components = {
+        "stage_name": stage_name,
+        "data_hash": hash_source_files(data_files) if data_files else "",
+        "config_hash": hash_dict(config) if config else "",
+        "code_hash": hash_source_files(code_files) if code_files else "",
+        "extra": kwargs,
+    }
+    return hash_dict(components)
+

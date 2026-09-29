@@ -1,6 +1,6 @@
 # Runtime and execution settings
 
-mode: "development" # "development" (fast fixtures/samples) or "full" (all valid data)
+mode: "full" # All valid data; this label does not enable automatic sampling.
 random_state: 42
 chunk_size: 50000
 storage_backend: "local" # "local" or "colab"

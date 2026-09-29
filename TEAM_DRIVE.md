@@ -56,11 +56,21 @@ Chủ thư mục tạo một file văn bản có tên riêng của nhóm trong `
 
 File được ghi xong vẫn ở Drive. Các biến RAM, mô hình chưa ghi ra file và tiến trình đang chạy không được tự lưu toàn bộ.
 
-- **Notebook 01:** khởi tạo lại và chạy cell batch. Kiểm tra checksum rồi dùng lại shard đã hoàn tất; shard dở phải đọc lại.
+- **Notebook 01:** khởi tạo lại và chạy cell batch. Manifest chỉ dùng lại shard có đủ file, số dòng và checksum; shard dở hoặc hỏng phải đọc lại. Không chạy riêng Gate G1 để bỏ qua lỗi ingest.
 - **Notebook 02:** nếu cleaning đã hoàn tất và file Parquet đọc được, có thể khởi tạo lại rồi tiếp tục cell metadata. Nếu không chắc file ghi xong, chạy lại cell tạo file đó.
 - **Các notebook còn lại:** cách đơn giản là khởi tạo lại và chạy lại notebook đang dở từ đầu; không cần chạy lại các notebook trước đã hoàn tất. Không coi sự tồn tại của file là bằng chứng checkpoint hợp lệ.
 
-Chạy riêng notebook giúp giải phóng RAM giữa các bước, nhưng không giảm nhu cầu RAM tối đa của một cell. Notebook 05–07, 09–10 hiện vẫn có bước pandas đọc toàn bảng. Nếu một cell hết RAM, đổi thành viên có cùng cấu hình RAM không giải quyết được nguyên nhân đó.
+Chạy riêng notebook giúp giải phóng RAM giữa các bước, nhưng không giảm nhu cầu RAM tối đa của một cell. Notebook 05/06 đã đọc theo từng cột hoặc cặp cột; 07 và 09–10 vẫn có bước dữ liệu lớn. Nếu một cell hết RAM, đổi thành viên có cùng cấu hình RAM không giải quyết được nguyên nhân đó.
+
+## Ingest theo batch và dung lượng
+
+Notebook 01 đọc trực tiếp từng CSV trong ZIP theo batch, ép kiểu rồi ghi Parquet nén; không giải nén toàn bộ CSV và không lấy mẫu. `PUBG_BATCH_ROWS = 50000` là mặc định; có thể giảm xuống `10000` khi RAM ingest thấp mà không giảm số dòng nghiên cứu.
+
+Mỗi shard được tạo và đóng trong `/content/temp/batch_ingest`, sau đó mới chép sang Drive, kiểm tra kích thước và SHA256 rồi công bố tên chính thức. Manifest chỉ ghi nhận shard sau khi xác minh thành công. Không mở hai phiên cùng ghi vào một thư mục staging.
+
+Nếu công bố Drive thất bại, bản local và receipt có thể được dùng lại trong cùng runtime. Khi máy ảo bị thu hồi, file local mất và shard chưa hoàn tất phải chuyển đổi lại. Checkpoint hiện theo shard, không theo từng batch 50.000 dòng.
+
+Batch giảm RAM và tránh tạo thêm khoảng 20 GB CSV giải nén, nhưng ZIP, staging, cleaned data, features và DuckDB temp vẫn cần dung lượng. Đĩa runtime phải đủ cho ít nhất shard đang tạo và file tạm của bước SQL; Drive phải đủ cho output bền vững. Không thể cam kết toàn bộ pipeline dưới 10 GB.
 
 ## Phạm vi lưu trữ và giới hạn dịch vụ
 

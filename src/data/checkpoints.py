@@ -37,18 +37,44 @@ class CheckpointManager:
 
     def _ensure_manifest_exists(self) -> None:
         if not self.manifest_path.is_file():
+            for snapshot_path in self._snapshot_paths():
+                try:
+                    manifest = read_json(snapshot_path)
+                    atomic_write_json(self.manifest_path, manifest)
+                    return
+                except (OSError, ValueError):
+                    continue
             initial_data = {
                 "format_version": "1.0",
                 "updated_at": datetime.now(timezone.utc).isoformat(),
                 "stages": {},
             }
-            atomic_write_json(self.manifest_path, initial_data)
+            self.save_manifest(initial_data)
+
+    def _snapshot_paths(self) -> List[Path]:
+        pattern = f"{self.manifest_path.stem}.snapshot_*.json"
+        return sorted(self.manifest_path.parent.glob(pattern), reverse=True)
 
     def load_manifest(self) -> Dict[str, Any]:
-        return read_json(self.manifest_path)
+        try:
+            return read_json(self.manifest_path)
+        except (OSError, ValueError):
+            for snapshot_path in self._snapshot_paths():
+                try:
+                    manifest = read_json(snapshot_path)
+                    atomic_write_json(self.manifest_path, manifest)
+                    return manifest
+                except (OSError, ValueError):
+                    continue
+            raise
 
     def save_manifest(self, manifest: Dict[str, Any]) -> None:
         manifest["updated_at"] = datetime.now(timezone.utc).isoformat()
+        snapshot_name = (
+            f"{self.manifest_path.stem}.snapshot_"
+            f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}.json"
+        )
+        atomic_write_json(self.manifest_path.with_name(snapshot_name), manifest)
         atomic_write_json(self.manifest_path, manifest)
 
     def is_compatible(self, stage: str, signature: str) -> bool:
@@ -71,6 +97,8 @@ class CheckpointManager:
             if not path.is_absolute():
                 path = self.manifest_path.parent / path
             if not path.is_file():
+                return False
+            if path.stat().st_size == 0:
                 return False
             checksum = stage_record.get("checksums", {}).get(art_name)
             if checksum and hash_file(path) != checksum:
@@ -108,6 +136,11 @@ class CheckpointManager:
             if not added:
                 break
             invalidated.update(added)
+        current = stages.get(stage, {})
+        if (current.get("status") == "running"
+                and current.get("dependencies") == ["notebook/" + d for d in dependencies]
+                and all(stages[key].get("status") == "stale" for key in invalidated - {stage})):
+            return  # Already invalidated; preserve the original start time and avoid a Drive write.
         for key in invalidated - {stage}:
             stages[key]["status"] = "stale"
         stages[stage] = {"status": "running", "signature": "notebook_v1",
@@ -130,6 +163,8 @@ class CheckpointManager:
             path = Path(path_val).resolve()
             if not path.is_file():
                 raise FileNotFoundError(f"Cannot commit missing artifact for stage '{stage}': {path}")
+            if path.stat().st_size == 0:
+                raise ValueError(f"Cannot commit empty (0 bytes) artifact for stage '{stage}': {path}")
             verified_artifacts[name] = Path(os.path.relpath(path, self.manifest_path.parent.resolve())).as_posix()
             checksums[name] = hash_file(path)
 
@@ -147,7 +182,28 @@ class CheckpointManager:
         self.save_manifest(manifest)
         log_stage(stage, "completed", signature=signature, artifacts_count=len(verified_artifacts))
 
+    def record_blocked(
+        self,
+        stage: str,
+        signature: str,
+        reason_code: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Record stage execution as blocked (e.g. Chronology Grade C blocks S2/P3)."""
+        manifest = self.load_manifest()
+        manifest["stages"][stage] = {
+            "status": "blocked",
+            "signature": signature,
+            "reason_code": reason_code,
+            "blocked_at": datetime.now(timezone.utc).isoformat(),
+            "artifacts": {},
+            "metadata": metadata or {},
+        }
+        self.save_manifest(manifest)
+        log_stage(stage, "blocked", signature=signature, reason_code=reason_code)
+
     def invalidate_descendants(self, stage: str) -> List[str]:
+
         """Invalidate all downstream dependent stages when an upstream checkpoint is stale."""
         manifest = self.load_manifest()
         invalidated: Set[str] = set()

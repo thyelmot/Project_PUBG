@@ -1,7 +1,7 @@
 # Phụ lục: Ánh xạ và Kế thừa Tài liệu Nghiên cứu (Literature Mapping)
 
 **Ngày lập:** 24/09/2026  
-**Căn cứ:** [PUBG_RESEARCH_SPEC.md](../../../PUBG_RESEARCH_SPEC.md), Phiên bản 3.0; [PUBG_IMPLEMENTATION_PLAN.md](../../../PUBG_IMPLEMENTATION_PLAN.md) §3.  
+**Căn cứ:** [PUBG_RESEARCH_SPEC.md](../../PUBG_RESEARCH_SPEC.md), Phiên bản 3.0; [PUBG_IMPLEMENTATION_PLAN.md](../../PUBG_IMPLEMENTATION_PLAN.md) §3.  
 
 Tài liệu này xác định ranh giới kế thừa từ ba bài báo khoa học nền tảng (**L1, L2, L3**), đảm bảo việc sử dụng các khái niệm và phương pháp học thuật có kiểm soát, tránh sao chép sai lệch hoặc suy diễn vượt quá phạm vi dữ liệu thực tế.
 

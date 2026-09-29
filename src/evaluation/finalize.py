@@ -5,8 +5,37 @@ from typing import Any, Dict, List, Optional, Tuple
 from src.data.io import atomic_write_json, read_json
 from src.utils.hashing import hash_file
 from src.utils.logging import get_logger
+from src.data.checkpoints import CheckpointManager
 
 logger = get_logger("pubg_finalize")
+
+RQ2_RESULT_TABLES = {'cluster_profile.csv', 'cluster_centers_standardized.csv',
+                     'cluster_assignments.csv', 'clustering_robustness.csv',
+                     'c4_min_games_sensitivity.csv', 'c5_outcome_comparison.csv'}
+
+
+def select_rq2_results(paths, cfg):
+    """Only completed, compatible RQ2 artifacts can enter the final report."""
+    manager = CheckpointManager(paths['checkpoints'] / 'checkpoint_manifest.json')
+    record = manager.load_manifest()['stages'].get('rq2_clustering', {})
+    if not manager.is_compatible('rq2_clustering', record.get('signature')):
+        raise ValueError('RQ2 is incomplete/stale or its artifacts changed. Complete notebook 07 first.')
+    decisions = read_json(paths['manifests'] / 'rq2_decisions.json')
+    if decisions['config'] != cfg['rq2']:
+        raise ValueError('RQ2 config differs from the completed run. Rerun notebook 07 with the selected settings.')
+    runs = decisions.get('run_ids')
+    if not runs:
+        raise ValueError('RQ2 run IDs missing. Complete the updated notebook 07 first.')
+    artifacts = {name: (manager.manifest_path.parent / path).resolve()
+                 for name, path in record['artifacts'].items()}
+    if cfg['rq2']['mode_strategy'] == 'per_mode':
+        for mode in runs:
+            if mode not in ('Solo', 'Duo', 'Squad'):
+                raise ValueError(f'Invalid RQ2 mode: {mode}')
+            for filename in RQ2_RESULT_TABLES:
+                if artifacts.get(f'{mode}/{filename}') != (paths['tables'] / 'rq2' / mode / filename).resolve():
+                    raise ValueError(f'Missing official per-mode output: {mode}/{filename}')
+    return {f'rq2/{mode}': run for mode, run in runs.items()}, artifacts
 
 
 def build_final_results_manifest(
@@ -14,6 +43,7 @@ def build_final_results_manifest(
     reports_root: Path,
     official_run_ids: Dict[str, str],
     output_manifest_path: Path,
+    rq2_artifacts: Optional[Dict[str, Path]] = None,
 ) -> Dict[str, Any]:
     """Lock all official experiment artifacts, tables, and figures with cryptographic checksums."""
     output_manifest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -26,13 +56,18 @@ def build_final_results_manifest(
         "figures": {},
         "models": {},
         "predictions": {},
+        "metadata": {},
     }
 
     # Verify tables
     tables_dir = reports_root / "tables"
     if tables_dir.is_dir():
-        for csv_file in tables_dir.glob("*.csv"):
-            manifest["tables"][csv_file.name] = {
+        selected = {p.resolve() for p in (rq2_artifacts or {}).values()}
+        for csv_file in tables_dir.rglob("*.csv"):
+            if rq2_artifacts is not None and (csv_file.name in RQ2_RESULT_TABLES or 'rq2' in csv_file.relative_to(tables_dir).parts):
+                if csv_file.resolve() not in selected:
+                    continue
+            manifest["tables"][csv_file.relative_to(tables_dir).as_posix()] = {
                 "path": Path(os.path.relpath(csv_file.resolve(), output_manifest_path.parent.resolve())).as_posix(),
                 "sha256": hash_file(csv_file),
                 "byte_size": csv_file.stat().st_size,
@@ -57,6 +92,14 @@ def build_final_results_manifest(
                 "path": Path(os.path.relpath(prediction.resolve(), output_manifest_path.parent.resolve())).as_posix(),
                 "sha256": hash_file(prediction), "byte_size": prediction.stat().st_size,
             }
+    metadata_files = [p for p in (rq2_artifacts or {}).values() if p.suffix == '.json']
+    metadata_files += [artifacts_root / 'experiments' / f'compute_{run}.json'
+                       for run in official_run_ids.values() if '/' not in run]
+    for path in metadata_files:
+        if path.is_file():
+            key = Path(os.path.relpath(path, artifacts_root)).as_posix()
+            manifest['metadata'][key] = {'path': Path(os.path.relpath(path, output_manifest_path.parent)).as_posix(),
+                                         'sha256': hash_file(path), 'byte_size': path.stat().st_size}
     atomic_write_json(output_manifest_path, manifest)
     logger.info(f"Final results manifest locked: {len(manifest['tables'])} tables -> {output_manifest_path.name}")
     return manifest
@@ -68,7 +111,7 @@ def verify_final_manifest_integrity(manifest_path: Path) -> Tuple[bool, List[str
     all_valid = True
     mismatches = []
 
-    for category in ["tables", "figures", "models", "predictions"]:
+    for category in ["tables", "figures", "models", "predictions", "metadata"]:
         items = manifest.get(category, {})
         for name, item_meta in items.items():
             f_path = Path(item_meta["path"])

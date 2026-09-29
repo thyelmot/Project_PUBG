@@ -20,9 +20,27 @@ data/processed/*
 # Checkpoint staging & large experiment artifacts
 artifacts/checkpoints/*.tmp
 artifacts/checkpoints/staging/
+artifacts/checkpoints/
+artifacts/backups/
 artifacts/models/*.joblib
 artifacts/models/*.xgb
 artifacts/logs/*.log
+artifacts/manifests/runtime_snapshot.json
+
+# Local transfer bundles and scratch scripts
+*.zip
+temp_*.py
+scratch/
+scripts/*_patch.py
+scripts/inspect_*.py
+scripts/restore_*.py
+scripts/replay_*.py
+scripts/check_conversation_modifications.py
+scripts/check_generator_escapes.py
+scripts/fix_*.py
+scripts/test_exec_nb00.py
+scripts/apply_all_replaces.py
+scripts/audit_notebooks_detail.py
 
 # Operating system artifacts
 .DS_Store
