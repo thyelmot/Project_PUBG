@@ -45,10 +45,10 @@ def make_kmeans(device='cpu', **kwargs):
     return GPUKMeans(init='k-means++', max_iter=300, tol=1e-4, output_type='numpy', **kwargs)
 
 
-def make_linear(device='cpu'):
+def make_linear(device='cpu', fit_intercept=True):
     if device == 'cpu':
         from sklearn.linear_model import LinearRegression
-        return LinearRegression()
+        return LinearRegression(fit_intercept=fit_intercept)
     compute_info(device)
     from cuml.linear_model import LinearRegression
-    return LinearRegression(algorithm='svd', fit_intercept=True, output_type='numpy')
+    return LinearRegression(algorithm='svd', fit_intercept=fit_intercept, output_type='numpy')

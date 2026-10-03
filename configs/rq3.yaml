@@ -1,14 +1,28 @@
 # RQ3: Survival and Placement Prediction
 
 minimum_history_threshold: null # TBD: Decided in Notebook 08 (e.g., 5 or 10 matches)
+historical:
+  threshold_candidates: [1, 3, 5, 10] # Diagnostics only, not a selected threshold
+  threshold_decision_reason: null
+  threshold_diagnostics_hash: null # From history_diagnostics_receipt.json after diagnostics
+  evaluation_protocol: null # Choose walk_forward_fixed_model before G4; no implicit refit/frozen mixing
+  availability:
+    status: pending
+    policy: null # explicit_columns or start_plus_verified_duration, only with source evidence
+    timestamp_semantics: null
+    evidence: null
+    prediction_column: null
+    available_column: null
+    duration_column: null # Never individual player survival
+    duration_unit: null
 chronology_required_for_historical: true
 device: "cuda" # GPU OLS for notebook 09 and paired ablation in notebook 10
 
 split:
   strategy: "auto" # "chronological" if Grade A/B, "group_by_match" if Grade C
-  train_ratio: 0.70
-  validation_ratio: 0.15
-  test_ratio: 0.15
+  train_ratio: null
+  validation_ratio: null
+  test_ratio: null # Locked after chronology/inventory evidence (Gate G4)
   group_column: "match_id"
   random_state: 42
 

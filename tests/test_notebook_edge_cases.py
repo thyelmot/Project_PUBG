@@ -84,6 +84,9 @@ class TestNotebookEdgeCases(unittest.TestCase):
                                  "mean_kills": [0., 0.1, 9., 10.], "mean_assists": [np.nan] * 4})
         outcomes = pd.DataFrame({"player_name": ["d", "c", "b", "a"], "mean_survive_time": [100, 90, 1, 0],
                                  "mean_normalized_placement": [1., .9, .1, 0.], "win_rate": [1, 1, 0, 0]})
+        outcomes["mean_survive_time_valid_matches"] = 5
+        outcomes["mean_normalized_placement_valid_matches"] = 5
+        outcomes["win_rate_valid_matches"] = 5
         self.assertTrue(np.isfinite(prepare_clustering_matrix(profiles)).all())
         with tempfile.TemporaryDirectory() as directory:
             result = execute_rq2_clustering(profiles, outcomes, 2, Path(directory))
@@ -108,7 +111,10 @@ class TestNotebookEdgeCases(unittest.TestCase):
             con = get_duckdb_connection(root / "temp")
             try:
                 for grade in ["Grade A", "Grade B"]:
-                    build_historical_features(con, source, output, grade)
+                    build_historical_features(con, source, output, grade, min_history_threshold=1,
+                        availability_config={"status":"verified", "evidence":"Synthetic fixture only",
+                            "policy":"explicit_columns", "timestamp_semantics":"prediction_and_statistic_availability",
+                            "prediction_column":"date", "available_column":"date"})
                     counts = pd.read_parquet(output).set_index("match_id")["hist_games_played"]
                     self.assertEqual(counts.to_dict(), {"m1": 0, "m2": 0, "m3": 2})
             finally:

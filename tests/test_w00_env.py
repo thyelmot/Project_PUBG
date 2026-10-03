@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 import tempfile
 import json
+import subprocess
 
 # Add Project_PUBG to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -73,8 +74,14 @@ class TestW00ConfigValidation(unittest.TestCase):
                               "runtime.random_state must be int")
 
     def test_mode_is_valid(self):
-        self.assertIn(self.cfg["runtime"]["mode"], ("full", "sample"),
-                      "runtime.mode must be 'full' or 'sample'")
+        self.assertIn(self.cfg["runtime"]["mode"], ("full", "development", "sample"),
+                      "runtime.mode must be full/development (legacy sample is nonofficial)")
+
+    def test_development_mode_preserves_explicit_nonofficial_scope(self):
+        cfg = {**self.cfg, "runtime": {**self.cfg["runtime"], "mode": "development"}}
+        validate_config(cfg)
+        self.assertEqual(cfg["runtime"]["mode"], "development")
+        self.assertEqual(cfg["runtime"]["chunk_size"], self.cfg["runtime"]["chunk_size"])
 
     def test_chunk_size_positive_int(self):
         cs = self.cfg["runtime"]["chunk_size"]
@@ -134,6 +141,14 @@ class TestW00ConfigValidation(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_config(bad_cfg)
 
+    def test_validate_config_raises_on_bad_device_and_paths(self):
+        bad_device = {**self.cfg, "rq2": {**self.cfg["rq2"], "device": "auto"}}
+        with self.assertRaises(ValueError):
+            validate_config(bad_device)
+        bad_paths = {**self.cfg, "paths": {**self.cfg["paths"], "active_environment": "missing"}}
+        with self.assertRaises(ValueError):
+            validate_config(bad_paths)
+
     def test_describe_config_status_returns_list(self):
         rows = describe_config_status(self.cfg)
         self.assertIsInstance(rows, list)
@@ -163,6 +178,17 @@ class TestW00EnvironmentCheck(unittest.TestCase):
     def test_check_environment_remediation_is_list(self):
         env = check_environment()
         self.assertIsInstance(env["remediation"], list)
+
+    def test_check_environment_rejects_wrong_project_root(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.assertRaises(RuntimeError) as error:
+                check_environment(
+                    target_dir=tmpdir,
+                    min_disk_gb=0.0,
+                    raise_on_critical=True,
+                    required_files=["configs/data.yaml", "src/utils/config.py"],
+                )
+            self.assertIn("configs/data.yaml", str(error.exception))
 
     def test_check_environment_raise_on_critical_when_unwritable(self):
         """raise_on_critical=True must raise RuntimeError for a non-writable dir."""
@@ -227,6 +253,7 @@ class TestW00RuntimeSnapshot(unittest.TestCase):
             self.assertIn("snapshot_at", loaded)
             self.assertIn("runtime", loaded)
             self.assertIn("config_summary", loaded)
+            self.assertIn("config", loaded)
             self.assertIn("source_hashes", loaded)
             self.assertIn("doc_hashes", loaded)
 
@@ -241,10 +268,16 @@ class TestW00RuntimeSnapshot(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             out = Path(tmpdir) / "s.json"
             snap = save_runtime_snapshot(out, self.project_root, self.cfg, {})
-            gh = snap["source_hashes"].get("generate_notebooks.py", "")
+            gh = snap["source_hashes"].get("src/utils/generate_notebooks.py", "")
             # SHA-256 hex = 64 chars
             self.assertEqual(len(gh), 64,
                              "generate_notebooks.py hash must be full SHA-256 (64 hex chars)")
+
+    def test_snapshot_hashes_all_source_modules(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            snap = save_runtime_snapshot(Path(tmpdir) / "s.json", self.project_root, self.cfg, {})
+            self.assertIn("src/utils/runtime.py", snap["source_hashes"])
+            self.assertIn("src/utils/config.py", snap["source_hashes"])
 
     def test_snapshot_doc_hashes_stored(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -254,6 +287,52 @@ class TestW00RuntimeSnapshot(unittest.TestCase):
             self.assertEqual(snap["doc_hashes"]["PUBG_RESEARCH_SPEC.md"], "abc123")
 
 
+class TestNotebook00ScientificPresentation(unittest.TestCase):
+    def setUp(self):
+        self.root = Path(__file__).resolve().parent.parent
+        self.notebook = self.root / "notebooks" / "00_setup.ipynb"
+        self.data = json.loads(self.notebook.read_text(encoding="utf-8"))
+
+    def test_scientific_notes_and_tables_are_present(self):
+        markdown = "\n".join("".join(c.get("source", [])) for c in self.data["cells"] if c["cell_type"] == "markdown")
+        code = "\n".join("".join(c.get("source", [])) for c in self.data["cells"] if c["cell_type"] == "code")
+        for heading in (
+            "Bối cảnh khoa học, phạm vi và tiêu chí thành công",
+            "Xác minh project root và provenance đầu vào",
+            "Tài nguyên, phiên bản và snapshot tái lập",
+            "Kết luận vận hành, giới hạn và bàn giao",
+        ):
+            self.assertIn(heading, markdown)
+        for table_id in ("BẢNG 00-A", "BẢNG 00-B", "BẢNG 00-C", "BẢNG 00-G", "BẢNG 00-J", "BẢNG 00-K"):
+            self.assertIn(table_id, code)
+        self.assertNotIn("BAO CAO TAI NGUYEN PHAN CUNG", code)
+        self.assertNotIn("Notebook 00 hoan tat", code)
+
+    def test_actual_notebook_runs_in_isolated_runtime_workspace(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            program = '''import json, sys
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+nb = json.load(open(sys.argv[1], encoding="utf-8"))
+scope = {"PUBG_INSTALL_DEPENDENCIES": False, "__name__": "__main__"}
+for index, cell in enumerate(nb["cells"]):
+    if cell["cell_type"] == "code":
+        exec(compile("".join(cell["source"]), f"notebook00-cell-{index}", "exec"), scope)
+        if "storage-options" in cell.get("metadata", {}).get("tags", []):
+            scope.update(PUBG_STORAGE_MODE="runtime", PUBG_REQUIRE_EXISTING_PROJECT=False)
+'''
+            run = subprocess.run(
+                [sys.executable, "-c", program, str(self.notebook)], cwd=workspace,
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=90,
+            )
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+            for table_id in ("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"):
+                self.assertIn(f"BẢNG 00-{table_id}", run.stdout)
+            snapshot = next(workspace.rglob("runtime_snapshot.json"))
+            checkpoint = json.loads(next(workspace.rglob("checkpoint_manifest.json")).read_text(encoding="utf-8"))
+            self.assertTrue(snapshot.is_file())
+            self.assertEqual(checkpoint["stages"]["notebook/00_setup.ipynb"]["status"], "completed")
 if __name__ == "__main__":
     unittest.main()
 

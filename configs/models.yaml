@@ -41,5 +41,5 @@ nonlinear_candidates:
 
 resource_limits:
   max_memory_gb: 12.0
-  fallback_to_sgd_on_oom: true
+  fallback_to_sgd_on_oom: false # Never silently change estimator; record resource_limited instead.
   chunk_batch_size: 50000

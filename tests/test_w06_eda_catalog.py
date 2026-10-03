@@ -1,4 +1,8 @@
+import json
+import os
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +13,7 @@ import pandas as pd
 from src.analysis.eda import (
     compute_distribution_summary,
     compute_sql_distribution_summary,
+    compute_sql_correlation_matrices,
     run_structural_eda,
     compute_player_retention_diagnostics,
     compute_combat_phase_by_placement_tier,
@@ -138,6 +143,19 @@ class TestW06EDACatalog(unittest.TestCase):
         # Recommendation should be per_mode
         self.assertEqual(res["recommended_rq2_strategy"], "per_mode")
 
+    def test_sql_correlations_use_pairwise_n_and_average_ranks_for_ties(self):
+        columns = ["player_kills", "player_dmg", "player_assists"]
+        pearson, spearman, pair_n = compute_sql_correlation_matrices(self.con, self.pq_path, columns)
+        expected = self.df[columns].corr(method="spearman")
+
+        self.assertEqual(list(pearson.columns), columns)
+        self.assertEqual(int(pair_n.loc["player_kills", "player_dmg"]), len(self.df))
+        self.assertAlmostEqual(
+            spearman.loc["player_kills", "player_assists"],
+            expected.loc["player_kills", "player_assists"],
+            places=10,
+        )
+
     def test_combat_phase_by_placement_tier(self):
         """Verify computation of combat phase ratios across placement tiers (Chart H06)."""
         df_h06 = compute_combat_phase_by_placement_tier(self.con, self.pq_path)
@@ -239,6 +257,143 @@ class TestW06EDACatalog(unittest.TestCase):
             self.assertFalse(np.isnan(row["effect_size_eta_squared"]))
             self.assertNotEqual(row["effect_magnitude"], "unknown")
             self.assertNotEqual(row["effect_size_magnitude"], "unknown")
+
+
+class TestNotebook0506Execution(unittest.TestCase):
+    def test_actual_notebooks_05_and_06_run_sequentially_on_fixture(self):
+        root = Path(__file__).resolve().parent.parent
+        notebook_05 = root / "notebooks" / "05_eda.ipynb"
+        notebook_06 = root / "notebooks" / "06_rq1_analysis.ipynb"
+        program = r'''import json, sys
+from pathlib import Path
+import pandas as pd
+import yaml
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
+nb = json.load(open(sys.argv[1], encoding="utf-8"))
+scope = {"PUBG_INSTALL_DEPENDENCIES": False, "__name__": "__main__"}
+for index, cell in enumerate(nb["cells"]):
+    if cell["cell_type"] != "code":
+        continue
+    exec(compile("".join(cell["source"]), f"{sys.argv[1]}-cell-{index}", "exec"), scope)
+    tags = cell.get("metadata", {}).get("tags", [])
+    if "storage-options" in tags:
+        scope.update(PUBG_STORAGE_MODE="runtime", PUBG_REQUIRE_EXISTING_PROJECT=False)
+    if "bootstrap" in tags:
+        from src.data.io import atomic_write_parquet
+        from src.data.checkpoints import CheckpointManager
+        paths = scope["paths"]
+        checkpoints = CheckpointManager(paths["checkpoints"] / "checkpoint_manifest.json")
+        nb05 = checkpoints.load_manifest().get("stages", {}).get("notebook/05_eda.ipynb", {})
+        if nb05.get("status") == "completed":
+            continue
+        runtime_path = scope["PROJECT_ROOT"] / "configs" / "runtime.yaml"
+        runtime_cfg = yaml.safe_load(runtime_path.read_text(encoding="utf-8"))
+        runtime_cfg["mode"] = "development"
+        runtime_path.write_text(yaml.safe_dump(runtime_cfg, sort_keys=False), encoding="utf-8")
+        rows = []
+        for i in range(180):
+            mode = ("solo", "duo", "squad")[i % 3]
+            kills = i % 5
+            survive = 240.0 + i * 11.0
+            walk = 300.0 + i * 17.0
+            ride = float((i % 4) * 120)
+            assists = 0 if mode == "solo" else i % 4
+            total = walk + ride
+            rows.append({
+                "row_id": f"r{i}", "match_id": f"m{i // 15}", "player_name": f"p{i % 60}",
+                "date": f"2017-11-{1 + i // 60:02d}",
+                "team_id": f"t{i // 3}", "team_size_mode": mode.title(), "perspective_mode": "tpp",
+                "party_size": {"solo": 1, "duo": 2, "squad": 4}[mode], "game_size": 72,
+                "player_kills": kills, "player_dmg": float(kills * 80 + i % 7),
+                "player_dist_walk": walk, "player_dist_ride": ride, "total_distance": total,
+                "walk_ratio": walk / total, "player_assists": assists, "player_dbno": assists,
+                "assist_ratio": assists / (assists + kills) if assists + kills else None,
+                "damage_per_kill": (kills * 80 + i % 7) / kills if kills else None,
+                "player_survive_time": survive, "kills_per_minute": kills / (survive / 60.0),
+                "damage_per_minute": (kills * 80 + i % 7) / (survive / 60.0),
+                "walk_velocity": walk / survive, "ride_velocity": ride / survive,
+                "team_placement": i % 12 + 1, "normalized_placement": 1.0 - (i % 12) / 11.0,
+                "valid_placement": True, "placement_validity_flag": "VALID",
+                "event_kill_count": kills, "first_kill_time": 60.0 + i if kills else None,
+                "avg_kill_time": 120.0 + i if kills else None,
+                "early_kill_ratio": 1.0 / kills if kills else None,
+                "mid_kill_ratio": (kills - 1.0) / kills if kills else None,
+                "late_kill_ratio": 0.0 if kills else None, "has_kill": bool(kills),
+            })
+        final = paths["processed"] / "player_match_features.parquet"
+        meta = paths["interim"] / "match_metadata.parquet"
+        split = paths["interim"] / "split_assignments.parquet"
+        atomic_write_parquet(final, pd.DataFrame(rows))
+        atomic_write_parquet(meta, pd.DataFrame({"match_id": sorted({row["match_id"] for row in rows})}))
+        match_ids = sorted({row["match_id"] for row in rows})
+        atomic_write_parquet(split, pd.DataFrame({
+            "match_id": match_ids,
+            "split": ["train"] * 8 + ["validation"] * 2 + ["test"] * 2,
+        }))
+        checkpoints.commit("notebook/02_data_quality_and_structure.ipynb", "fixture-nb02", {"splits": split})
+        checkpoints.commit(
+            "notebook/04_combat_timing.ipynb", "fixture-nb04", {"features": final, "metadata": meta}
+        )
+'''
+        with tempfile.TemporaryDirectory() as directory:
+            run = subprocess.run(
+                [sys.executable, "-c", program, str(notebook_05)],
+                cwd=directory,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env={**os.environ, "MPLBACKEND": "Agg"},
+                timeout=180,
+            )
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+            self.assertIn("STAGE NB05 HOÀN TẤT TRONG SCOPE DEVELOPMENT", run.stdout)
+            run_06 = subprocess.run(
+                [sys.executable, "-c", program, str(notebook_06)],
+                cwd=directory,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env={**os.environ, "MPLBACKEND": "Agg"},
+                timeout=180,
+            )
+            self.assertEqual(run_06.returncode, 0, run_06.stdout + run_06.stderr)
+            self.assertIn("STAGE NB06 HOÀN TẤT TRONG SCOPE DEVELOPMENT", run_06.stdout)
+            project = next(Path(directory).rglob("eda_structural_overview.csv")).parents[2]
+            pair_n = pd.read_csv(next(project.rglob("eda_correlation_pair_n.csv")))
+            self.assertIn("feature", pair_n.columns)
+            self.assertTrue(any(project.rglob("eda_vif_diagnostics.csv")))
+            catalog = pd.read_csv(next(project.rglob("eda_catalog_status.csv")))
+            self.assertEqual(set(catalog["chart_id"]), {
+                *(f"A{i:02d}" for i in range(1, 7)), *(f"B{i:02d}" for i in range(1, 11)),
+                *(f"C{i:02d}" for i in range(1, 7)), *(f"D{i:02d}" for i in range(1, 9)),
+                "E01", "E02", *(f"F{i:02d}" for i in range(1, 8)),
+                *(f"G{i:02d}" for i in range(1, 7)), *(f"H{i:02d}" for i in range(1, 8)),
+                "I01", "I02", "I03",
+            })
+            self.assertEqual(set(catalog.loc[catalog["chart_id"].isin(["I02", "I03"]), "status"]), {"deferred_to_nb08_or_nb02"})
+            self.assertEqual(pd.read_parquet(next(project.rglob("eda_development_scope.parquet")))["match_id"].nunique(), 10)
+            mode_summary = pd.read_csv(next(project.rglob("eda_mode_comparison_summary.csv")))
+            self.assertEqual(set(mode_summary.game_mode_label), {"Solo", "Duo", "Squad"})
+            mode_manifest = json.loads(next(project.rglob("mode_analysis.json")).read_text(encoding="utf-8"))
+            self.assertEqual(mode_manifest["sample_n"], 150)
+            rq1 = pd.read_csv(next(project.rglob("rq1_relationship_summary.csv")))
+            self.assertEqual(set(rq1["analysis_scope"]), {"development"})
+            self.assertLessEqual(int(rq1["n_observations"].max()), 150)
+            self.assertTrue(any(project.rglob("rq1_scatter_density.png")))
+            for name in (
+                "eda_group_a_structure.png", "eda_group_b_missing_and_zeros.png",
+                "eda_group_c_raw_distributions.png", "eda_group_d_derived_distributions.png",
+                "eda_group_e_mode_comparisons.png", "eda_group_f_correlation_heatmaps.png",
+                "eda_group_g_timing_by_placement.png", "eda_group_h_retention_curve.png",
+                "eda_group_a_catalog_supplement.png", "eda_groups_bc_catalog_supplement.png",
+                "eda_group_d_catalog_supplement.png", "eda_group_f_behavior_vs_outcome.png",
+                "eda_group_g_behavior_vs_outcome.png", "eda_group_h_timing_catalog_supplement.png",
+            ):
+                image = next(project.rglob(name))
+                self.assertEqual(image.read_bytes()[:8], b"\x89PNG\r\n\x1a\n")
 
 
 if __name__ == "__main__":

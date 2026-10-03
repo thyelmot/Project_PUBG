@@ -15,11 +15,13 @@ class HistGradientBoostingWrapper(BaseEstimator, RegressorMixin):
         learning_rate: float = 0.1,
         max_leaf_nodes: int = 31,
         random_state: int = 42,
+        early_stopping: bool = False,
     ) -> None:
         self.max_iter = max_iter
         self.learning_rate = learning_rate
         self.max_leaf_nodes = max_leaf_nodes
         self.random_state = random_state
+        self.early_stopping = early_stopping
         self.model: Optional[HistGradientBoostingRegressor] = None
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> "HistGradientBoostingWrapper":
@@ -28,6 +30,7 @@ class HistGradientBoostingWrapper(BaseEstimator, RegressorMixin):
             learning_rate=self.learning_rate,
             max_leaf_nodes=self.max_leaf_nodes,
             random_state=self.random_state,
+            early_stopping=self.early_stopping,
         )
         self.model.fit(X, y)
         return self

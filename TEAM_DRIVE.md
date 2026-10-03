@@ -38,19 +38,20 @@ Chủ thư mục tạo một file văn bản có tên riêng của nhóm trong `
 - Trong mỗi notebook mới, luôn chạy cell lựa chọn, Bootstrap, cell khởi tạo rồi các cell nghiệp vụ. Không có biến Python nào tự chuyển từ notebook trước sang notebook sau.
 - Trước bàn giao, chờ cell ghi kết quả kết thúc, kiểm tra file xuất hiện trên giao diện Drive của người nhận, ghi lại tên notebook/cell đã hoàn thành, sau đó kết thúc phiên đang ghi. Không bàn giao chỉ dựa vào việc file đã có tên: file có thể vẫn đang ghi.
 - Người nhận đọc các file đã lưu trong `data/`, `artifacts/`, `reports/` của cùng project. Các file tạm DuckDB trong `/content/temp` chỉ thuộc phiên hiện tại và không cần chuyển.
+- Khi bàn giao hình NB05/NB07, giữ cả catalog và bảng nguồn/mẫu trực quan đã lưu. Caption chỉ rõ scope/N/n/seed/quy tắc; không đưa mẫu hoặc kết quả fixture vào thư mục kết quả nghiên cứu như full-data. Hình mở được chưa đủ: đối chiếu giá trị với CSV và đọc trạng thái `report_ready`.
 
 | Hoàn tất notebook | Đầu ra chính dùng tiếp |
 |---|---|
 | 01 | `data/interim/staging_shards/` và `batch_manifest.json` có `complete: true` |
 | 02 | `cleaned_aggregate.parquet`, `match_metadata.parquet`, `split_assignments.parquet` trong `data/interim/`; chronology/split manifest trong `artifacts/manifests/` |
-| 03 | Bước thông báo; phần tạo features thực hiện ở 04 |
+| 03 | `data/interim/player_match_base.parquet`, dictionary/validation/parts; 04 chỉ nối timing |
 | 04 | `data/processed/player_match_features.parquet` |
 | 05–07 | Bảng EDA, RQ1 và phân cụm trong `reports/tables/` |
-| 08 | Historical features nếu chronology cho phép; có thể bị bỏ qua khi Grade C |
-| 09 | `artifacts/experiments/predictions_p1_linear.parquet` và `predictions_p2_linear.parquet` |
-| 10 | Bảng ablation và phân tích sai số trong `reports/tables/` |
-| 11 | `artifacts/manifests/final_results_manifest.json` |
-| 12 | Đọc và trình bày kết quả đã khóa |
+| 08 | `historical_status.json`, diagnostics/coverage/leakage; dataset khi quyết định hợp lệ, Grade C ghi S2/P3 blocked chứ không bỏ qua audit |
+| 09 | Models/meta, development predictions/validation/diagnostics; duyệt G4 rồi `predictions_final_<experiment>.parquet` và final comparison, không chỉ P1/P2 |
+| 10 | Pairing/deltas/ablation/errors/importance/CI từ saved predictions; không train lại |
+| 11 | `artifacts/manifests/releases/<release_id>/` chứa snapshot bất biến; canonical manifest trỏ release này |
+| 12 | Chọn manifest cụ thể, 12 phần chỉ đọc; không tạo run hoặc dùng current checkpoint để chặn snapshot |
 
 ## Nếu phiên bị ngắt
 
@@ -58,9 +59,9 @@ File được ghi xong vẫn ở Drive. Các biến RAM, mô hình chưa ghi ra 
 
 - **Notebook 01:** khởi tạo lại và chạy cell batch. Manifest chỉ dùng lại shard có đủ file, số dòng và checksum; shard dở hoặc hỏng phải đọc lại. Không chạy riêng Gate G1 để bỏ qua lỗi ingest.
 - **Notebook 02:** nếu cleaning đã hoàn tất và file Parquet đọc được, có thể khởi tạo lại rồi tiếp tục cell metadata. Nếu không chắc file ghi xong, chạy lại cell tạo file đó.
-- **Các notebook còn lại:** cách đơn giản là khởi tạo lại và chạy lại notebook đang dở từ đầu; không cần chạy lại các notebook trước đã hoàn tất. Không coi sự tồn tại của file là bằng chứng checkpoint hợp lệ.
+- **Các notebook còn lại:** khởi tạo lại và chạy notebook dở theo thứ tự; chỉ reuse completed compatible với checksum/signature/schema/count. Profiles/diagnostics/per-mode/experiments/comparisons đã commit có thể reuse; thao tác fit dở phải chạy lại. Stale downstream cần producer tương ứng, không coi file tồn tại là bằng chứng.
 
-Chạy riêng notebook giúp giải phóng RAM giữa các bước, nhưng không giảm nhu cầu RAM tối đa của một cell. Notebook 05/06 đã đọc theo từng cột hoặc cặp cột; 07 và 09–10 vẫn có bước dữ liệu lớn. Nếu một cell hết RAM, đổi thành viên có cùng cấu hình RAM không giải quyết được nguyên nhân đó.
+Chạy riêng notebook giúp giải phóng RAM giữa các bước, nhưng không giảm nhu cầu RAM tối đa của một cell. Notebook 05/06 dùng projection/SQL; 07 profile matrices và09 train/validation collect vẫn cần host RAM qua resource gate. NB10 đọc saved predictions, không cần GPU/fit. Đổi thành viên có cùng RAM không giải quyết OOM. Các quyết định units/eligibility/history/K/G4 production còn pending; fixture không thay xác minh thật.
 
 ## Ingest theo batch và dung lượng
 
@@ -83,3 +84,5 @@ Tài liệu chính thức: [chia sẻ thư mục](https://support.google.com/dri
 ## Cập nhật bản sửa
 
 Cập nhật `src/`, `notebooks/` và tài liệu này vào project chung, giữ nguyên dữ liệu đã lưu. Khởi động lại runtime để không dùng module cũ. Cấu hình trên dùng cho mỗi notebook riêng; chế độ `runtime` cũ vẫn tồn tại nhưng không phù hợp việc bàn giao qua Drive.
+
+Upload bằng cập nhật đúng file ID/version, không thêm bản (1)/(2); không chỉ upload notebook vì bootstrap giữ source/config dự án hiện hữu. Sau notebook thành công kiểm artifacts/checkpoint rồi lưu notebook có output, tải về thay đúng `notebooks/` local và Drive. Không thay bản tốt bằng bản lỗi. Canonical ghi đè có read-back; releases có phiên bản được giữ riêng, không phải file trùng ngẫu nhiên. Khi hết tài nguyên dừng, ghi stage/cell/path/reason và bàn giao committed state; không tự bypass quota, sample hay CPU fallback.

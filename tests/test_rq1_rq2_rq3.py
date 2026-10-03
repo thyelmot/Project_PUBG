@@ -89,12 +89,18 @@ class TestRQ1RQ2RQ3Pipelines(unittest.TestCase):
             "early_kill_ratio": np.where(kills > 0, 0.3, np.nan),
             "mid_kill_ratio": np.where(kills > 0, 0.4, np.nan),
             "late_kill_ratio": np.where(kills > 0, 0.3, np.nan),
+            "phase_eligible_kill_count": np.where(kills > 0, kills, np.nan),
+            "timing_coverage_status": np.where(kills > 0, "event_count_exact", "confirmed_no_kill_no_event"),
             "has_kill": kills > 0,
             "kills_per_minute": kills / (survive / 60.0),
             "damage_per_minute": dmg / (survive / 60.0),
             "walk_velocity": walk / survive,
             "ride_velocity": ride / survive,
         })
+
+        # Placement is a team outcome, identical for teammates by contract.
+        df["team_placement"]=df.groupby(["match_id","team_id"])["team_placement"].transform("first")
+        df["normalized_placement"]=(df.team_placement-1)/(df.observed_team_count-1)
 
         # Assign split by match
         unique_m = df["match_id"].unique()
@@ -143,7 +149,10 @@ class TestRQ1RQ2RQ3Pipelines(unittest.TestCase):
     def test_historical_and_rq3_prediction(self):
         # 1. Historical features with Grade B
         hist_pq = self.test_dir / "historical_test.parquet"
-        h_res = build_historical_features(self.con, self.pq_path, hist_pq, chronology_grade="Grade B", min_history_threshold=1)
+        h_res = build_historical_features(self.con, self.pq_path, hist_pq, chronology_grade="Grade B", min_history_threshold=1,
+            availability_config={"status":"verified", "evidence":"Synthetic fixture only",
+                "policy":"explicit_columns", "timestamp_semantics":"prediction_and_statistic_availability",
+                "prediction_column":"date", "available_column":"date"})
         self.assertEqual(h_res["status"], "completed")
 
         # Test Grade C blocking (D08)
@@ -180,12 +189,15 @@ class TestRQ1RQ2RQ3Pipelines(unittest.TestCase):
 
         # 5. Ablation Study
         ablation_csv = self.test_dir / "ablation_test.csv"
-        abl_df = run_group_ablation_study(self.df, self.registry, features, target, ablation_csv)
+        with self.assertRaisesRegex(ValueError,"Do not refit"):
+            run_group_ablation_study(self.df, self.registry, features, target, ablation_csv)
+        abl_df = run_group_ablation_study(self.df.loc[self.df.split!='test'], self.registry, features, target, ablation_csv)
         self.assertGreater(len(abl_df), 1)
 
         # 6. Error Analysis
         error_csv = self.test_dir / "error_test.csv"
-        err_df = analyze_prediction_errors(lin_preds, error_csv)
+        err_df = analyze_prediction_errors(lin_preds, error_csv, target_name=target,
+            error_bins={"placement":[0,.2,.5,.8,1],"survival":[0,300,600,10000]})
         self.assertFalse(err_df.empty)
 
 

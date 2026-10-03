@@ -79,9 +79,11 @@ class TestW07RQ1Bivariate(unittest.TestCase):
     def test_allowlist_enforcement_under_d01(self):
         """Verify D01: Survival MUST NOT use phase timing features as primary valid predictors."""
         out_csv = self.test_dir / "rq1_test.csv"
-        rq1_df = run_rq1_analysis(self.df, self.registry, out_csv)
+        rq1_df = run_rq1_analysis(self.df, self.registry, out_csv, analysis_scope="development")
 
         self.assertFalse(rq1_df.empty)
+        self.assertEqual(set(rq1_df["analysis_scope"]), {"development"})
+        self.assertIn("status", rq1_df.columns)
 
         # Check Survival target
         surv_df = rq1_df[rq1_df["target"] == "player_survive_time"]
@@ -139,6 +141,12 @@ class TestW07RQ1Bivariate(unittest.TestCase):
         self.assertEqual(classify_correlation_strength(0.42), "moderate")
         self.assertEqual(classify_correlation_strength(-0.75), "strong")
         self.assertEqual(classify_correlation_strength(np.nan), "unspecified")
+
+    def test_unverified_mode_mapping_fails_fast(self):
+        bad = self.df.copy()
+        bad.loc[0, "team_size_mode"] = "unknown_mode"
+        with self.assertRaisesRegex(ValueError, "Unverified team_size_mode"):
+            run_rq1_analysis(bad, self.registry, self.test_dir / "bad.csv")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,30 @@
 from typing import Optional
-import numpy as np
+
+import duckdb
 import pandas as pd
+
+
+def normalized_placement_sql(player_alias: str = "a", metadata_alias: str = "m") -> str:
+    """Return the canonical DuckDB expression for roster-normalized placement."""
+    return f"""CASE
+        WHEN {placement_valid_sql(player_alias, metadata_alias)}
+        THEN 1.0 - (
+            CAST({player_alias}.team_placement - 1 AS DOUBLE)
+            / ({metadata_alias}.observed_team_count - 1)
+        )
+        ELSE NULL
+    END"""
+
+
+def placement_valid_sql(player_alias: str = "a", metadata_alias: str = "m") -> str:
+    """Return the exact validity predicate used by normalized_placement_sql."""
+    return f"""(
+        isfinite({metadata_alias}.observed_team_count)
+        AND isfinite({player_alias}.team_placement)
+        AND {metadata_alias}.observed_team_count > 1
+        AND {player_alias}.team_placement BETWEEN 1 AND {metadata_alias}.observed_team_count
+        AND COALESCE({metadata_alias}.is_roster_complete, false)
+    )"""
 
 
 def compute_normalized_placement(
@@ -8,29 +32,18 @@ def compute_normalized_placement(
     observed_team_count: pd.Series,
     is_roster_complete: Optional[pd.Series] = None,
 ) -> pd.DataFrame:
-    """Compute normalized placement in [0, 1] according to Research Spec §14.
-
-    Formula:
-      normalized_placement = 1.0 - (team_placement - 1.0) / (N_teams - 1.0)
-
-    Conditions:
-      Roster verified complete, N_teams > 1, and 1 <= placement <= N_teams.
-      If conditions not met, normalized_placement is NaN and placement_valid is False.
-      Never clips invalid/out-of-bounds placements to hide errors.
-    """
-    placement = team_placement.astype("float64").values
-    n_teams = observed_team_count.astype("float64").values
-
-    valid_mask = (n_teams > 1) & (placement >= 1) & (placement <= n_teams)
-    if is_roster_complete is not None:
-        valid_mask = valid_mask & is_roster_complete.astype(bool).values
-
-    with np.errstate(divide="ignore", invalid="ignore"):
-        norm_pl = np.where(valid_mask, 1.0 - (placement - 1.0) / (n_teams - 1.0), np.nan)
-
-    return pd.DataFrame({
-        "team_placement": team_placement.values,
-        "observed_team_count": observed_team_count.values,
-        "normalized_placement": norm_pl,
-        "placement_valid": valid_mask,
-    }, index=team_placement.index)
+    """Small-frame adapter to canonical SQL; invalid values are never clipped."""
+    inputs = pd.DataFrame({
+        "team_placement": team_placement.astype("float64").to_numpy(),
+        "observed_team_count": observed_team_count.astype("float64").to_numpy(),
+        "is_roster_complete": True if is_roster_complete is None else is_roster_complete.fillna(False).astype(bool).to_numpy(),
+    })
+    with duckdb.connect(":memory:") as connection:
+        connection.register("a", inputs)
+        result = connection.execute(f"""SELECT
+            {normalized_placement_sql('a', 'a')} AS normalized_placement,
+            COALESCE({placement_valid_sql('a', 'a')}, false) AS placement_valid FROM a""").df()
+    result.index = team_placement.index
+    result.insert(0, "team_placement", team_placement.to_numpy())
+    result.insert(1, "observed_team_count", observed_team_count.to_numpy())
+    return result

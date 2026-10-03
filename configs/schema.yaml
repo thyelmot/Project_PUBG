@@ -23,11 +23,14 @@ aggregate:
     player_name: ["playerName", "player_name"]
     team_id: ["teamId", "team_id"]
     team_placement: ["teamPlacement", "team_placement"]
-  units:
+  units: {}
+  candidate_units:
     player_survive_time: "seconds"
     player_dist_walk: "meters"
     player_dist_ride: "meters"
     player_dmg: "points"
+  units_verification_status: "pending_source_or_consistency_evidence"
+  units_evidence: null
 
 deaths:
   required_columns:
@@ -49,8 +52,11 @@ deaths:
     killer_name: ["killerName", "killer_name"]
     victim_name: ["victimName", "victim_name"]
     killed_by: ["killedBy", "killed_by"]
-  units:
+  units: {}
+  candidate_units:
     time: "seconds"
+  units_verification_status: "pending_source_or_consistency_evidence"
+  units_evidence: null
 
 keys:
   player_match_key: ["match_id", "player_name"]

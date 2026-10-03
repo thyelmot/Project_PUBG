@@ -78,7 +78,8 @@ class TestNoDriveNotebooks(unittest.TestCase):
             table.parent.mkdir(parents=True)
             table.write_text("value\n1\n", encoding="utf-8")
             manifest_rel = Path("artifacts/manifests/final_results_manifest.json")
-            build_final_results_manifest(original / "artifacts", original / "reports", {}, original / manifest_rel)
+            build_final_results_manifest(original / "artifacts", original / "reports", {}, original / manifest_rel,
+                selected_artifacts={"tables": {table.name: table}})
             moved = Path(directory) / "moved"
             original.rename(moved)
             self.assertEqual(verify_final_manifest_integrity(moved / manifest_rel), (True, []))

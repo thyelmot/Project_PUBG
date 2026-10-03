@@ -5,6 +5,10 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Environment / local configs
+.env.*
+*.pem
+credentials*.json
+secrets*.json
 .env
 *.token
 *.key
@@ -20,6 +24,11 @@ data/processed/*
 # Checkpoint staging & large experiment artifacts
 artifacts/checkpoints/*.tmp
 artifacts/checkpoints/staging/
+artifacts/experiments/
+artifacts/metrics/
+artifacts/logs/temp/
+*.partial
+*.ready.json
 artifacts/checkpoints/
 artifacts/backups/
 artifacts/models/*.joblib

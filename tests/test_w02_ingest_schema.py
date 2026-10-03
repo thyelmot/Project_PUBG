@@ -2,8 +2,10 @@
 
 import json
 import shutil
+import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -13,6 +15,7 @@ import pyarrow.parquet as pq
 
 from src.data.batch_ingest import convert_csv_batches, ingest_sources, finalize_ingest
 from src.data.inventory import inventory_sources, update_inventory_with_staged_counts
+from src.data.download_data import download_configured_shards
 from src.data.io import get_duckdb_connection, read_json
 from src.data.schema import validate_shard_schema, generate_schema_report
 from src.utils.config import load_config, resolve_paths
@@ -82,6 +85,44 @@ class TestW02Inventory(unittest.TestCase):
         self.assertIsNone(s_info["download_date"])
         self.assertIsNone(s_info["version"])
 
+    def test_source_info_preserves_only_explicit_provenance(self):
+        configured = {
+            "source": {
+                "dataset_version": 3,
+                "download_date": "2026-09-30T00:00:00Z",
+                "archive_url": "https://example.test/data.zip",
+                "metadata_source": "https://example.test/catalog",
+                "metadata_checked_at": "2026-09-30",
+            }
+        }
+        inv = inventory_sources(
+            self.raw_dir, ["**/agg_match_stats*.csv"], ["**/kill_match_stats*.csv"],
+            con=self.con, compute_hash=True, data_cfg=configured,
+        )
+        self.assertEqual(inv["source_info"]["version"], 3)
+        self.assertEqual(inv["source_info"]["download_date"], "2026-09-30T00:00:00Z")
+        self.assertEqual(inv["aggregate_shards"][0]["checksum_algorithm"], "sha256")
+
+    def test_configured_shard_urls_use_safe_names(self):
+        source = {
+            "agg_urls": [{"url": "https://example.test/a", "filename": "agg_match_stats_0.csv"}],
+            "kill_urls": ["https://example.test/data.csv"],
+            "expected_checksums": {},
+        }
+        def fake_download(url, target, checksum, temp_dir=None):
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("header\n", encoding="utf-8")
+            return target
+        with patch("src.data.download_data.download_file_with_checksum", side_effect=fake_download):
+            result = download_configured_shards(source, self.raw_dir)
+        self.assertEqual(result["aggregate"][0].name, "agg_match_stats_0.csv")
+        self.assertEqual(result["deaths"][0].name, "kill_match_stats_000.csv")
+        bad = {"agg_urls": [{"url": "https://example.test/a", "filename": "../escape.csv"}]}
+        with self.assertRaisesRegex(ValueError, "Unsafe"):
+            download_configured_shards(bad, self.raw_dir, ["aggregate"])
+        wrong_prefix = {"agg_urls": [{"url": "https://example.test/a", "filename": "data.csv"}]}
+        with self.assertRaisesRegex(ValueError, "must match"):
+            download_configured_shards(wrong_prefix, self.raw_dir, ["aggregate"])
     def test_update_inventory_with_staged_counts(self):
         inv = {
             "aggregate_shards": [{"filename": "agg_0.csv", "relative_path": "aggregate/agg_0.csv", "row_count": -1}],
@@ -134,6 +175,11 @@ class TestW02SchemaValidation(unittest.TestCase):
         self.assertEqual(res["column_mapping"]["matchId"], "match_id")
         self.assertEqual(res["column_mapping"]["playerName"], "player_name")
 
+    def test_validate_shard_schema_rejects_alias_collision(self):
+        cols = ["match_id", "matchId", "player_name", "player_kills", "player_survive_time", "team_placement"]
+        res = validate_shard_schema(cols, self.required_agg, self.aliases)
+        self.assertFalse(res["is_valid"])
+        self.assertEqual(res["alias_collisions"]["match_id"], ["match_id", "matchId"])
     def test_validate_shard_schema_missing_required_column(self):
         cols = ["match_id", "player_kills"]  # missing player_name, survive_time, team_placement
         res = validate_shard_schema(cols, self.required_agg, self.aliases)
@@ -160,6 +206,7 @@ class TestW02SchemaValidation(unittest.TestCase):
         self.assertFalse(rep["all_shards_valid"])
         self.assertEqual(rep["summary"]["valid_shards"], 1)
         self.assertEqual(rep["summary"]["invalid_shards"], 1)
+        self.assertIn("units_verification_status", rep["tables"]['aggregate'])
 
 
 class TestW02BatchIngestReconciliation(unittest.TestCase):
@@ -275,6 +322,86 @@ class TestW02BatchIngestReconciliation(unittest.TestCase):
         audit = result_meta["parse_audit"]
         self.assertEqual(len(audit["player_name"]["sample_parse_errors"]), 0)
 
+
+class TestNotebook01Execution(unittest.TestCase):
+    def test_actual_notebook_runs_in_isolated_runtime_workspace(self):
+        root = Path(__file__).resolve().parent.parent
+        notebook = root / "notebooks" / "01_download_validate.ipynb"
+        document = json.loads(notebook.read_text(encoding="utf-8"))
+        markdown = "\n".join("".join(cell["source"]) for cell in document["cells"] if cell["cell_type"] == "markdown")
+        for marker in ("Bối cảnh khoa học", "Phương pháp ingest", "Provenance", "Schema, alias", "Trực quan kiểm toán", "Gate G1", "giới hạn", "bàn giao"):
+            self.assertIn(marker, markdown)
+        self.assertNotIn("Tai du lieu", markdown)
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory)
+            raw = workspace / "Data_PUBG"
+            (raw / "aggregate").mkdir(parents=True)
+            (raw / "deaths").mkdir()
+            base = {
+                "date": ["2017-11-20T10:00:00+0000", "2017-11-20T10:01:00+0000"],
+                "game_size": [100, 100], "match_id": ["m1", "m1"],
+                "match_mode": ["tpp", "tpp"], "party_size": [4, 4],
+                "player_assists": [0, 1], "player_dbno": [0, 0],
+                "player_dist_ride": [0.0, 50.0], "player_dist_walk": [100.0, 200.0],
+                "player_dmg": [50.0, 150.0], "player_kills": [0, 2],
+                "player_name": ["Alice", "Bob"], "player_survive_time": [300.0, 600.0],
+                "team_id": ["t1", "t1"], "team_placement": [10, 10],
+            }
+            pd.DataFrame(base).to_csv(raw / "aggregate" / "agg_match_stats_0.csv", index=False)
+            second = {key: list(value) for key, value in base.items()}
+            second.update({
+                "date": ["2017-11-21T10:00:00+0000", "2017-11-21T10:01:00+0000"],
+                "match_id": ["m2", "m2"], "player_name": ["Carol", "Dan"],
+                "player_dmg": ["", 30.0], "player_kills": ["bad", 1],
+                "team_id": ["t2", "t2"], "team_placement": [20, 20],
+            })
+            pd.DataFrame(second).to_csv(raw / "aggregate" / "agg_match_stats_1.csv", index=False)
+            pd.DataFrame({
+                "match_id": ["m1"], "time": [250.0], "killer_name": ["Bob"],
+                "victim_name": ["Charlie"], "killed_by": ["AKM"],
+            }).to_csv(raw / "deaths" / "kill_match_stats_final_0.csv", index=False)
+            program = '''import json, sys
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
+nb = json.load(open(sys.argv[1], encoding="utf-8"))
+scope = {"PUBG_INSTALL_DEPENDENCIES": False, "PUBG_BATCH_ROWS": 2, "__name__": "__main__"}
+for index, cell in enumerate(nb["cells"]):
+    if cell["cell_type"] == "code":
+        exec(compile("".join(cell["source"]), f"notebook01-cell-{index}", "exec"), scope)
+        if "storage-options" in cell.get("metadata", {}).get("tags", []):
+            scope.update(PUBG_STORAGE_MODE="runtime", PUBG_REQUIRE_EXISTING_PROJECT=False)
+'''
+            run = subprocess.run(
+                [sys.executable, "-c", program, str(notebook)], cwd=workspace,
+                capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120,
+            )
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+            for marker in (
+                "BẢNG 01-A", "BẢNG 01-B1", "BẢNG 01-B2", "BẢNG 01-C",
+                "BẢNG 01-D", "BẢNG 01-E", "BẢNG 01-F", "BẢNG 01-G",
+                "BẢNG 01-H", "HÌNH V01-01", "HÌNH V01-02", "Gate G1 hoàn tất",
+            ):
+                self.assertIn(marker, run.stdout)
+            inventory_path = next(workspace.rglob("source_inventory.json"))
+            project = inventory_path.parents[2]
+            inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+            manifest = json.loads((project / "data" / "interim" / "staging_shards" / "batch_manifest.json").read_text(encoding="utf-8"))
+            parse_report = json.loads(next(workspace.rglob("schema_parse_report.json")).read_text(encoding="utf-8"))
+            checkpoints = json.loads(next(workspace.rglob("checkpoint_manifest.json")).read_text(encoding="utf-8"))
+            self.assertEqual(len(inventory["aggregate_shards"]), 2)
+            self.assertEqual(manifest["row_reconciliation"]["rows_read"], 5)
+            self.assertTrue(manifest["row_reconciliation"]["is_reconciled"])
+            self.assertGreater(parse_report["column_summary"]["player_dmg"]["original_missing"], 0)
+            self.assertGreater(parse_report["column_summary"]["player_kills"]["parse_errors"], 0)
+            notebook_stage = checkpoints["stages"]["notebook/01_download_validate.ipynb"]
+            self.assertEqual(notebook_stage["status"], "completed")
+            self.assertIn("shard_scale_figure", notebook_stage["artifacts"])
+            self.assertIn("missing_parse_figure", notebook_stage["artifacts"])
+            for name in ("nb01_shard_scale.png", "nb01_missing_vs_parse.png"):
+                figure = next(workspace.rglob(name))
+                self.assertEqual(figure.read_bytes()[:8], b"\x89PNG\r\n\x1a\n")
+            self.assertTrue(any(workspace.rglob("schema_report.json")))
+            self.assertTrue(any(workspace.rglob("schema_parse_report.json")))
 
 if __name__ == "__main__":
     unittest.main()

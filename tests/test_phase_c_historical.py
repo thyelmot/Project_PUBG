@@ -1,4 +1,6 @@
-"""Unit tests for Section 20 Phase C: Historical Features, Gate G7, and Leakage Auditing."""
+"""Fixture tests for historical windows and the G3 threshold decision."""
+import json
+from unittest.mock import Mock
 import unittest
 import tempfile
 from pathlib import Path
@@ -44,6 +46,9 @@ class TestPhaseCHistorical(unittest.TestCase):
             "player_survive_time": [500.0, 1000.0, 1200.0, 300.0, 1500.0],
             "normalized_placement": [0.3, 0.6, 0.8, 0.1, 0.95],
         }
+        self.availability = {"status": "verified", "evidence": "Synthetic fixture only: instantaneous completed matches",
+            "policy": "explicit_columns", "timestamp_semantics": "prediction_and_statistic_availability",
+            "prediction_column": "date", "available_column": "date"}
         self.df = pd.DataFrame(data)
         self.source_pq = self.root / "player_match_features.parquet"
         self.df.to_parquet(self.source_pq, index=False)
@@ -61,6 +66,7 @@ class TestPhaseCHistorical(unittest.TestCase):
             out_pq,
             chronology_grade="Grade B",
             min_history_threshold=1,
+            availability_config=self.availability,
         )
         self.assertEqual(res["status"], "completed")
 
@@ -95,6 +101,7 @@ class TestPhaseCHistorical(unittest.TestCase):
             out_pq,
             chronology_grade="Grade B",
             min_history_threshold=1,
+            availability_config=self.availability,
         )
         hist_df = pd.read_parquet(out_pq)
         cold_start_rows = hist_df[hist_df["hist_games_played"] == 0]
@@ -105,8 +112,8 @@ class TestPhaseCHistorical(unittest.TestCase):
             self.assertTrue(pd.isna(row["hist_survive_mean"]))
             self.assertTrue(pd.isna(row["hist_placement_mean"]))
 
-    def test_gate_g7_when_threshold_is_none(self):
-        """Test that when min_history_threshold is None, diagnostics are run and Gate G7 is pending."""
+    def test_threshold_pending_when_threshold_is_none(self):
+        """An unspecified threshold never selects an implicit default."""
         out_pq = self.root / "hist_gate_g7.parquet"
         cov_csv = self.root / "history_coverage.csv"
         audit_csv = self.root / "leakage_audit.csv"
@@ -120,13 +127,23 @@ class TestPhaseCHistorical(unittest.TestCase):
             coverage_table_path=cov_csv,
             leakage_audit_path=audit_csv,
         )
-        self.assertEqual(res["gate_status"], "G7_PENDING")
-        self.assertTrue(cov_csv.is_file())
-        self.assertTrue(audit_csv.is_file())
-
+        self.assertEqual(res["status"], "pending")
+        self.assertEqual(res["decision_gate"], "G3")
+        self.assertEqual(res["reason_code"], "minimum_history_threshold_pending")
+        self.assertFalse(out_pq.exists())
+        self.assertFalse(audit_csv.exists())
+        compute_history_depth_diagnostics(self.con, self.source_pq, cov_csv,
+            chronology_grade="Grade B", availability_config=self.availability)
         cov_df = pd.read_csv(cov_csv)
         self.assertIn("threshold", cov_df.columns)
         self.assertIn("eligible_rows", cov_df.columns)
+
+    def test_invalid_threshold_rejected_before_writing(self):
+        output = self.root / "invalid.parquet"
+        for threshold in [0, -1, True, 1.5, "2"]:
+            with self.subTest(threshold=threshold), self.assertRaises(ValueError):
+                build_historical_features(self.con, self.source_pq, output, "Grade B", threshold)
+            self.assertFalse(output.exists())
 
     def test_grade_c_blocking_and_manifest_recording(self):
         """Test that Chronology Grade C safely blocks S2 and P3 tasks in registry and checkpoints."""
@@ -147,7 +164,7 @@ class TestPhaseCHistorical(unittest.TestCase):
 
         self.assertEqual(res["status"], "blocked")
         self.assertEqual(res["reason_code"], "blocked_by_chronology")
-        self.assertTrue(out_pq.is_file())  # Feasibility dataset is still generated for audit
+        self.assertFalse(out_pq.exists())  # Grade C has status/audit, never a fake dataset
 
         # Verify registry tasks updated to blocked
         s2 = reg.get("s2_historical_survival")
@@ -172,11 +189,12 @@ class TestPhaseCHistorical(unittest.TestCase):
             out_pq,
             chronology_grade="Grade B",
             min_history_threshold=1,
+            availability_config=self.availability,
             leakage_audit_path=audit_csv,
         )
         audit_df = pd.read_csv(audit_csv)
-        self.assertEqual(audit_df.loc[0, "audit_status"], "PASSED")
-        self.assertEqual(audit_df.loc[0, "leakage_count"], 0)
+        self.assertTrue((audit_df["status"] == "PASSED").all())
+        self.assertEqual(audit_df["observed_violations"].sum(), 0)
 
 
 if __name__ == "__main__":

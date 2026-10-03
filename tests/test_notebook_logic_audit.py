@@ -29,19 +29,22 @@ class TestNotebookLogicAudit(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             manifest = Path(directory) / "checkpoint.json"
             manager = CheckpointManager(manifest)
+            artifacts = {}
             for name, dependencies in [("01", []), ("02", ["01"]), ("04", ["02"])]:
+                artifacts[name] = Path(directory) / f"{name}.txt"
+                artifacts[name].write_text("ok", encoding="utf-8")
                 manager.begin_notebook(name, dependencies)
-                manager.commit("notebook/" + name, "notebook_v1", {})
+                manager.commit("notebook/" + name, "notebook_v1", {"stage": artifacts[name]})
             manager.begin_notebook("01", [])  # Rerun fails after marking running.
             restored = CheckpointManager(manifest)
             with self.assertRaisesRegex(RuntimeError, "01"):
                 restored.begin_notebook("02", ["01"])
             self.assertEqual(restored.load_manifest()["stages"]["notebook/04"]["status"], "stale")
-            restored.commit("notebook/01", "notebook_v1", {})
+            restored.commit("notebook/01", "notebook_v1", {"stage": artifacts["01"]})
             with self.assertRaisesRegex(RuntimeError, "02"):
                 restored.begin_notebook("04", ["02"])
             restored.begin_notebook("02", ["01"])
-            restored.commit("notebook/02", "notebook_v1", {})
+            restored.commit("notebook/02", "notebook_v1", {"stage": artifacts["02"]})
             restored.begin_notebook("04", ["02"])
 
     def test_download_uses_local_file_and_rejects_truncated_response(self):
@@ -134,7 +137,8 @@ class TestNotebookLogicAudit(unittest.TestCase):
             models.mkdir()
             (models / "model.uploading_123").write_bytes(b"partial")
             manifest = root / "artifacts/manifests/final.json"
-            locked = build_final_results_manifest(root / "artifacts", root / "reports", {"p2": "p2_linear"}, manifest)
+            locked = build_final_results_manifest(root / "artifacts", root / "reports", {"p2": "p2_linear"}, manifest,
+                selected_artifacts={"predictions": {predictions.name: predictions}})
             self.assertIn(predictions.name, locked["predictions"])
             self.assertFalse(locked["models"])
             self.assertTrue(verify_final_manifest_integrity(manifest)[0])

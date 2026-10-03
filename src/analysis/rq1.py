@@ -39,6 +39,7 @@ def run_rq1_analysis(
     registry: FeatureRegistry,
     output_table_path: Path,
     min_observations_per_mode: int = 20,
+    analysis_scope: str = "unspecified",
 ) -> pd.DataFrame:
     """Execute complete RQ1 association analysis across outcomes and modes.
 
@@ -63,11 +64,18 @@ def run_rq1_analysis(
         if "team_size_mode" in schema:
             clean_df = read_parquet_df(parquet_path, columns=["team_size_mode"])
             mode_map = {"solo": "Solo", "duo": "Duo", "squad": "Squad"}
-            clean_df["mode_label"] = clean_df["team_size_mode"].astype(str).str.lower().map(lambda x: mode_map.get(x, f"Other_{x}"))
+            normalized_mode = clean_df["team_size_mode"].astype("string").str.lower()
+            unknown = sorted(set(normalized_mode.dropna()) - set(mode_map))
+            if unknown:
+                raise ValueError(f"Unverified team_size_mode values: {unknown}")
+            clean_df["mode_label"] = normalized_mode.map(mode_map)
         elif "party_size" in schema:
             clean_df = read_parquet_df(parquet_path, columns=["party_size"])
             mode_map = {1: "Solo", 2: "Duo", 4: "Squad"}
-            clean_df["mode_label"] = clean_df["party_size"].map(lambda x: mode_map.get(x, f"Other_{x}"))
+            unknown = sorted(set(clean_df["party_size"].dropna()) - set(mode_map))
+            if unknown:
+                raise ValueError(f"Unverified party_size values: {unknown}")
+            clean_df["mode_label"] = clean_df["party_size"].map(mode_map)
         else:
             clean_df = pd.DataFrame(index=pd.RangeIndex(pq.ParquetFile(parquet_path).metadata.num_rows))
             clean_df["mode_label"] = "Overall"
@@ -75,10 +83,17 @@ def run_rq1_analysis(
         clean_df = df.copy()
         if "team_size_mode" in clean_df.columns:
             mode_map = {"solo": "Solo", "duo": "Duo", "squad": "Squad"}
-            clean_df["mode_label"] = clean_df["team_size_mode"].astype(str).str.lower().map(lambda x: mode_map.get(x, f"Other_{x}"))
+            normalized_mode = clean_df["team_size_mode"].astype("string").str.lower()
+            unknown = sorted(set(normalized_mode.dropna()) - set(mode_map))
+            if unknown:
+                raise ValueError(f"Unverified team_size_mode values: {unknown}")
+            clean_df["mode_label"] = normalized_mode.map(mode_map)
         elif "party_size" in clean_df.columns:
             mode_map = {1: "Solo", 2: "Duo", 4: "Squad"}
-            clean_df["mode_label"] = clean_df["party_size"].map(lambda x: mode_map.get(x, f"Other_{x}"))
+            unknown = sorted(set(clean_df["party_size"].dropna()) - set(mode_map))
+            if unknown:
+                raise ValueError(f"Unverified party_size values: {unknown}")
+            clean_df["mode_label"] = clean_df["party_size"].map(mode_map)
         else:
             clean_df["mode_label"] = "Overall"
 
@@ -132,6 +147,7 @@ def run_rq1_analysis(
             if assoc_df.empty:
                 continue
             assoc_df["mode"] = mode
+            assoc_df["analysis_scope"] = analysis_scope
             # Attach feature group
             assoc_df["group"] = assoc_df["feature"].apply(
                 lambda f_name: registry.get(f_name).group if registry.get(f_name) else "unknown"
@@ -140,16 +156,16 @@ def run_rq1_analysis(
 
     if not all_results:
         final_table = pd.DataFrame(columns=[
-            "feature", "group", "target", "mode", "n_observations", "pearson_r", "pearson_pvalue",
-            "spearman_rho", "spearman_pvalue", "is_primary_valid", "target_derived", "notes"
+            "feature", "group", "target", "mode", "analysis_scope", "n_observations", "pearson_r", "pearson_pvalue",
+            "spearman_rho", "spearman_pvalue", "status", "is_primary_valid", "target_derived", "notes"
         ])
     else:
         final_table = pd.concat(all_results, ignore_index=True)
         # Reorder columns
         cols = [
-            "feature", "group", "target", "mode", "n_observations",
+            "feature", "group", "target", "mode", "analysis_scope", "n_observations",
             "pearson_r", "pearson_pvalue", "spearman_rho", "spearman_pvalue",
-            "is_primary_valid", "target_derived", "notes"
+            "status", "is_primary_valid", "target_derived", "notes"
         ]
         final_table = final_table[[c for c in cols if c in final_table.columns]]
 
@@ -167,11 +183,17 @@ def generate_rq1_interpretations(
         "primary_findings": {},
         "divergences_linear_vs_monotonic": [],
         "mode_variations": [],
+        "analysis_scope": sorted(rq1_df["analysis_scope"].dropna().astype(str).unique().tolist()) if "analysis_scope" in rq1_df else ["unspecified"],
+        "population": "Eligible player-match rows within the declared analysis scope; repeated players and shared team outcomes are not independent units.",
+        "confounders": ["opportunity_time", "repeated_player", "shared_team_outcome", "mode_and_match_conditions"],
         "methodological_limitations": [
             "Repeated player observations: Several players contribute multiple matches, which violates the strict independent and identically distributed (i.i.d.) assumption.",
             "Opportunity time bias: Players who survive longer naturally have more game time to accumulate kills, damage, and distance.",
             "Observational nature: All coefficients represent observed statistical associations, not causal relationships.",
             "D01 Disclosure: Phase timing features are excluded from primary survival predictors to prevent indirect leakage from duration proxy.",
+            "Repeated team outcome: Multiple player rows can share one team placement, so row-level associations do not imply independent team outcomes.",
+            "Multiple testing: Many feature-target-mode pairs are inspected; p-values are descriptive and are not used alone to claim strong evidence.",
+            "Retrospective scope: Current-match variables are observed after or during the match and do not establish prospective utility.",
         ],
     }
 
@@ -195,6 +217,8 @@ def generate_rq1_interpretations(
                     "spearman_rho": round(float(row["spearman_rho"]), 4),
                     "strength": classify_correlation_strength(row["pearson_r"]),
                     "n_observations": int(row["n_observations"]),
+                    "direction": "positive" if row["pearson_r"] > 0 else "negative",
+                    "analysis_scope": row.get("analysis_scope", "unspecified"),
                 }
                 for _, row in top_features.iterrows()
             ]
@@ -214,7 +238,25 @@ def generate_rq1_interpretations(
             "pearson_r": round(float(row["pearson_r"]), 4),
             "spearman_rho": round(float(row["spearman_rho"]), 4),
             "difference": round(float(abs(row["spearman_rho"] - row["pearson_r"])), 4),
-            "interpretation": "Non-linear monotonic relationship indicated by rank correlation exceeding linear correlation.",
+            "interpretation": "Pearson and Spearman differ materially; inspect non-linearity, outliers, and ties before interpretation.",
+        })
+
+    valid_modes = rq1_df[
+        (rq1_df["mode"] != "Overall") & rq1_df["is_primary_valid"].eq(True) & rq1_df["pearson_r"].notna()
+    ]
+    for (target, feature), group in valid_modes.groupby(["target", "feature"]):
+        if group["mode"].nunique() < 2:
+            continue
+        strongest = group.loc[group["pearson_r"].abs().idxmax()]
+        weakest = group.loc[group["pearson_r"].abs().idxmin()]
+        interpretations["mode_variations"].append({
+            "target": target,
+            "feature": feature,
+            "strongest_mode": strongest["mode"],
+            "strongest_pearson_r": round(float(strongest["pearson_r"]), 4),
+            "weakest_mode": weakest["mode"],
+            "weakest_pearson_r": round(float(weakest["pearson_r"]), 4),
+            "absolute_magnitude_gap": round(float(abs(strongest["pearson_r"]) - abs(weakest["pearson_r"])), 4),
         })
 
     if output_json_path is not None:

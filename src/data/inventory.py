@@ -79,7 +79,10 @@ def inventory_sources(
                         "relative_path": name,
                         "byte_size": member.file_size,
                         "compressed_size": member.compress_size,
-                        "crc32": str(member.CRC),
+                        "crc32": f"{member.CRC:08x}",
+                        "checksum": f"{member.CRC:08x}",
+                        "checksum_algorithm": "crc32",
+                        "source_url": source_cfg.get("archive_url"),
                         "row_count": -1,  # Ingest will count rows via streaming
                         "status": "valid",
                     })
@@ -91,7 +94,10 @@ def inventory_sources(
                         "relative_path": name,
                         "byte_size": member.file_size,
                         "compressed_size": member.compress_size,
-                        "crc32": str(member.CRC),
+                        "crc32": f"{member.CRC:08x}",
+                        "checksum": f"{member.CRC:08x}",
+                        "checksum_algorithm": "crc32",
+                        "source_url": source_cfg.get("archive_url"),
                         "row_count": -1,
                         "status": "valid",
                     })
@@ -103,8 +109,13 @@ def inventory_sources(
         "archive_path": str(detected_archive) if detected_archive else None,
         "archive_sha256": source_cfg.get("archive_sha256"),
         "archive_size_bytes": detected_archive.stat().st_size if detected_archive else source_cfg.get("archive_size_bytes"),
-        "download_date": None,  # Strictly recorded only when verified; never speculated
-        "version": None,        # Version is null when unversioned/unverified
+        "source_url": source_cfg.get("archive_url"),
+        "aggregate_urls": source_cfg.get("agg_urls", []),
+        "death_urls": source_cfg.get("kill_urls", []),
+        "download_date": source_cfg.get("download_date"),
+        "version": source_cfg.get("dataset_version"),
+        "metadata_source": source_cfg.get("metadata_source"),
+        "metadata_checked_at": source_cfg.get("metadata_checked_at"),
         "storage_format": storage_format,
     }
 
@@ -140,6 +151,9 @@ def inventory_sources(
                 "relative_path": str(file_path.relative_to(raw_dir)),
                 "byte_size": size,
                 "sha256": checksum,
+                "checksum": checksum,
+                "checksum_algorithm": "sha256",
+                "source_url": None,
                 "row_count": row_count,
                 "status": "valid" if row_count > 0 else "error",
             })
@@ -161,6 +175,9 @@ def inventory_sources(
                 "relative_path": str(file_path.relative_to(raw_dir)),
                 "byte_size": size,
                 "sha256": checksum,
+                "checksum": checksum,
+                "checksum_algorithm": "sha256",
+                "source_url": None,
                 "row_count": row_count,
                 "status": "valid" if row_count > 0 else "error",
             })
@@ -179,11 +196,14 @@ def update_inventory_with_staged_counts(
 ) -> Dict[str, Any]:
     """Synchronize actual row counts from staged batch manifest into source inventory."""
     shard_rows = {}
+    shard_records = {}
     for s in manifest.get("shards", []):
         src = s.get("source", "")
         rows = s.get("rows", 0)
         shard_rows[src] = rows
         shard_rows[Path(src).name] = rows
+        shard_records[src] = s
+        shard_records[Path(src).name] = s
 
     total_agg = 0
     for s in inventory.get("aggregate_shards", []):
@@ -193,6 +213,12 @@ def update_inventory_with_staged_counts(
             s["row_count"] = shard_rows[rel]
         elif name in shard_rows:
             s["row_count"] = shard_rows[name]
+        staged = shard_records.get(rel) or shard_records.get(name)
+        if staged:
+            s["staged_file"] = staged.get("file")
+            s["staged_sha256"] = staged.get("sha256")
+            s["schema_validation"] = staged.get("schema_validation", {})
+            s["parse_audit"] = staged.get("parse_audit", {})
         if s.get("row_count", -1) > 0:
             s["status"] = "valid"
             total_agg += s["row_count"]
@@ -205,6 +231,12 @@ def update_inventory_with_staged_counts(
             s["row_count"] = shard_rows[rel]
         elif name in shard_rows:
             s["row_count"] = shard_rows[name]
+        staged = shard_records.get(rel) or shard_records.get(name)
+        if staged:
+            s["staged_file"] = staged.get("file")
+            s["staged_sha256"] = staged.get("sha256")
+            s["schema_validation"] = staged.get("schema_validation", {})
+            s["parse_audit"] = staged.get("parse_audit", {})
         if s.get("row_count", -1) > 0:
             s["status"] = "valid"
             total_kill += s["row_count"]

@@ -10,6 +10,9 @@ combat_timing:
   early_cutoff: 0.3333333333
   mid_cutoff: 0.6666666667
   min_valid_duration_seconds: 60.0
+  min_valid_duration_status: "pending_real_data_evidence"
+  event_time_unit_status: "pending_source_or_consistency_evidence"
+  enemy_kill_eligibility_status: "pending_team_or_cause_evidence"
 
 transforms:
   log_transform_features: [] # TBD: Decided in EDA (Notebook 05)

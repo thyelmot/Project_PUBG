@@ -1,158 +1,132 @@
-# PUBG — Hai chế độ chạy notebook trên Google Colab
+# Nghiên cứu khai phá dữ liệu PUBG
 
-Mọi thay đổi của dự án được ghi tại [CHANGELOG_FIXES.md](CHANGELOG_FIXES.md). Trước khi sửa phải đối chiếu [đặc tả nghiên cứu](PUBG_RESEARCH_SPEC.md) và [kế hoạch triển khai](PUBG_IMPLEMENTATION_PLAN.md).
+Cập nhật 03/10/2026, giai đoạn15. [Đặc tả v3.0](PUBG_RESEARCH_SPEC.md) là nguồn quyết định; [kế hoạch](PUBG_IMPLEMENTATION_PLAN.md) và [nhật ký](CHANGELOG_FIXES.md) lưu bằng chứng. Code/fixture không phải kết quả nghiên cứu. G0 chỉ công nhận khi đủ QA; G1-G5 production và giai đoạn16 còn chờ dữ liệu thật.
 
-## Tài liệu và đợt triển khai hiện hành, cập nhật 29/09/2026
+## I. Mục tiêu, phạm vi và cấu trúc
 
-[Kế hoạch thống nhất](PUBG_IMPLEMENTATION_PLAN.md) chứa toàn bộ yêu cầu theo giai đoạn 0-16. Đọc [quy tắc tích theo bằng chứng](PUBG_IMPLEMENTATION_PLAN.md#tracking-rules), rồi kiểm tra từ [giai đoạn 0](PUBG_IMPLEMENTATION_PLAN.md#phase-0). Ô chưa tích nghĩa là chưa được tái nghiệm thu trong bản mới, không có nghĩa code chưa tồn tại.
+| Câu hỏi | Đơn vị | Kết quả đọc |
+| --- | --- | --- |
+| RQ1: hành vi liên hệ survival/placement thế nào? | Người chơi-trận | Pearson/Spearman, N, mode, primary/diagnostic |
+| RQ2: những kiểu hành vi nào? | Hồ sơ người chơi-mode | C1-C5, centers/sizes, stability, outcome sau clustering |
+| RQ3: dự đoán survival/placement? | Người chơi-trận hoặc history | Baseline mean/median, linear, S/P/T/ablation, lỗi và CI |
 
-Hoàn thiện code và kiểm thử toàn bộ notebook 00-12 trước G0, sau đó chạy dữ liệu thật theo thứ tự. Dùng Drive, batch 50000, require-existing true, per_mode và GPU cho huấn luyện có hỗ trợ. Không chạy All-in-One, kể cả test gọi nó; chọn kiểm thử theo [giai đoạn 15](PUBG_IMPLEMENTATION_PLAN.md#phase-15). Hướng dẫn All-in-One và kết quả test cũ bên dưới là lịch sử, không áp dụng như lệnh thực thi của đợt hiện hành.
+Combat Timing là phần mở rộng chính. Current-match là hồi cứu; history chỉ là dự đoán tương lai khi chronology/availability hợp lệ. Association không chứng minh nhân quả, R² không phải accuracy. Không thêm deep learning/ranking/spatial mining hoặc causal inference vào core.
 
-| Tài liệu | Vai trò |
-|---|---|
-| Đặc tả nghiên cứu | Mục tiêu và protocol chính thức |
-| Kế hoạch triển khai thống nhất | Nguồn kế hoạch duy nhất, công việc và điều kiện nghiệm thu |
-| [TEAM_DRIVE.md](TEAM_DRIVE.md) | Chạy nối tiếp, bàn giao và phục hồi |
-| [NOTEBOOK_CELL_GUIDE.md](NOTEBOOK_CELL_GUIDE.md) | Giải thích cell |
-| [RQ2_RUN_GUIDE.md](RQ2_RUN_GUIDE.md) | Gates và cách chạy RQ2 |
-| [GPU_PER_MODE_GUIDE.md](GPU_PER_MODE_GUIDE.md) | Đồng bộ file, per_mode và GPU |
-| CHANGELOG_FIXES.md | Lịch sử thay đổi/kiểm thử, chỉ ghi nối tiếp |
-| literature_mapping và traceability_matrix | Căn cứ nghiên cứu và truy vết |
+```text
+Project_PUBG/
+  configs/       cấu hình và quyết định
+  notebooks/     00-12, điều phối và trình bày
+  src/           công thức, xử lý, huấn luyện, kiểm chứng
+  tests/         fixture, leakage, gates và resume
+  data/          raw, interim, processed
+  artifacts/     checkpoints, manifests, models, experiments, logs
+  reports/       tables và appendix
+  figures/       theo paths["figures"] đã resolve
+```
 
-Thông tin/test ngày 25/09 bên dưới là lịch sử. K=4/min_games=5 không phải lựa chọn nghiên cứu mặc định; dùng diagnostics và gates theo kế hoạch. Checklist cũ và kết quả synthetic không chứng minh full-data/Drive/GPU đã được xác minh.
+Tài liệu: [TEAM_DRIVE](TEAM_DRIVE.md), [hướng dẫn cell](NOTEBOOK_CELL_GUIDE.md), [RQ2](RQ2_RUN_GUIDE.md), [GPU](GPU_PER_MODE_GUIDE.md), [literature mapping](reports/appendix/literature_mapping.md). Literature/traceability không cho phép sao metric/ngưỡng từ L1/L2/L3.
 
-## Cách chạy cho nhóm
+## II. Chạy Colab nối tiếp và thứ tự notebook
 
-### Cách 1 — All-in-One, không dùng Drive
+Không chạy hoặc regenerate All-in-One. Mở từng notebook trong folder chung, chạy cấu hình, bootstrap, khởi tạo và các cell từ trên xuống; không bỏ qua cell đỏ. Một người ghi mỗi stage, các tab không chia sẻ RAM.
 
-1. Mở [PUBG_COLAB_ALL_IN_ONE.ipynb](notebooks/PUBG_COLAB_ALL_IN_ONE.ipynb) bằng **Colab → File → Upload notebook**.
-2. Trong cell **Chọn nơi lưu dữ liệu**, giữ `PUBG_STORAGE_MODE = "runtime"`.
-3. Chạy các cell từ trên xuống trong cùng notebook và cùng runtime. Bootstrap chỉ cài các thư viện còn thiếu, không cài lại toàn bộ môi trường Colab.
-4. Cell cuối tải `PUBG_results.zip` về máy trước khi runtime bị reset.
+```python
+PUBG_STORAGE_MODE = "drive"
+PUBG_DRIVE_PROJECT_ROOT = "/content/drive/MyDrive/PUBG_Project/Project_PUBG"
+PUBG_REQUIRE_EXISTING_PROJECT = True
+PUBG_BATCH_ROWS = 50000
+```
 
-**Nhóm chỉ cần chia sẻ notebook tổng hợp.** Mỗi người chạy runtime riêng, không truy cập Drive cá nhân của người khác. Notebook chứa snapshot code/config lúc sinh; sau khi sửa code cần chạy lại generator.
+Chủ thư mục chia sẻ Editor; thành viên thêm shortcut chính thư mục vào My Drive. Cùng tên đường dẫn không chứng minh cùng Drive folder ID. Kiểm marker và đọc/ghi thực theo TEAM_DRIVE. Bootstrap không tạo project khác để che root sai. Đồng bộ source/config liên quan, giữ quyết định nhóm đã duyệt, khởi động lại runtime.
 
-### Cách 2 — 13 notebook riêng, dùng chung Google Drive
+| Notebook | Trách nhiệm và điều kiện |
+| --- | --- |
+| 00 | Config/paths/packages/hardware/snapshot/checkpoint; chưa đảm bảo tài nguyên full |
+| 01 | Public/local source, mọi shard, hash/schema/parse, typed Parquet; G1 |
+| 02 | Cleaning/ledger/roster/identity/chronology, split match; G2 trước outcome EDA |
+| 03 | Base features/target/dictionary/validation; player_match_base.parquet, không tự đạt G3 |
+| 04 | Global count/sum/min, coverage/discrepancy, safe merge; RUN-04 chặn units/eligibility/threshold pending |
+| 05 | Catalog A01-I03, tám nhóm EDA; train/validation để chọn, không tự chốt tham số |
+| 06 | RQ1 allowlists, coefficients/N/mode, coupling và limitations |
+| 07 | Development profiles/retention/stability/K, sau khóa fit full eligible descriptive per_mode; C1-C5/fitted objects |
+| 08 | Chronology/availability/threshold/protocol, strict-past history hoặc blocked/pending; feasibility khác completed history |
+| 09 | S/P baselines/candidates và T0/T1/ablation validation; nhóm duyệt G4 trước final test |
+| 10 | Saved predictions/pairing, ablation/deltas/slices/importance/CI; không train lại |
+| 11 | Explicit selection, required matrix, immutable release/final/figure manifests; integrity khác G5 |
+| 12 | Chọn release cụ thể, 12 phần chỉ đọc, reasons/findings truy nguồn; không raw/train/new run |
 
-**Nhiều thành viên chạy nối tiếp trên một thư mục:** xem [TEAM_DRIVE.md](TEAM_DRIVE.md).
-Chủ thư mục chia sẻ `PUBG_Project` với quyền Editor; thành viên thêm shortcut vào My Drive và bật `PUBG_REQUIRE_EXISTING_PROJECT = True`.
-Cùng một chuỗi đường dẫn chưa đủ: mọi người phải trỏ đến cùng thư mục gốc được chia sẻ, không dùng các bản sao riêng.
+GPU T4/cuML cho KMeans07 và OLS hỗ trợ09. NB10 đánh giá saved predictions, không cần GPU. Constants, Ward, DuckDB/EDA/evaluation CPU. Thiếu CUDA khi device=cuda phải dừng, không silent CPU fallback; fixture CPU chưa chứng minh speedup/GPU thật.
 
-1. Upload toàn bộ `Project_PUBG` lên đúng thư mục Drive dùng chung trước khi mở notebook.
-2. Mở từng notebook từ `00_setup.ipynb` đến `12_final_results_summary.ipynb`.
-3. Trong cell **Chọn nơi lưu dữ liệu**, giữ cấu hình mặc định `drive`, `PUBG_REQUIRE_EXISTING_PROJECT = True`, `PUBG_BATCH_ROWS = 50000` và cùng một `PUBG_DRIVE_PROJECT_ROOT`, mặc định `/content/drive/MyDrive/PUBG_Project/Project_PUBG`.
-4. Chấp nhận quyền mount Drive, rồi chạy notebook hiện tại từ trên xuống. Chỉ chuyển sang notebook sau khi notebook trước đã hoàn tất.
+## III. Source, persistent storage và development/full
 
-Mỗi tab Colab vẫn có biến Python riêng. Dữ liệu nối tiếp qua `data/`, `artifacts/` và `reports/` trong cùng thư mục Drive. Không chạy đồng thời hai notebook ghi vào cùng artifact.
+configs/data.yaml: source.archive_url/archive_sha256 hoặc source.agg_urls/kill_urls và checksums. Raw local có thể trỏ dữ liệu hiện hữu qua paths.yaml, không tải lại. Inventory khám phá mọi shard theo patterns. Downloader kiểm response/size/hash, từ chối HTML/login/quota giả ZIP/CSV; URL public không cấp quyền sửa Drive. Không coi mtime là download date hoặc units candidate là verified.
 
-## Dataset public
+| Vai trò | Drive | Local/runtime |
+| --- | --- | --- |
+| Raw | PROJECT_ROOT/data/raw | paths["raw"], local có thể ../Data_PUBG |
+| Interim/processed | PROJECT_ROOT/data/{interim,processed} | Paths đã resolve |
+| Checkpoints/models/metrics/manifests | PROJECT_ROOT/artifacts | Paths đã resolve, không đoán từ raw_root |
+| Tables/figures | PROJECT_ROOT/reports/tables và root hình cấu hình | paths["tables"], paths["figures"] |
+| DuckDB spill/temp | Runtime /content/temp | temp_dir của phiên |
 
-- Dataset gốc: [PUBG Match Deaths and Statistics](https://www.kaggle.com/datasets/skihikingkevin/pubg-match-deaths/data).
-- [ZIP public của nhóm](https://drive.google.com/file/d/1-NpwnrD3VlD-ZGUyyKk2TwobswwF8zAy/view).
-- URL tải và checksum: `configs/data.yaml`, mục `source`.
+runtime.mode=development dùng fixture nhỏ/root riêng/output riêng; sample là alias lịch sử không chính thức. full xử lý đủ cohort hợp lệ đã khai báo, không tự chứng nhận G5. Cùng code/caller, mode không tự lấy mẫu/cắt shard. EDA/RQ1 development loại final test dù runtime=full. Full_descriptive_locked chỉ export sau design/G4 lock ở11, không dùng chọn lại.
 
-Downloader gửi HTTP request ẩn danh tới file public, bao gồm xác nhận tải file lớn; không gọi OAuth, đọc cookies trình duyệt hoặc xin quyền Drive. Chủ file cần duy trì **Anyone with the link / Viewer** và cho phép tải. Quota vẫn có thể làm tải thất bại; code từ chối HTML đăng nhập/quota thay vì lưu nó thành ZIP.
+Reset mất RAM/temp/model chưa publish; Drive giữ artifacts đã đóng/đọc lại/commit, không bảo đảm file dở. Disk usage đo filesystem/VM, không phải quota Drive. Cộng tác qua shortcut chỉ tiếp tục khi có runtime hợp lệ, không dùng tài khoản khác để vượt giới hạn dịch vụ.
 
-Ngày 24/09/2026 đã kiểm tra URL tải ẩn danh: HTTP 200, `application/octet-stream`, Content-Length 4.399.919.847 byte và 8 byte đầu có chữ ký ZIP. Chưa tải toàn bộ bản public hoặc kiểm chứng lại SHA256 của bản public trong lần kiểm tra này.
+## IV. Thay parameter và giới hạn nghiên cứu
 
-## Lưu kết quả và reset runtime
+| Muốn thay | File config | Key | Notebook cần chạy lại |
+| --- | --- | --- | --- |
+| Nguồn/schema | data.yaml, schema.yaml | source.*, discovery.*, schema/aliases/units | 01 rồi02-12, đối soát raw riêng |
+| Storage/root | paths.yaml và cell | active_environment, environments.*, PUBG_DRIVE_PROJECT_ROOT | Bootstrap/setup; chuyển và verify artifacts trước bàn giao |
+| RAM/temp/batch | runtime.yaml và cell | duckdb.*, chunk_size, PUBG_BATCH_ROWS | Stage tương ứng, giữ mọi row/phép tính |
+| Mode mapping | preprocessing.yaml, rq2.yaml | modes.team_size_mapping, party_size_mapping | 02-12 theo dependency |
+| Chronology/split | preprocessing.yaml, rq3.yaml | chronology.grade_assignment, split.* | 02 rồi các analyses/models phụ thuộc; không resplit để xóa test exposure |
+| Base/timing | features.yaml và src/features | combat_timing.*, groups/tasks/formula | 03 hoặc04 rồi05-12; signatures phải đổi |
+| RQ2 min_games/K | rq2.yaml | minimum_games_threshold, n_clusters_by_mode, selection_reason | Diagnostics/final07 rồi11-12; không refit nhánh độc lập compatible |
+| RQ2 transform/device | rq2.yaml | scaler, log_transform_features/reason, device | 07 diagnostics/decision/final rồi11-12 |
+| History | rq3.yaml | minimum_history_threshold, historical.* | 08 diagnostics/build rồi09-12 |
+| Features/model/backend | features.yaml, models.yaml, rq3.yaml | tasks.*, transforms.*, linear.*, nonlinear_candidates.*, device | 09 development/selection, G4 mới rồi10-12 |
+| Bootstrap/bins | rq3.yaml và G4 decision | evaluation.bootstrap.*, error_bins | Duyệt trước test, G4/10 rồi11-12 |
+| Caption/style | eda.yaml, generator/helpers | catalog/plot policy | Hình/manifest/consumer tương ứng, không refit chỉ để vẽ |
 
-`configs/paths.yaml` mặc định `active_environment: auto`. Bootstrap thêm môi trường `drive` trong bộ nhớ khi người dùng chọn Drive:
+Các ngưỡng min_games/min_history, K, split, units/chronology/availability, log/outlier, final features/model/params/bins chỉ thay sau evidence đúng stage. Null dừng với diagnostics/reason; không K4/min_games5 ngầm. per_mode/batch50000/storage đã được chốt. Mọi YAML option phải kiểm caller; không suy có key là đã hỗ trợ.
 
-| Dữ liệu | Local | Colab runtime | Colab Drive |
-|---|---|---|---|
-| Raw | `../Data_PUBG` | `/content/data/raw` | `<PROJECT_ROOT>/data/raw` |
-| Interim/processed | `Project_PUBG/data/` | `/content/data/` | `<PROJECT_ROOT>/data/` |
-| Artifacts/checkpoints | `Project_PUBG/artifacts/` | `/content/Project_PUBG/artifacts/` | `<PROJECT_ROOT>/artifacts/` |
-| Reports | `Project_PUBG/reports/` | `/content/Project_PUBG/reports/` | `<PROJECT_ROOT>/reports/` |
-| Figures | `Project_PUBG/figures/` | `/content/Project_PUBG/figures/` | `<PROJECT_ROOT>/figures/` |
+Không tự đổi RQ/target/cohort/split/estimator/metric/protocol; không bỏ extreme hợp lệ để đẹp score, sample/fallback OLS sang SGD hoặc KMeans sang MiniBatch trong cùng run. SGD recipe riêng qua RAM gate hiện stream matrix dataframe, chưa raw/disk out-of-core. Median/RobustScaler streaming và XGBoost backend chưa hỗ trợ.
 
-DuckDB temp vẫn dùng `/content/temp` trong chế độ Drive để tránh ghi file tạm nặng lên Drive. Dữ liệu raw/interim/processed và kết quả chính thức được lưu bền vững trong dự án Drive.
+Leakage rules: match không giao split; transforms fit train; outcomes không input clustering/chọn K/threshold; S1 cấm survival descendants kể cả phase-duration proxy; RQ1 target-derived chỉ diagnostic; P1/P2 chỉ khác direct survival và công bố coupling còn lại. Grade B history loại cùng ngày, Grade A loại tie block/availability chưa sẵn sàng. hist_kd chưa confirmed nếu deaths chưa verified. Ablation bỏ descendants/indicators.
 
-Đĩa Colab là tạm thời, file có thể mất khi runtime reset/bị thu hồi. Lưu notebook không đồng nghĩa đã lưu dữ liệu máy ảo. [Colab FAQ](https://research.google.com/colaboratory/faq.html).
+## V. Checkpoint, stale, ghi đè và troubleshooting
 
-- ZIP mặc định chứa configs/reports/figures/artifacts; không chứa raw hoặc DuckDB temp.
-- Đặt `INCLUDE_DATA_CHECKPOINTS = True` ở cell export nếu cần thêm interim/processed; ZIP có thể rất lớn. Có thể chạy riêng cell export trước khi hoàn tất nghiên cứu.
-- ZIP mặc định chia sẻ được kết quả đã có nhưng không đủ phục hồi mọi bước dữ liệu nặng.
-- Sau reset ở chế độ runtime: mở lại notebook và chạy lại hoặc phục hồi từ ZIP đã tải. Ở chế độ Drive: mount lại đúng thư mục và chạy notebook tiếp theo.
-- Manifest kết quả mới dùng đường dẫn tương đối nên checksum verification hoạt động khi chuyển máy. Checkpoint cũ có absolute paths cần kiểm tra lại; metadata không thay thế dữ liệu thực.
+artifacts/checkpoints/checkpoint_manifest.json: chỉ reuse completed với signature/checksum/schema/count tương thích. Running/failed/blocked không completed; stale nghĩa input/config/code/split/backend liên quan đổi. Chạy lại producer/downstream cần thiết, không đổi filename để bypass. Source hash đổi có thể invalidate nhiều hơn bảng tối thiểu ở trên.
 
-## Chạy local và cập nhật notebook
+Canonical dùng staging/validate/publish/read-back/commit, không sinh (1)/(2). Locked releases ở artifacts/manifests/releases/<release_id>/ có version có chủ đích, giữ riêng. Drive upload phải cập nhật đúng file ID/version, cùng tên chưa chắc ghi đè. Sau notebook thành công lưu bản có output và thay đúng Drive/local; không thay bản tốt bằng notebook lỗi. Output notebook không thay processed/model artifacts.
+
+| Lỗi | Cần làm |
+| --- | --- |
+| RAM/VRAM | Resource status, projection/SQL/spill/batch cùng phép tính hoặc runtime phù hợp; không cắt cohort/fallback model |
+| Disk/quota | Giữ committed checkpoint, báo stage/cell/path; chỉ dọn file được phép đã kiểm, không xóa raw |
+| Reset | Mount đúng root, cấu hình/bootstrap/init rồi notebook dở; reuse compatible shard/mode/experiment, fit dở khởi động lại |
+| HTML/403/checksum | Kiểm public source/quota/hash/backup; không bỏ checksum |
+| Stale/missing | Kiểm input/config/code/checkpoint, chạy producer cần thiết; file tồn tại chưa đủ |
+| Null | Đọc diagnostics, nhóm duyệt evidence/reason/receipt đúng gate, không sao fixture choice |
+| Schema/alias/parse | Đọc schema/parse reports, sửa contract có căn cứ, không ép kiểu che lỗi |
+| Chronology/history | Grade C S2/P3 blocked/null, current task có điều kiện riêng; A/B cần availability/protocol/threshold |
+| Join/coverage | Event ledger/unmatched/discrepancy, không missing-event=no-kill hoặc clip timing |
+
+## VI. Summary, kiểm thử local và generator
+
+PUBG_SUMMARY_MANIFEST chọn snapshot cụ thể artifacts/manifests/releases/<release_id>/final_results_manifest.json hoặc canonical cụ thể và ghi release ID; không latest. Source/dependencies chuẩn bị trước; local có PUBG_SUMMARY_CODE_ROOT. Summary mount/import/read, không mkdir/install/unpack/download/pickle/current config/checkpoint/fit. Đủ12phần, reasons/null/unknown/not_in_release, figures official report_ready và findings source/SHA/run/N/CI. Fixture cần PUBG_SUMMARY_ALLOW_FIXTURE=True, không phải kết quả PUBG.
 
 ```bash
 cd Project_PUBG
 python -m pip install -r requirements.txt
-python -m jupyter notebook
+python scripts/run_phase15_tests.py
+python src/utils/generate_notebooks.py --only 03_build_player_match.ipynb
 ```
 
-Bootstrap tìm project từ cwd/thư mục cha và chuyển cwd về project; mở từ `notebooks/` vẫn hoạt động. Local không tự cài lại package mỗi lần chạy.
+Runner loại hai method thực thi All-in-One, không dùng toàn suite chưa lọc. GPU thật mặc định skip; mount mock/fault injection không chứng minh Drive thật. Log/report phase15 ở reports/appendix; số test không thay ba mặt logic/tích hợp/khả năng đọc. NB00 lưu môi trường thực; package lock Colab chỉ sau setup thành công, không giả snapshot Windows là Colab.
 
-Sau khi sửa code/config:
+NB05 lưu `eda_figure_catalog.csv` và `eda_catalog_status.csv` để tra scope/N/n/seed/quy tắc/bảng nguồn. `eda_visualization_sample.csv` là mẫu dùng vẽ, không chứa tên người chơi; hai bảng phân bố số trận/người và số đội/trận cho phép đối chiếu histogram mà không xuất danh sách định danh. Thống kê toàn scope không được thay bằng mẫu này. NB07 lưu chi tiết lấy mẫu theo mode/K và theo nhánh trong `rq2_figure_catalog.csv`, cùng CSV diagnostics/robustness gốc.
 
-```bash
-python -m src.utils.generate_notebooks
-python -m unittest discover -s tests -v
-```
-
-Generator sinh notebook riêng và tổng hợp từ cùng nội dung, chỉ nhúng code/config/tests/README/requirements, không nhúng raw, outputs, `.env` hoặc token. Bootstrap tái sử dụng project hiện có, không ghi đè cấu hình thành viên đã sửa. Muốn dùng snapshot mới trên Colab, dùng runtime sạch hoặc cập nhật code/config hiện có.
-
-## Các bước hiện có
-
-| Bước | Chức năng |
-|---|---|
-| 00 | Setup, config, paths, resource, checkpoint status |
-| 01 | Public download/local input, inventory, typed Parquet |
-| 02 | Cleaning, roster metadata, chronology diagnostic, split |
-| 03 | Khởi tạo bước base; phép tính đang gộp ở 04 |
-| 04 | Combat Timing, player-match features |
-| 05 | Distribution summary, mode comparison |
-| 06 | RQ1 Pearson/Spearman theo outcome/mode |
-| 07 | Profiles, K diagnostics, KMeans, supporting comparisons |
-| 08 | Historical features hoặc blocked khi Grade C |
-| 09 | P1/P2 linear regression, lưu predictions |
-| 10 | Group ablation, error slices |
-| 11 | Khóa checksum các bảng/model hiện có |
-| 12 | Kiểm tra checksum, xem ablation |
-| Cuối | Tải ZIP kết quả về máy |
-
-## Phạm vi và giới hạn hiện tại
-
-RQ1 nghiên cứu hành vi–outcome; RQ2 phân nhóm hành vi; RQ3 dự đoán survival/placement. [Đặc tả](PUBG_RESEARCH_SPEC.md) và [kế hoạch](PUBG_IMPLEMENTATION_PLAN.md) nêu đầy đủ mục tiêu; mã hiện tại **chưa thực hiện toàn bộ** yêu cầu đó.
-
-- Notebook 05 đọc từng feature cùng `party_size`; notebook 06 đọc từng cặp feature–target. Cả hai vẫn dùng đủ dòng và công thức exact, nên bộ nhớ vẫn tăng theo số dòng và thời gian đọc từ Drive có thể tăng.
-- Notebook 07, 09–10 còn bước nạp dữ liệu lớn vào pandas hoặc mô hình. Bỏ Drive hay giảm `PUBG_BATCH_ROWS` không giải quyết RAM của các bước này. Không tự lấy mẫu để che giới hạn tài nguyên.
-- `runtime.mode: full` mô tả đúng đường chạy hiện tại; key này không tự cắt shard hoặc lấy mẫu.
-- Notebook 02 dùng group-by-match split, chronology diagnostic giới hạn 50.000 match; chưa phải audit chronology toàn bộ.
-- Notebook 07 đang dùng min-games 5, K mặc định 4 khi K null. Đây là lựa chọn chạy thử có sẵn, chưa phải quyết định theo retention/stability; cần hoàn thiện gates trước final research run.
-- Notebook 09 mới chạy P1/P2 linear, chưa orchestration đủ S1/S2/P3/T0/T1 và baselines. Có module không đồng nghĩa đã chạy thí nghiệm.
-- Streaming model fallback, đủ tám pha EDA/biểu đồ, experiment registry và tự động resume toàn pipeline cần tiếp tục đối chiếu kế hoạch.
-- Bước 11 khóa integrity của file hiện có, không chứng nhận mọi yêu cầu G5. Không còn ghi S1 như run đã chạy khi notebook 09 chưa tạo S1.
-
-Notebook hỗ trợ cả runtime tạm không cần Drive và thư mục Drive dùng chung giữa các stage. Chưa chạy full dataset hoặc tạo metric nghiên cứu thật.
-
-## Config và xử lý lỗi
-
-| Muốn thay | Config/key | Chạy lại từ |
-|---|---|---|
-| Nguồn | `data.yaml`: `source.archive_url`, `source.archive_sha256` | 01; dùng raw directory riêng nếu đổi nguồn |
-| Nơi lưu | `paths.yaml`: `active_environment`, `environments.*` | Bootstrap/setup, chuyển outputs cần thiết trước |
-| DuckDB | `runtime.yaml`: `duckdb.memory_limit`, `duckdb.threads` | Bước DuckDB tương ứng |
-| K | `rq2.yaml`: `n_clusters` | 07, 11, 12 |
-| Feature/model/threshold khác | Kiểm tra YAML và caller | Bước liên quan/downstream; không giả mọi YAML key đã nối vào code |
-
-- Checkpoint metadata tại `artifacts/checkpoints/checkpoint_manifest.json`. Manager có API compatibility/invalidation nhưng notebook chưa tự skip/resume mọi stage.
-- **HTML/403/quota:** kiểm tra quyền public/quota hoặc thay URL/checksum; không cần cấp quyền Drive cá nhân.
-- **Thiếu CSV:** kiểm tra raw_root; discovery đệ quy cả ZIP có thêm thư mục `Data_PUBG/`.
-- **Notebook 01 bị ngắt:** chạy lại cell cấu hình, Bootstrap, khởi tạo rồi cell batch. Manifest dùng lại shard đã hoàn tất đúng checksum; shard đang dở phải chuyển đổi lại.
-- **Mất runtime:** chế độ Drive giữ file đã công bố; biến Python và file trong `/content/temp` mất. Chế độ runtime phải chạy lại hoặc phục hồi artifact đã tải về.
-- **Hết RAM:** giảm `PUBG_BATCH_ROWS` chỉ giảm RAM khi chuyển CSV sang Parquet ở notebook 01; không sửa RAM của 07, 09–10.
-- **Hết disk:** ZIP/CSV/Parquet/temp có thể cùng tồn tại; chỉ dọn file đã sao lưu/tái tạo được, code không tự xóa raw.
-- **Missing artifact ở notebook riêng:** dùng notebook tổng hợp hoặc chuyển outputs bước trước vào runtime.
-- **Checksum sai:** dừng, xác minh nguồn/backup; không bỏ qua check.
-- **Grade C:** history bị chặn; current-match vẫn có thể chạy. Thiếu thứ tự nội ngày không loại history Grade B đã xác minh.
-
-## Kiểm thử
-
-Lần kiểm tra cuối ngày 25/09/2026 chạy `python -m unittest discover -s tests -v`: **60/60 test đạt**. Suite kiểm tra notebook All-in-One trong runtime sạch, 13 notebook ở các process riêng, chạy lại cell, Drive mô phỏng, bàn giao project sang tài khoản thứ hai, ZIP/checksum, publication lỗi và tính tương đương của cách đọc từng cột ở 05/06.
-
-Các tình huống Drive/FUSE là fault injection (mô phỏng lỗi), chưa phải kiểm thử mount Google Drive thật. Synthetic smoke không tải toàn bộ dataset nhiều GB, không đo peak RAM/đĩa trên Colab và không phải kết quả nghiên cứu chính thức.
+Generator dùng --only từng file bị ảnh hưởng, backup bản có output trước sinh; không sửa tay riêng ipynb. Bundle source/config/tests/docs không raw/secrets/outputs, không tự overwrite project hiện hữu. Drive phải đồng bộ source/config trước runtime mới. Không commit raw/token/cookie/artifact lớn hoặc công bố player names không cần thiết. Chưa full dataset/peak-memory/GPU/Drive/quota thật; giai đoạn16 giữ hoãn.

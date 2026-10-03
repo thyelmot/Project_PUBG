@@ -126,10 +126,11 @@ def validate_config(cfg: Dict[str, Any], stage: Optional[str] = None) -> None:
             "Fix in configs/runtime.yaml: set random_state to 42 or another integer."
         )
     mode = runtime.get("mode")
-    if mode not in ("full", "sample"):
+    if mode not in ("full", "development", "sample"):
         raise ValueError(
-            f"runtime.mode must be 'full' or 'sample' (got {mode!r}). "
-            "Full-data runs use 'full'. Set 'sample' only for smoke tests with explicit documentation."
+            f"runtime.mode must be 'full' or 'development' (got {mode!r}). "
+            "The legacy 'sample' alias is supported for nonofficial smoke tests only. "
+            "Mode does not automatically sample data; isolate fixture inputs and outputs."
         )
     chunk_size = runtime.get("chunk_size")
     if not isinstance(chunk_size, int) or chunk_size < 1:
@@ -146,6 +147,31 @@ def validate_config(cfg: Dict[str, Any], stage: Optional[str] = None) -> None:
         raise ValueError(
             "runtime.duckdb.memory_limit must be a string (e.g. '2GB'). Fix in configs/runtime.yaml."
         )
+    if not isinstance(runtime.get("resume"), bool):
+        raise ValueError("runtime.resume must be true or false. Fix in configs/runtime.yaml.")
+    if runtime.get("storage_backend") not in ("local", "colab"):
+        raise ValueError(
+            "runtime.storage_backend must be 'local' or 'colab'. Fix in configs/runtime.yaml."
+        )
+
+    paths_cfg = cfg.get("paths", {})
+    environments = paths_cfg.get("environments")
+    if not isinstance(environments, dict) or not environments:
+        raise ValueError("paths.environments must be a non-empty mapping in configs/paths.yaml.")
+    active_environment = paths_cfg.get("active_environment")
+    if active_environment != "auto" and active_environment not in environments:
+        raise ValueError(
+            f"paths.active_environment={active_environment!r} has no matching paths.environments entry."
+        )
+    required_path_keys = {"raw_root", "data_root", "artifacts_root", "reports_root", "figures_root", "temp_dir"}
+    for environment_name, environment_paths in environments.items():
+        if not isinstance(environment_paths, dict):
+            raise ValueError(f"paths.environments.{environment_name} must be a mapping.")
+        missing_path_keys = sorted(required_path_keys - set(environment_paths))
+        if missing_path_keys:
+            raise ValueError(
+                f"paths.environments.{environment_name} is missing: {', '.join(missing_path_keys)}."
+            )
 
     # --- RQ2 required fields ---
     rq2 = cfg.get("rq2", {})
@@ -155,6 +181,12 @@ def validate_config(cfg: Dict[str, Any], stage: Optional[str] = None) -> None:
             f"rq2.mode_strategy must be one of 'overall', 'player_mode', 'per_mode' (got {mode_strategy!r}). "
             "Project has locked per_mode. Fix in configs/rq2.yaml."
         )
+    for section in ("rq2", "rq3"):
+        device = cfg.get(section, {}).get("device")
+        if device not in ("cuda", "cpu"):
+            raise ValueError(
+                f"{section}.device must be 'cuda' or 'cpu' (got {device!r}). Fix in configs/{section}.yaml."
+            )
     mode_decision_reason = rq2.get("mode_decision_reason", "")
     if not mode_decision_reason or not isinstance(mode_decision_reason, str):
         raise ValueError(
@@ -213,7 +245,7 @@ def describe_config_status(cfg: Dict[str, Any]) -> list:
         return _row(field, value, s, f"Set after {gate}")
 
     rows = [
-        _req("runtime.mode", runtime.get("mode"), "full=official run; sample=smoke test only"),
+        _req("runtime.mode", runtime.get("mode"), "full=full-input path, not G5; development/sample=nonofficial tests, no automatic sampling"),
         _req("runtime.random_state", runtime.get("random_state"), "Seed for all stochastic steps"),
         _req("runtime.chunk_size", runtime.get("chunk_size"), "Batch rows for CSV ingest"),
         _req("runtime.duckdb.threads", runtime.get("duckdb", {}).get("threads"), ""),
@@ -230,7 +262,7 @@ def describe_config_status(cfg: Dict[str, Any]) -> list:
         _pend("rq2.n_clusters_by_mode (Squad)", (rq2.get("n_clusters_by_mode") or {}).get("Squad"),
               "notebook 07 diagnostics (Gate G3)"),
         _pend("rq3.split.train_ratio", split_cfg.get("train_ratio"), "notebook 02 split (Gate G4)"),
-        _pend("rq3.split.val_ratio", split_cfg.get("val_ratio"), "notebook 02 split (Gate G4)"),
+        _pend("rq3.split.validation_ratio", split_cfg.get("validation_ratio"), "notebook 02 split (Gate G4)"),
     ]
     return rows
 

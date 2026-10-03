@@ -4,7 +4,10 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Mapping, Optional
+import pandas as pd
+
+from src.data.io import atomic_write_csv
 
 
 _LOGGERS: Dict[str, logging.Logger] = {}
@@ -70,6 +73,14 @@ def log_stage(
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "stage": stage,
         "status": status,
+        "inputs": kwargs.pop("inputs", None),
+        "outputs": kwargs.pop("outputs", None),
+        "counts": kwargs.pop("counts", None),
+        "warnings": kwargs.pop("warnings", None),
+        "config_hash": kwargs.pop("config_hash", None),
+        "version": kwargs.pop("version", None),
+        "memory_gb": kwargs.pop("memory_gb", None),
+        "disk_gb": kwargs.pop("disk_gb", None),
         **kwargs,
     }
     log.info(f"STAGE_EVENT: {json.dumps(entry, default=str)}")
@@ -90,3 +101,52 @@ def log_metrics(
         "metrics": metrics,
     }
     log.info(f"METRIC_EVENT: {json.dumps(entry, default=str)}")
+
+
+def _replace_stage_rows(path: Path, stage: str, rows: pd.DataFrame) -> None:
+    """Replace one stage's rows in a canonical CSV without numbered copies."""
+    path = Path(path)
+    previous = pd.read_csv(path) if path.is_file() else pd.DataFrame(columns=rows.columns)
+    if "stage" in previous:
+        previous = previous[previous["stage"] != stage]
+    atomic_write_csv(path, pd.concat([previous, rows], ignore_index=True))
+
+
+def write_handover(
+    path: Path,
+    *,
+    stage: str,
+    artifacts: Mapping[str, Any],
+    status: str,
+    writer_id: str,
+    version: str,
+    error: Optional[str] = None,
+    next_step: str = "",
+) -> None:
+    """Persist the one-row team handover contract for a notebook stage."""
+    row = pd.DataFrame([{
+        "stage": stage,
+        "status": status,
+        "writer_id": writer_id,
+        "version": version,
+        "artifact_paths": "; ".join(f"{k}={v}" for k, v in sorted(artifacts.items())),
+        "error": error,
+        "next_step": next_step,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }])
+    _replace_stage_rows(path, stage, row)
+
+
+def write_figure_metadata(path: Path, *, stage: str, artifacts: Mapping[str, Any], details=None) -> None:
+    """Record a minimal catalog row for each generated figure."""
+    figures = [Path(value) for value in artifacts.values()
+               if Path(value).suffix.lower() in {".png", ".jpg", ".jpeg", ".svg", ".pdf"}]
+    rows = pd.DataFrame([{
+        "stage": stage, "path": str(figure), "title": figure.stem.replace("_", " "),
+        "caption": "Diagnostic: đọc caption và phạm vi trong notebook; chưa phải hình báo cáo chính thức.",
+        "report_ready": False, "created_at": datetime.now(timezone.utc).isoformat(),
+        **(details or {}).get(figure.name, {}),
+    } for figure in figures])
+    if rows.empty:
+        rows = pd.DataFrame(columns=["stage", "path", "title", "caption", "report_ready", "created_at"])
+    _replace_stage_rows(path, stage, rows)

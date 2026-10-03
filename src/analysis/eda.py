@@ -144,6 +144,47 @@ def compute_sql_distribution_summary(
     ])
 
 
+def compute_sql_correlation_matrices(
+    con: duckdb.DuckDBPyConnection,
+    parquet_path: Path,
+    columns: List[str],
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Return exact pairwise Pearson, tie-aware Spearman and pair-N matrices.
+
+    Each pair is processed by DuckDB, so the notebook does not materialize the
+    complete multivariate dataset in pandas or average correlations by chunk.
+    """
+    safe_path = parquet_path.resolve().as_posix().replace("'", "''")
+    available = set(con.execute(f"SELECT * FROM read_parquet('{safe_path}') LIMIT 0").df().columns)
+    selected = [col for col in columns if col in available]
+    pearson = pd.DataFrame(np.nan, index=selected, columns=selected, dtype="float64")
+    spearman = pearson.copy()
+    pair_n = pd.DataFrame(0, index=selected, columns=selected, dtype="int64")
+
+    for i, left in enumerate(selected):
+        for right in selected[i:]:
+            query = f"""
+            WITH pairs AS (
+                SELECT CAST({left} AS DOUBLE) AS x, CAST({right} AS DOUBLE) AS y
+                FROM read_parquet('{safe_path}')
+                WHERE {left} IS NOT NULL AND {right} IS NOT NULL
+            ), ranked AS (
+                SELECT x, y,
+                    RANK() OVER (ORDER BY x) + (COUNT(*) OVER (PARTITION BY x) - 1) / 2.0 AS rx,
+                    RANK() OVER (ORDER BY y) + (COUNT(*) OVER (PARTITION BY y) - 1) / 2.0 AS ry
+                FROM pairs
+            )
+            SELECT COUNT(*) AS n, CORR(x, y) AS pearson_r, CORR(rx, ry) AS spearman_rho
+            FROM ranked
+            """
+            n_obs, pearson_r, spearman_rho = con.execute(query).fetchone()
+            for matrix, value in ((pearson, pearson_r), (spearman, spearman_rho)):
+                matrix.loc[left, right] = matrix.loc[right, left] = value
+            pair_n.loc[left, right] = pair_n.loc[right, left] = int(n_obs)
+
+    return pearson, spearman, pair_n
+
+
 def run_structural_eda(df: pd.DataFrame, meta_df: pd.DataFrame) -> Dict[str, Any]:
     """Phase 1: Structural dataset overview."""
     total_rows = len(df)
@@ -247,76 +288,118 @@ def run_chronology_audit(
     meta_df: pd.DataFrame,
     has_exact_order_evidence: bool = False,
     config_grade: Optional[str] = None,
+    player_match_df: Optional[pd.DataFrame] = None,
 ) -> Dict[str, Any]:
-    """Phase 8: Audit timestamps and determine rigorous Chronology Grade (A/B/C) per research spec v3.0.
-
-    Grade A requires confirmed exact chronology semantics (not merely low timestamp tie ratio).
-    Grade B permits cross-day historical modeling using strictly earlier days (excluding same-day matches).
-    Grade C blocks official historical prediction S2/P3.
-    """
+    """Audit chronology evidence; configuration may downgrade but never upgrade evidence."""
+    base = {
+        "grade": "Grade C",
+        "description": "Chronology insufficient. Historical prediction S2/P3 blocked by chronology.",
+        "historical_modeling_status": "blocked",
+        "policy": "blocked",
+        "total_matches": int(len(meta_df)),
+        "unique_timestamps": 0,
+        "timestamp_tie_ratio": 1.0,
+        "total_days_observed": 0,
+        "max_matches_per_day": 0,
+        "same_day_multi_match_days": 0,
+        "same_player_timestamp_overlap_count": 0,
+        "null_date_count": int(len(meta_df)),
+        "min_timestamp": None,
+        "max_timestamp": None,
+        "timezone_normalized": "UTC",
+        "observed_resolution_seconds": None,
+        "source_timestamp_semantics": "pending_source_evidence",
+        "statistic_availability": "pending_source_evidence",
+        "has_exact_order_evidence": bool(has_exact_order_evidence),
+        "config_grade_requested": config_grade,
+    }
     if "match_date" not in meta_df.columns:
-        return {
-            "grade": "Grade C",
-            "description": "Chronology insufficient. Historical prediction S2/P3 blocked by chronology.",
-            "reason": "No match_date column found in metadata.",
-            "historical_modeling_status": "blocked",
-        }
+        return {**base, "reason": "No match_date column found in metadata."}
 
     dates = pd.to_datetime(meta_df["match_date"], errors="coerce", utc=True, format="mixed")
     null_dates = int(dates.isna().sum())
-
-    if null_dates > 0:
+    valid_dates = dates.dropna()
+    base.update({
+        "null_date_count": null_dates,
+        "unique_timestamps": int(valid_dates.nunique()),
+        "min_timestamp": str(valid_dates.min()) if not valid_dates.empty else None,
+        "max_timestamp": str(valid_dates.max()) if not valid_dates.empty else None,
+    })
+    if null_dates > 0 or valid_dates.empty:
         return {
-            "grade": "Grade C",
-            "description": "Chronology insufficient. Historical prediction S2/P3 blocked by chronology.",
-            "null_date_count": null_dates,
+            **base,
             "reason": "Timestamp contains missing or unparseable dates.",
-            "historical_modeling_status": "blocked",
+            "description": "Chronology contains missing/unparseable match dates; S2/P3 remains blocked.",
         }
 
-    total_matches = len(dates)
-    unique_timestamps = int(dates.nunique())
-    tie_ratio = float(1.0 - (unique_timestamps / total_matches)) if total_matches > 0 else 1.0
-
-    days = dates.dt.date
+    total_matches = len(valid_dates)
+    unique_timestamps = int(valid_dates.nunique())
+    tie_ratio = float(1.0 - unique_timestamps / total_matches) if total_matches else 1.0
+    days = valid_dates.dt.floor("D")
     matches_per_day = days.value_counts()
-    total_days = len(matches_per_day)
-    max_matches_in_single_day = int(matches_per_day.max()) if not matches_per_day.empty else 0
+    total_days = int(len(matches_per_day))
+    positive_deltas = valid_dates.sort_values().drop_duplicates().diff().dropna()
+    positive_deltas = positive_deltas[positive_deltas > pd.Timedelta(0)]
+    resolution = float(positive_deltas.min().total_seconds()) if not positive_deltas.empty else None
 
-    if config_grade in {"Grade A", "Grade B", "Grade C"}:
-        grade = config_grade
-        grade_desc = f"Enforced via config: {config_grade}."
-    elif has_exact_order_evidence and tie_ratio < 0.05:
-        grade = "Grade A"
-        grade_desc = "Exact intra-day completion order verified with ground-truth evidence. Safe for granular historical expansion."
+    overlap_count = 0
+    if player_match_df is not None and {"player_name", "match_id"}.issubset(player_match_df.columns):
+        time_column = "match_date" if "match_date" in player_match_df.columns else "date" if "date" in player_match_df.columns else None
+        if time_column:
+            player_times = player_match_df[["player_name", "match_id", time_column]].copy()
+            player_times[time_column] = pd.to_datetime(
+                player_times[time_column], errors="coerce", utc=True, format="mixed"
+            )
+            player_times = player_times.dropna(subset=["player_name", "match_id", time_column]).drop_duplicates()
+            overlaps = player_times.groupby(["player_name", time_column])["match_id"].nunique()
+            overlap_count = int((overlaps > 1).sum())
+
+    evidence_grade = "Grade C"
+    if has_exact_order_evidence and tie_ratio < 0.05 and overlap_count == 0:
+        evidence_grade = "Grade A"
     elif total_days >= 3:
-        # Grade B: Day-level chronology verified. Low tie ratio alone DOES NOT grant Grade A (per spec D04).
-        grade = "Grade B"
-        grade_desc = (
-            "Day-level grouping verified. Cross-day historical modeling permitted (strictly earlier days only, "
-            "excluding same-day matches to prevent intra-day order leakage). Grade A withheld because exact match "
-            "completion order within the same day is unverified."
-        )
-    else:
-        grade = "Grade C"
-        grade_desc = "Chronology insufficient (less than 3 distinct days observed). Historical prediction S2/P3 blocked."
+        evidence_grade = "Grade B"
 
-    status = "eligible_cross_day" if grade == "Grade B" else "eligible_granular" if grade == "Grade A" else "blocked"
+    grade = evidence_grade
+    if config_grade in {"Grade A", "Grade B", "Grade C"}:
+        rank = {"Grade C": 0, "Grade B": 1, "Grade A": 2}
+        if rank[config_grade] < rank[evidence_grade]:
+            grade = config_grade
+
+    if grade == "Grade A":
+        description = "Exact intra-day order has explicit source evidence; granular historical expansion is eligible."
+        status = "eligible_granular"
+        policy = "exact_order"
+    elif grade == "Grade B":
+        description = (
+            "Day-level chronology is usable. Historical features may use strictly earlier days only; "
+            "same-day matches are excluded because exact intra-day order and statistic availability remain unverified."
+        )
+        status = "eligible_cross_day"
+        policy = "strictly_earlier_days_only"
+    else:
+        description = "Fewer than three reliable days or a configured downgrade; official historical S2/P3 is blocked."
+        status = "blocked"
+        policy = "blocked"
 
     return {
+        **base,
         "grade": grade,
-        "description": grade_desc,
+        "evidence_grade": evidence_grade,
+        "description": description,
         "historical_modeling_status": status,
+        "policy": policy,
         "total_matches": total_matches,
         "unique_timestamps": unique_timestamps,
         "timestamp_tie_ratio": tie_ratio,
         "total_days_observed": total_days,
-        "max_matches_per_day": max_matches_in_single_day,
-        "min_timestamp": str(dates.min()),
-        "max_timestamp": str(dates.max()),
-        "policy": "strictly_earlier_days_only" if grade == "Grade B" else "exact_order" if grade == "Grade A" else "blocked",
+        "max_matches_per_day": int(matches_per_day.max()) if not matches_per_day.empty else 0,
+        "same_day_multi_match_days": int((matches_per_day > 1).sum()),
+        "same_player_timestamp_overlap_count": overlap_count,
+        "null_date_count": null_dates,
+        "observed_resolution_seconds": resolution,
+        "reason": None if grade != "Grade C" else "Insufficient trustworthy chronology.",
     }
-
 
 def analyze_parquet_distributions(path: Path, columns: List[str]):
     """Exact full-row statistics, loading only one feature and its mode at a time.

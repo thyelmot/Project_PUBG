@@ -49,13 +49,15 @@ class SafeColabFixTests(unittest.TestCase):
     def test_checkpoint_skips_only_redundant_running_write(self):
         with tempfile.TemporaryDirectory() as directory:
             manager = CheckpointManager(Path(directory) / "manifest.json")
+            artifact = Path(directory) / "stage.txt"
+            artifact.write_text("ok", encoding="utf-8")
             manager.begin_notebook("01", [])
             with patch.object(manager, "save_manifest", wraps=manager.save_manifest) as save:
                 manager.begin_notebook("01", [])
                 save.assert_not_called()
-            manager.commit("notebook/01", "notebook_v1", {})
+            manager.commit("notebook/01", "notebook_v1", {"stage": artifact})
             manager.begin_notebook("02", ["01"])
-            manager.commit("notebook/02", "notebook_v1", {})
+            manager.commit("notebook/02", "notebook_v1", {"stage": artifact})
             manager.begin_notebook("01", [])
             self.assertEqual(manager.load_manifest()["stages"]["notebook/02"]["status"], "stale")
             with self.assertRaises(RuntimeError):

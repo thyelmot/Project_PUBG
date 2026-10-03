@@ -3,15 +3,17 @@ import numpy as np
 import pandas as pd
 
 
-def compute_regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
+def compute_regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, Any]:
     """Compute base regression metrics with robust NaN handling for degenerate cases."""
-    valid_mask = ~np.isnan(y_true) & ~np.isnan(y_pred)
+    if not np.isfinite(y_pred).all():
+        raise ValueError("Non-finite predictions are invalid, not silently dropped")
+    valid_mask = np.isfinite(y_true)
     y = y_true[valid_mask].astype(np.float64)
     y_hat = y_pred[valid_mask].astype(np.float64)
     n = len(y)
 
     if n == 0:
-        return {"mae": np.nan, "rmse": np.nan, "r2": np.nan, "n": 0}
+        return {"mae": np.nan, "rmse": np.nan, "r2": np.nan, "n": 0, "r2_reason":"no_valid_targets"}
 
     residuals = y - y_hat
     mae = float(np.mean(np.abs(residuals)))
@@ -19,12 +21,15 @@ def compute_regression_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[s
 
     if n < 2:
         r2 = np.nan
+        reason = "fewer_than_two_observations"
     else:
         sst = np.sum((y - np.mean(y)) ** 2)
         sse = np.sum(residuals ** 2)
-        r2 = float(1.0 - (sse / sst)) if sst > 1e-12 else np.nan
+        r2 = float(1.0 - (sse / sst)) if sst > 0 else np.nan
+        reason = None if sst > 0 else "zero_target_variance"
 
-    return {"mae": mae, "rmse": rmse, "r2": r2, "n": n}
+    return {"mae": mae, "rmse": rmse, "r2": r2, "n": n, "r2_reason":reason,
+            "excluded_nonfinite_targets":int((~valid_mask).sum())}
 
 
 def compute_hierarchical_metrics(
@@ -46,7 +51,9 @@ def compute_hierarchical_metrics(
     if actual_col not in pred_df.columns or pred_col not in pred_df.columns:
         raise KeyError(f"Prediction DataFrame must contain '{actual_col}' and '{pred_col}' columns")
 
-    clean_df = pred_df.dropna(subset=[actual_col, pred_col]).copy()
+    if not np.isfinite(pred_df[pred_col]).all():
+        raise ValueError("Non-finite predictions are invalid, not silently dropped")
+    clean_df = pred_df.loc[np.isfinite(pred_df[actual_col])].copy()
 
     # 1. Micro
     micro_res = compute_regression_metrics(
@@ -67,6 +74,13 @@ def compute_hierarchical_metrics(
             "rmse": float(np.sqrt(match_metrics["mse"].mean())),
             "n_matches": len(match_metrics),
         }
+        weights = 1.0 / clean_df.groupby("match_id")[actual_col].transform("size").to_numpy(dtype=float)
+        actual = clean_df[actual_col].to_numpy(dtype=np.float64)
+        mean = np.average(actual,weights=weights)
+        sst = float(np.sum(weights*(actual-mean)**2))
+        sse = float(np.sum(weights*residual.to_numpy(dtype=np.float64)**2))
+        match_aware_res.update(r2=1-sse/sst if len(actual)>1 and sst>0 else np.nan,
+            r2_reason=None if len(actual)>1 and sst>0 else "insufficient_or_constant_target")
     else:
         match_aware_res = {"mae": np.nan, "rmse": np.nan, "n_matches": 0}
 
@@ -91,6 +105,10 @@ def compute_hierarchical_metrics(
             "n": 0,
         }
     elif "match_id" in clean_df.columns and "team_id" in clean_df.columns and len(clean_df) > 0:
+        if clean_df[["match_id","team_id"]].isna().any().any():
+            raise ValueError("Team-aware placement requires complete match/team keys")
+        if (clean_df.groupby(["match_id","team_id"])[actual_col].nunique()>1).any():
+            raise ValueError("Conflicting actual placement within a team; cannot aggregate first")
         team_df = clean_df.groupby(["match_id", "team_id"]).agg(
             team_actual=(actual_col, "first"),
             team_predicted=(pred_col, "mean"),
@@ -107,5 +125,7 @@ def compute_hierarchical_metrics(
         "micro": micro_res,
         "match_aware": match_aware_res,
         "team_aware": team_aware_res,
+        "coverage": {"input_rows":len(pred_df),"valid_rows":len(clean_df),
+                     "excluded_nonfinite_targets":len(pred_df)-len(clean_df)},
     }
 

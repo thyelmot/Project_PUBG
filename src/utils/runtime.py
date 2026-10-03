@@ -63,6 +63,9 @@ def collect_runtime_info() -> Dict[str, Any]:
             info["cuda_available"] = torch.cuda.is_available()
             if torch.cuda.is_available():
                 info["cuda_device_name"] = torch.cuda.get_device_name(0)
+                info["cuda_vram_gb"] = round(
+                    torch.cuda.get_device_properties(0).total_memory / (1024 ** 3), 2
+                )
         except ImportError:
             pass
 
@@ -73,6 +76,7 @@ def check_environment(
     target_dir: Optional[str] = ".",
     min_disk_gb: float = 5.0,
     raise_on_critical: bool = False,
+    required_files: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Verify environment health: write permissions, disk space, and core dependencies.
 
@@ -82,6 +86,7 @@ def check_environment(
         raise_on_critical: If True, raise RuntimeError when status is 'critical'
             with a specific remediation message. Default False preserves the
             existing behaviour of returning the report without raising.
+        required_files: Project-root-relative marker files that must exist.
     """
     target_path = Path(target_dir).resolve()
     target_path.mkdir(parents=True, exist_ok=True)
@@ -107,6 +112,15 @@ def check_environment(
     status = "healthy"
     warnings = []
     remediation: List[str] = []
+    missing_files = [name for name in (required_files or []) if not (target_path / name).is_file()]
+    if missing_files:
+        status = "critical"
+        warnings.append("Missing required project files: " + ", ".join(missing_files))
+        remediation.append(
+            f"Project root {target_path} is incomplete or incorrect; missing: {', '.join(missing_files)}. "
+            "In Drive mode, verify the shared-folder shortcut and Editor access; "
+            "otherwise select the directory containing configs/ and src/."
+        )
     if not can_write:
         status = "critical"
         warnings.append(f"Directory {target_path} is not writable.")
@@ -134,6 +148,7 @@ def check_environment(
         "total_disk_gb": total_gb,
         "warnings": warnings,
         "remediation": remediation,
+        "missing_required_files": missing_files,
         "runtime": runtime_info,
     }
 
@@ -200,7 +215,7 @@ def save_runtime_snapshot(
     """
     from src.utils.hashing import hash_file  # local import to avoid circular dependency
 
-    generator_path = project_root / "src" / "utils" / "generate_notebooks.py"
+    code_files = sorted((project_root / "src").rglob("*.py"))
     snapshot: Dict[str, Any] = {
         "snapshot_at": datetime.now(timezone.utc).isoformat(),
         "project_root": str(project_root),
@@ -217,8 +232,10 @@ def save_runtime_snapshot(
             "rq2_device": cfg.get("rq2", {}).get("device"),
             "rq3_device": cfg.get("rq3", {}).get("device"),
         },
+        "config": {key: value for key, value in cfg.items() if key != "_project_root"},
         "source_hashes": {
-            "generate_notebooks.py": hash_file(generator_path) if generator_path.is_file() else "missing",
+            str(path.relative_to(project_root)).replace("\\", "/"): hash_file(path)
+            for path in code_files
         },
         "doc_hashes": doc_hashes or {},
     }

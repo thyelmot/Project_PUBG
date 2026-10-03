@@ -114,6 +114,7 @@ class TestEvaluationAndUtils(unittest.TestCase):
             reports_root=reports_dir,
             official_run_ids={"rq1": "run_01", "rq3": "run_02"},
             output_manifest_path=manifest_path,
+            selected_artifacts={"tables": {sample_csv.name: sample_csv}, "models": {sample_mod.name: sample_mod}},
         )
         self.assertIn("rq1_correlations.csv", manifest["tables"])
         self.assertIn("p1_model.txt", manifest["models"])
@@ -127,7 +128,7 @@ class TestEvaluationAndUtils(unittest.TestCase):
         sample_csv.write_text("corrupted content", encoding="utf-8")
         valid_corrupt, mismatches_corrupt = verify_final_manifest_integrity(manifest_path)
         self.assertFalse(valid_corrupt)
-        self.assertEqual(len(mismatches_corrupt), 1)
+        self.assertTrue(any("rq1_correlations.csv" in reason for reason in mismatches_corrupt))
 
 
 if __name__ == "__main__":

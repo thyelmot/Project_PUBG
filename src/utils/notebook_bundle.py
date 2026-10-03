@@ -15,6 +15,10 @@ PUBG_DRIVE_PROJECT_ROOT = "/content/drive/MyDrive/PUBG_Project/Project_PUBG"  # 
 PUBG_REQUIRE_EXISTING_PROJECT = True  # @param {type:"boolean"}
 # @markdown Số dòng mỗi batch khi đọc CSV trong ZIP; giảm nếu RAM ít. Không lấy mẫu dữ liệu.
 PUBG_BATCH_ROWS = 50000  # @param {type:"integer"}
+# Optional team label. Blank uses a unique runtime process ID.
+PUBG_WRITER_ID = ""  # @param {type:"string"}
+# Set True only after confirming the previous writer runtime has stopped.
+PUBG_FORCE_STAGE_TAKEOVER = False  # @param {type:"boolean"}
 '''
 
 ALL_IN_ONE_STORAGE_OPTIONS_CELL = (
@@ -22,6 +26,46 @@ ALL_IN_ONE_STORAGE_OPTIONS_CELL = (
     .replace('PUBG_STORAGE_MODE = "drive"', 'PUBG_STORAGE_MODE = "runtime"')
     .replace('PUBG_REQUIRE_EXISTING_PROJECT = True', 'PUBG_REQUIRE_EXISTING_PROJECT = False')
 )
+
+
+SUMMARY_BOOTSTRAP = '''# Bootstrap chỉ đọc: không giải nén bundle, tạo thư mục, cài package hoặc ghi checkpoint.
+import os
+import sys
+from pathlib import Path
+IN_COLAB = "google.colab" in sys.modules or bool(os.environ.get("COLAB_RELEASE_TAG"))
+PUBG_STORAGE_MODE = globals().get("PUBG_STORAGE_MODE", "drive").strip().lower()
+if PUBG_STORAGE_MODE not in {"drive", "runtime"}:
+    raise ValueError("PUBG_STORAGE_MODE phải là drive hoặc runtime")
+if PUBG_STORAGE_MODE == "drive":
+    if not IN_COLAB:
+        raise RuntimeError("Máy local chọn runtime và đường dẫn manifest cụ thể; Drive mount chỉ trên Colab.")
+    from google.colab import drive
+    drive.mount("/content/drive")
+    PROJECT_ROOT = Path(PUBG_DRIVE_PROJECT_ROOT).expanduser().resolve()
+    if PUBG_REQUIRE_EXISTING_PROJECT and not PROJECT_ROOT.is_dir():
+        raise FileNotFoundError("Không thấy project đã chia sẻ; kiểm tra shortcut/quyền. Không tạo project mới.")
+else:
+    PROJECT_ROOT = Path(globals().get("PUBG_SUMMARY_CODE_ROOT") or Path.cwd()).expanduser().resolve()
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+_selected_manifest = globals().get("PUBG_SUMMARY_MANIFEST", "")
+if not str(_selected_manifest).strip():
+    raise ValueError("Điền PUBG_SUMMARY_MANIFEST bằng đường dẫn một release cụ thể; không tìm latest.")
+manifest_path = Path(_selected_manifest).expanduser()
+if not manifest_path.is_absolute():
+    manifest_path = PROJECT_ROOT / manifest_path
+manifest_path = manifest_path.resolve()
+if not manifest_path.is_file():
+    raise FileNotFoundError("Không thấy manifest đã chọn: " + str(manifest_path))
+try:
+    from src.evaluation.finalize import load_locked_release
+    from src.evaluation.summary import render_summary_section
+except ImportError as error:
+    raise ImportError("Cần source hiện hành và dependencies đọc báo cáo; đồng bộ src hoặc cài requirements ngoài summary. Không tự sửa release.") from error
+PUBG_SUMMARY_ALLOW_FIXTURE = globals().get("PUBG_SUMMARY_ALLOW_FIXTURE", False)
+_PUBG_CELL_PROGRESS = {}
+print("Chế độ chỉ đọc; manifest đã chọn:", manifest_path)
+'''
 
 
 def bootstrap_source(project_root: Path) -> str:

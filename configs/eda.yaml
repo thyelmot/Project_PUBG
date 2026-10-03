@@ -6,6 +6,17 @@ sampling:
   diagnostic_sample_size: 100000
   random_state: 42
 
+scope:
+  analysis_scope: "development"
+  full_descriptive_locked: false
+  allowed_development_splits: ["train", "validation"]
+
+decisions:
+  log_transform_status: "pending_real_data_evidence"
+  log_transform_features: []
+  log_transform_reason: "Chờ skewness, tail diagnostics và validation evidence; fixture chỉ kiểm thử cơ chế."
+  outlier_policy: "diagnose_only_no_automatic_row_removal"
+
 catalog:
   structural:
     - id: "A01"

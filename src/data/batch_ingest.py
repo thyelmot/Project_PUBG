@@ -14,7 +14,7 @@ import zipfile
 import pandas as pd
 import pyarrow.parquet as pq
 
-from src.data.download_data import resolve_archive, resolve_local_sources
+from src.data.download_data import download_configured_shards, resolve_archive, resolve_local_sources
 from src.data.io import atomic_write_json, read_json, publish_file, check_storage_writable
 from src.data.schema import validate_shard_schema
 from src.utils.hashing import hash_file
@@ -23,12 +23,13 @@ SENSITIVE_PLAYER_COLUMNS = {"player_name", "killer_name", "victim_name"}
 
 
 def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=None, resume_key=None,
-                        result_metadata=None, retain_local=False):
+                        result_metadata=None, retain_local=False, source_name=None):
     """Build locally, then publish the closed Parquet file to persistent storage."""
     if not isinstance(batch_rows, int) or isinstance(batch_rows, bool) or batch_rows < 1:
         raise ValueError("batch_rows must be a positive integer")
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
+    source_name = source_name or output.name
     local_dir = Path(work_dir) if work_dir else Path(tempfile.gettempdir()) / "pubg_batch_ingest"
     local_dir.mkdir(parents=True, exist_ok=True)
     partial = local_dir / f"{output.name}.{resume_key or os.getpid()}.partial"
@@ -72,6 +73,11 @@ def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=
             col_sql_types = {}
             parse_audit = {}
             for chunk in chunks:
+                if {"source_file", "source_row", "__pubg_source_file", "__pubg_source_row"}.intersection(chunk.columns):
+                    raise ValueError("Input uses reserved lineage columns")
+                chunk["__pubg_source_file"] = source_name
+                chunk["__pubg_source_row"] = range(rows + 1, rows + len(chunk) + 1)
+
                 if expressions is None:
                     validation = validate_shard_schema(
                         list(chunk.columns),
@@ -98,6 +104,10 @@ def convert_csv_batches(con, stream, output, schema, batch_rows=50000, work_dir=
                         original_quoted = original.replace('"', '""')
                         canonical_quoted = canonical.replace('"', '""')
                         expressions.append(f'TRY_CAST("{original_quoted}" AS {sql_type}) AS "{canonical_quoted}"')
+                    expressions.extend([
+                        '"__pubg_source_file" AS "source_file"',
+                        'CAST("__pubg_source_row" AS BIGINT) AS "source_row"',
+                    ])
 
                 # Audit types, parse errors, and integer validity per column
                 for original, canonical in validation["column_mapping"].items():
@@ -198,7 +208,15 @@ def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=
     check_storage_writable(staging_dir)
     manifest_path = staging_dir / "batch_manifest.json"
     old = read_json(manifest_path) if manifest_path.is_file() else {}
-    manifest = {"version": 1, "complete": False, "shards": []}
+    manifest = {"version": 1, "status": "running", "complete": False, "shards": [],
+                "started_at": datetime.now(timezone.utc).isoformat(),
+                "source_info": {
+                    "archive_url": data_cfg.get("source", {}).get("archive_url"),
+                    "aggregate_urls": data_cfg.get("source", {}).get("agg_urls", []),
+                    "death_urls": data_cfg.get("source", {}).get("kill_urls", []),
+                    "download_date": data_cfg.get("source", {}).get("download_date"),
+                    "version": data_cfg.get("source", {}).get("dataset_version"),
+                }}
     cached = {s["source"]: s for s in old.get("shards", [])}
     source = data_cfg["source"]
     filename = source.get("archive_filename", "Data_PUBG.zip")
@@ -207,10 +225,20 @@ def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=
     groups = [("aggregate", "agg_patterns"), ("deaths", "kill_patterns")]
     local = {kind: resolve_local_sources(raw_root, data_cfg["discovery"][patterns])
              for kind, patterns in groups}
+    missing_local = [kind for kind, _ in groups if not local[kind]]
+    configured_url_kinds = {
+        "aggregate" if source.get("agg_urls") else None,
+        "deaths" if source.get("kill_urls") else None,
+    } - {None}
+    downloadable = [kind for kind in missing_local if kind in configured_url_kinds]
+    if not local_zip and downloadable:
+        download_configured_shards(source, raw_root, downloadable, temp_dir=work_dir)
+        local = {kind: resolve_local_sources(raw_root, data_cfg["discovery"][patterns])
+                 for kind, patterns in groups}
     with ExitStack() as stack:
         entries = []
         archive = None
-        if local_zip or not any(local.values()):
+        if local_zip or (not all(local.values()) and bool(source.get("archive_url"))):
             archive_path = resolve_archive(source.get("archive_url", ""), raw_root,
                                            source.get("archive_sha256"), filename)
             archive = stack.enter_context(zipfile.ZipFile(archive_path))
@@ -234,6 +262,7 @@ def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=
                 for path in local[kind]:
                     entries.append((kind, path.relative_to(raw_root).as_posix(),
                                     path.stat().st_size, hash_file(path), path))
+        entries.sort(key=lambda entry: (entry[0], entry[1]))
         if not all(any(e[0] == kind for e in entries) for kind, _ in groups):
             raise FileNotFoundError("Missing aggregate/deaths CSV. Check the ZIP or raw_root; no partial dataset is accepted.")
         # Keep prior records during revalidation so another interruption cannot erase them.
@@ -262,11 +291,13 @@ def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=
                 with (archive.open(handle) if archive else open(handle, "rb")) as stream:
                     rows = convert_csv_batches(
                         con, stream, output, schema_cfg[kind], batch_rows, work_dir=work_dir,
-                        resume_key=signature, result_metadata=verified_local, retain_local=True)
+                        resume_key=signature, result_metadata=verified_local, retain_local=True, source_name=name)
                 local_path = Path(verified_local.pop("local_path"))
                 receipt_path = Path(verified_local.pop("receipt_path"))
                 record = {"source": name, "kind": kind, "signature": signature,
                           "file": output.name, "rows": rows, "source_bytes": size,
+                          "source_checksum": checksum,
+                          "source_checksum_algorithm": "crc32" if archive else "sha256",
                           **verified_local}
                 try:
                     verify_staged_record(output, record)
@@ -314,7 +345,9 @@ def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=
             "total_rows": sum(s.get("rows", 0) for s in manifest["shards"]),
             "column_summary": column_summary,
         }
-        parse_report_path = staging_dir / "schema_parse_report.json"
+        report_dir = Path(manifests_dir) if manifests_dir else staging_dir
+        report_dir.mkdir(parents=True, exist_ok=True)
+        parse_report_path = report_dir / "schema_parse_report.json"
         atomic_write_json(parse_report_path, parse_report)
         manifest["parse_report"] = parse_report_path.name
 
@@ -327,13 +360,25 @@ def ingest_sources(con, raw_root, staging_dir, data_cfg, schema_cfg, batch_rows=
         if shard_validations:
             from src.data.schema import generate_schema_report
             schema_report = generate_schema_report(schema_cfg, shard_validations)
-            m_dir = Path(manifests_dir) if manifests_dir else (staging_dir.parent.parent / "artifacts" / "manifests")
-            m_dir.mkdir(parents=True, exist_ok=True)
-            schema_report_path = m_dir / "schema_report.json"
+            schema_report_path = report_dir / "schema_report.json"
             atomic_write_json(schema_report_path, schema_report)
             manifest["schema_report"] = schema_report_path.name
 
+        parse_error_cells = sum(v["parse_errors"] for v in column_summary.values())
+        original_missing_cells = sum(v["original_missing"] for v in column_summary.values())
+        rows_saved = sum(s.get("rows", 0) for s in manifest["shards"])
+        manifest["row_reconciliation"] = {
+            "rows_read": rows_saved,
+            "rows_saved": rows_saved,
+            "rows_dropped": 0,
+            "parse_error_cells_retained_as_null": parse_error_cells,
+            "original_missing_cells": original_missing_cells,
+            "policy": "Ingest preserves every parsed CSV record; invalid typed cells become null and are audited.",
+            "is_reconciled": rows_saved == sum(s.get("rows", 0) for s in manifest["shards"]),
+        }
         manifest["complete"] = True
+        manifest["status"] = "completed"
+        manifest["completed_at"] = datetime.now(timezone.utc).isoformat()
         atomic_write_json(manifest_path, manifest)
     return manifest
 

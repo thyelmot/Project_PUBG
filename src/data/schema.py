@@ -23,77 +23,71 @@ def validate_shard_schema(
     optional_columns: Optional[Dict[str, str]] = None,
     units: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
-    """Verify that required columns are present or resolve via controlled aliases.
+    """Resolve a controlled schema and reject ambiguous alias mappings."""
+    actual_by_lower: Dict[str, List[str]] = {}
+    for column in actual_columns:
+        actual_by_lower.setdefault(column.lower(), []).append(column)
 
-    Optionally maps known optional columns and verifies unit metadata contracts.
-    """
-    col_map = {}
-    missing_required = []
+    col_map: Dict[str, str] = {}
+    missing_required: List[str] = []
+    optional_present: List[str] = []
+    optional_missing: List[str] = []
+    alias_collisions: Dict[str, List[str]] = {
+        f"case:{key}": values for key, values in actual_by_lower.items() if len(values) > 1
+    }
+    claimed: Dict[str, str] = {}
 
-    actual_lower = {c.lower(): c for c in actual_columns}
+    def resolve(canonical: str) -> Optional[str]:
+        candidates = [canonical, *aliases.get(canonical, [])]
+        matches: List[str] = []
+        for candidate in candidates:
+            for actual in actual_by_lower.get(candidate.lower(), []):
+                if actual not in matches:
+                    matches.append(actual)
+        if len(matches) > 1:
+            alias_collisions[canonical] = matches
+            return None
+        if not matches:
+            return None
+        actual = matches[0]
+        previous = claimed.get(actual)
+        if previous and previous != canonical:
+            alias_collisions[f"shared:{actual}"] = [previous, canonical]
+            return None
+        claimed[actual] = canonical
+        col_map[actual] = canonical
+        return actual
 
-    for req_col in required_columns:
-        if req_col in actual_columns:
-            col_map[req_col] = req_col
-        elif req_col.lower() in actual_lower:
-            col_map[actual_lower[req_col.lower()]] = req_col
+    for canonical in required_columns:
+        if resolve(canonical) is None and canonical not in alias_collisions:
+            missing_required.append(canonical)
+
+    for canonical in (optional_columns or {}):
+        if resolve(canonical) is None:
+            if canonical not in alias_collisions:
+                optional_missing.append(canonical)
         else:
-            # Check aliases
-            alias_list = aliases.get(req_col, [])
-            found = False
-            for alias in alias_list:
-                if alias in actual_columns:
-                    col_map[alias] = req_col
-                    found = True
-                    break
-                elif alias.lower() in actual_lower:
-                    col_map[actual_lower[alias.lower()]] = req_col
-                    found = True
-                    break
-            if not found:
-                missing_required.append(req_col)
+            optional_present.append(canonical)
 
-    # Process optional columns if provided
-    optional_present = []
-    optional_missing = []
-    if optional_columns:
-        for opt_col in optional_columns:
-            if opt_col in actual_columns:
-                col_map[opt_col] = opt_col
-                optional_present.append(opt_col)
-            elif opt_col.lower() in actual_lower:
-                col_map[actual_lower[opt_col.lower()]] = opt_col
-                optional_present.append(opt_col)
-            else:
-                alias_list = aliases.get(opt_col, [])
-                found = False
-                for alias in alias_list:
-                    if alias in actual_columns:
-                        col_map[alias] = opt_col
-                        optional_present.append(opt_col)
-                        found = True
-                        break
-                    elif alias.lower() in actual_lower:
-                        col_map[actual_lower[alias.lower()]] = opt_col
-                        optional_present.append(opt_col)
-                        found = True
-                        break
-                if not found:
-                    optional_missing.append(opt_col)
-
-    # Check units contract
-    units_verified = {}
-    if units:
-        for col_name, unit_val in units.items():
-            if col_name in col_map.values():
-                units_verified[col_name] = unit_val
-
+    mapped_actual = set(col_map)
+    unexpected_columns = [
+        column for column in actual_columns
+        if column not in mapped_actual and not column.startswith("__pubg_")
+    ]
+    units_verified = {
+        column: unit for column, unit in (units or {}).items()
+        if column in col_map.values()
+    }
     return {
-        "is_valid": len(missing_required) == 0,
+        "is_valid": not missing_required and not alias_collisions,
         "missing_columns": missing_required,
+        "alias_collisions": alias_collisions,
         "column_mapping": col_map,
         "optional_present": optional_present,
         "optional_missing": optional_missing,
+        "unexpected_columns": unexpected_columns,
+        "actual_columns": list(actual_columns),
+        "canonical_columns": sorted(col_map.values()),
         "units_verified": units_verified,
         "total_actual_columns": len(actual_columns),
     }
@@ -127,6 +121,9 @@ def generate_schema_report(
             "expected_optional_columns": opt,
             "configured_aliases": aliases,
             "units_contract": units,
+            "candidate_units": table_cfg.get("candidate_units", {}),
+            "units_verification_status": table_cfg.get("units_verification_status", "unverified"),
+            "units_evidence": table_cfg.get("units_evidence"),
             "shards": {},
         }
 
@@ -143,6 +140,9 @@ def generate_schema_report(
             report["tables"][kind]["shards"][shard_name] = {
                 "is_valid": is_valid,
                 "missing_required": val_result.get("missing_columns", []),
+                "alias_collisions": val_result.get("alias_collisions", {}),
+                "actual_columns": val_result.get("actual_columns", []),
+                "unexpected_columns": val_result.get("unexpected_columns", []),
                 "optional_present": val_result.get("optional_present", []),
                 "optional_missing": val_result.get("optional_missing", []),
                 "column_mapping": val_result.get("column_mapping", {}),

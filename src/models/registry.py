@@ -33,6 +33,16 @@ class ExperimentDefinition:
     metrics: Optional[Dict[str, float]] = None
     artifact_paths: Dict[str, str] = field(default_factory=dict)
     signatures: Dict[str, str] = field(default_factory=dict)
+    run_id: Optional[str] = None
+    dataset: Optional[str] = None
+    dataset_version: Optional[str] = None
+    feature_version: Optional[str] = None
+    pipeline_version: Optional[str] = None
+    config_hash: Optional[str] = None
+    n_train: Optional[int] = None
+    n_val: Optional[int] = None
+    n_test: Optional[int] = None
+    chronology_grade: Optional[str] = None
     split_scope: str = "official"
 
     def __post_init__(self):
@@ -71,6 +81,8 @@ class ExperimentRegistry:
         exp = self._experiments[experiment_id]
         exp.status = status
         exp.reason_code = reason_code
+        if status != "completed":
+            exp.metrics = None
 
     def update_metrics(
         self,

@@ -19,7 +19,9 @@ def run_group_ablation_study(
     output_table_path: Path,
     device: str = 'cpu',
 ) -> pd.DataFrame:
-    """Execute ablation experiments: FULL, -Combat, -Movement, -Support, -Timing."""
+    """Legacy development helper, not a final-test recipe. NB10 consumes G4 predictions."""
+    if (df["split"] == "test").any():
+        raise ValueError("Do not refit ablation after test exposure; use locked saved predictions")
     output_table_path.parent.mkdir(parents=True, exist_ok=True)
 
     ablation_recipes = [
@@ -41,6 +43,8 @@ def run_group_ablation_study(
             features_to_use = list(base_feature_set)
         else:
             features_to_use = registry.remove_group_and_descendants(base_feature_set, grp)
+            if grp == "combat_timing_phase":
+                features_to_use = registry.remove_group_and_descendants(features_to_use, "combat_timing_absolute")
 
         logger.info(f"Running {exp_name} with {len(features_to_use)} features...")
         model = LinearModelWrapper(model_type="exact", device=device)
@@ -52,7 +56,7 @@ def run_group_ablation_study(
             experiment_id=exp_name,
         )
 
-        test_preds = pred_df[pred_df["split"] == "test"]
+        test_preds = pred_df[pred_df["split"] == "validation"]
         metrics = compute_regression_metrics(
             test_preds["target_actual"].values,
             test_preds["target_predicted"].values,
@@ -69,9 +73,10 @@ def run_group_ablation_study(
             "removed_group": grp or "none",
             "features_count": len(features_to_use),
             "device": device,
-            "test_mae": metrics["mae"],
-            "test_rmse": metrics["rmse"],
-            "test_r2": metrics["r2"],
+            "validation_mae": metrics["mae"],
+            "validation_rmse": metrics["rmse"],
+            "validation_r2": metrics["r2"],
+            "scope": "development_validation_only",
             "delta_mae_vs_full": delta_mae,
         })
 

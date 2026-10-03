@@ -1,9 +1,14 @@
 spec_version: "3.0"
-spec_checksum: null
+spec_checksum: "64305bd7d924eecf55a7f83279b59d7f85eccaa997691093ef41a119c2dfa3fc"
 
 source:
   dataset_name: "PUBG Match Deaths and Statistics"
   dataset_slug: "skihikingkevin/pubg-match-deaths"
+  dataset_version: 3
+  license: "CC0-1.0"
+  download_date: null
+  metadata_source: "https://www.kaggle.com/datasets/skihikingkevin/pubg-match-deaths"
+  metadata_checked_at: "2026-09-30"
   archive_url: "https://drive.usercontent.google.com/download?id=1-NpwnrD3VlD-ZGUyyKk2TwobswwF8zAy&export=download&confirm=t"
   direct_download_url: "https://drive.usercontent.google.com/download?id=1-NpwnrD3VlD-ZGUyyKk2TwobswwF8zAy&export=download&confirm=t"
   view_url: "https://drive.google.com/file/d/1-NpwnrD3VlD-ZGUyyKk2TwobswwF8zAy/view?usp=sharing"

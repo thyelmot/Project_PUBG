@@ -134,7 +134,8 @@ class TestDataAndFeaturesPipeline(unittest.TestCase):
         audit_dir = self.test_dir / "audit"
         timing_audit = extract_and_aggregate_combat_timing(self.con, [kill_pq], meta_pq, timing_pq, audit_dir)
         # Suicide was excluded: Frank kills Frank -> excluded
-        self.assertEqual(timing_audit["valid_enemy_kills"], 3)
+        self.assertEqual(timing_audit["valid_absolute_events"], 3)
+        self.assertEqual(timing_audit["enemy_kill_eligibility_status"], "pending_team_or_cause_evidence")
         timing_df = pd.read_parquet(timing_pq)
         alice_timing = timing_df[(timing_df["match_id"] == "m1") & (timing_df["killer_name"] == "Alice")].iloc[0]
         self.assertEqual(alice_timing["event_kill_count"], 2)

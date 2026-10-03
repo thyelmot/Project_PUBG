@@ -25,7 +25,7 @@ class TestPhaseAInfrastructure(unittest.TestCase):
             "player_name": ["p1", "p2", "p1"]
         })
         row_ids = generate_row_id(df)
-        self.assertEqual(list(row_ids), ["m1__p1", "m1__p2", "m2__p1"])
+        self.assertEqual(list(row_ids), ["match:2:m1|player:2:p1", "match:2:m1|player:2:p2", "match:2:m2|player:2:p1"])
 
         df_dup = pd.DataFrame({
             "match_id": ["m1", "m1"],
@@ -49,10 +49,10 @@ class TestPhaseAInfrastructure(unittest.TestCase):
         })
         ensured = ensure_row_id(df)
         self.assertIn("row_id", ensured.columns)
-        self.assertEqual(ensured["row_id"].tolist(), ["m1__p1", "m2__p2"])
+        self.assertEqual(ensured["row_id"].tolist(), ["match:2:m1|player:2:p1", "match:2:m2|player:2:p2"])
 
         ensured2 = ensure_row_id(ensured)
-        self.assertEqual(ensured2["row_id"].tolist(), ["m1__p1", "m2__p2"])
+        self.assertEqual(ensured2["row_id"].tolist(), ["match:2:m1|player:2:p1", "match:2:m2|player:2:p2"])
 
     def test_align_cohort_rows(self):
         df1 = pd.DataFrame({

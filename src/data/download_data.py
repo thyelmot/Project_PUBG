@@ -91,6 +91,8 @@ def download_file_with_checksum(
     temp_dir: Optional[Path] = None,
 ) -> Path:
     """Safely download a file via streaming to a temporary .part file and verify integrity."""
+    if urllib.parse.urlparse(url).scheme not in {"http", "https"}:
+        raise ValueError("Download URL must use http or https.")
     target_path.parent.mkdir(parents=True, exist_ok=True)
     temp_dir = temp_dir or os.environ.get("PUBG_SESSION_TEMP_DIR")
     if temp_dir is not None:
@@ -143,6 +145,51 @@ def download_file_with_checksum(
         part_path.unlink(missing_ok=True)
 
 
+def download_configured_shards(
+    source_cfg: Dict[str, Any],
+    raw_dir: Path,
+    kinds: Optional[List[str]] = None,
+    temp_dir: Optional[Path] = None,
+) -> Dict[str, List[Path]]:
+    """Download configured aggregate/death shard URLs with safe deterministic names."""
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    requested = set(kinds or ("aggregate", "deaths"))
+    result: Dict[str, List[Path]] = {"aggregate": [], "deaths": []}
+    expected = source_cfg.get("expected_checksums", {})
+    for kind, key, prefix in (
+        ("aggregate", "agg_urls", "agg_match_stats"),
+        ("deaths", "kill_urls", "kill_match_stats"),
+    ):
+        if kind not in requested:
+            continue
+        for index, item in enumerate(source_cfg.get(key, []) or []):
+            if isinstance(item, str):
+                url, filename, checksum = item, None, None
+            elif isinstance(item, dict):
+                url = item.get("url")
+                filename = item.get("filename")
+                checksum = item.get("sha256")
+            else:
+                raise ValueError(f"{key}[{index}] must be a URL string or mapping")
+            if not isinstance(url, str) or not url:
+                raise ValueError(f"{key}[{index}] is missing a URL")
+            if not filename:
+                inferred = Path(urllib.parse.unquote(urllib.parse.urlparse(url).path)).name
+                filename = (
+                    inferred
+                    if inferred.startswith(prefix) and inferred.lower().endswith(".csv")
+                    else f"{prefix}_{index:03d}.csv"
+                )
+            if Path(filename).name != filename:
+                raise ValueError(f"Unsafe configured shard filename: {filename}")
+            if not filename.startswith(prefix) or not filename.lower().endswith(".csv"):
+                raise ValueError(f"Configured shard filename must match {prefix}*.csv: {filename}")
+            checksum = checksum or expected.get(filename)
+            result[kind].append(download_file_with_checksum(
+                url, raw_dir / filename, checksum, temp_dir=temp_dir
+            ))
+    return result
+
 def resolve_archive(
     archive_url: str,
     target_dir: Path,
@@ -166,6 +213,11 @@ def resolve_archive(
             break
 
     if local_archive is None:
+        if not archive_url:
+            raise FileNotFoundError(
+                "No local archive or configured archive_url. Provide raw CSV shards, archive_url, "
+                "or agg_urls/kill_urls in configs/data.yaml."
+            )
         download_target = target_dir.parent / archive_filename
         logger.info(f"Local archive not found. Downloading from: {archive_url}")
         local_archive = download_file_with_checksum(archive_url, download_target, expected_checksum)

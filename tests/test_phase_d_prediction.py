@@ -89,6 +89,8 @@ class TestPhaseDPrediction(unittest.TestCase):
                     "normalized_placement": norm_placement,
                 })
         self.df = pd.DataFrame(records)
+        # Placement is a team target: fixture must not assign conflicting player targets.
+        self.df["normalized_placement"] = self.df.groupby(["match_id", "team_id"])["normalized_placement"].transform("first")
 
     def tearDown(self):
         self.temp_dir.cleanup()
@@ -213,59 +215,175 @@ class TestPhaseDPrediction(unittest.TestCase):
         self.assertTrue(metrics_p["team_aware"].get("applicable", False))
         self.assertFalse(np.isnan(metrics_p["team_aware"]["mae"]))
 
+    def development_config(self):
+        from src.utils.config import load_config
+        cfg = load_config(str(Path(__file__).resolve().parents[1] / "configs"))
+        cfg["rq3"]["device"] = "cpu"  # Isolated fixture, not a production fallback.
+        return cfg
+
+    def run_development(self, frame=None, **kwargs):
+        return run_rq3_prediction_suite(self.df if frame is None else frame, self.paths,
+            config=self.development_config(), device="cpu", run_nonlinear=True, batch_size=7, **kwargs)
+
     def test_run_rq3_prediction_suite_full_workflow(self):
-        """Run complete RQ3 prediction suite including baselines, core linear, Grade C blocking, and checkpoint commit."""
+        """Nine real candidates, test closed; old automatic G4 behavior is forbidden."""
         reg = create_canonical_experiment_matrix()
-        ckpt_mgr = CheckpointManager(manifest_path=self.paths["checkpoints"] / "checkpoint_manifest.json")
-        feat_reg = FeatureRegistry()
+        ckpt = CheckpointManager(self.paths["checkpoints"] / "checkpoint_manifest.json")
+        with unittest.mock.patch("src.models.training.lock_selection_recipe",
+                                 side_effect=AssertionError("Cannot automatically approve G4")):
+            result = self.run_development(experiment_registry=reg, checkpoint_mgr=ckpt)
+        self.assertEqual(result["status"], "pending_selection")
+        self.assertEqual(result["test_metrics"], {})
+        self.assertGreaterEqual(len(result["models"]), 12)
+        for task in ["s1", "p1", "p2"]:
+            self.assertGreaterEqual(sum(pd.read_parquet(p,columns=["task"]).task.iloc[0] == task for p in result["predictions"].values()), 3)
+        for name in ["s2_historical_survival", "p3_historical_placement"]:
+            self.assertEqual(reg.get(name).status, "blocked")
+            self.assertEqual(reg.get(name).reason_code, "blocked_by_chronology")
+            self.assertIsNone(reg.get(name).metrics)
+        self.assertEqual(ckpt.load_manifest()["stages"]["rq3_prediction"]["status"], "blocked")
+        self.assertFalse((self.paths["manifests"] / "selection_locks").exists())
+        for exp_id, pred_path in result["predictions"].items():
+            pred=pd.read_parquet(pred_path)
+            self.assertEqual(set(pred.split), {"train", "validation"})
+            import joblib
+            model = joblib.load(self.paths["models"] / f"{exp_id}.joblib")
+            meta = json.loads((self.paths["models"] / f"meta_{exp_id}.json").read_text())
+            original = self.df.set_index(["match_id","player_name"])
+            keys = list(zip(pred.match_id,pred.player_name))
+            x = original.loc[keys, meta["features"]].values
+            np.testing.assert_allclose(model.predict(x), pred.predicted, atol=1e-10)
+            self.assertEqual(meta["test_samples"], 0)
+            if meta["features"] and hasattr(model,"pipeline") and model.pipeline is not None and "scaler" in model.pipeline.named_steps:
+                train_x=self.df.loc[self.df.split == "train",meta["features"]].to_numpy(dtype=float)
+                np.testing.assert_allclose(model.pipeline.named_steps["imputer"].statistics_,
+                                           np.nanmean(train_x,axis=0),atol=1e-10)
+                np.testing.assert_allclose(model.pipeline.named_steps["scaler"].mean_,
+                                           np.nanmean(train_x,axis=0),atol=1e-10)
+            if "baseline" in exp_id:
+                y = self.df.loc[self.df.split == "train",meta["target"]]
+                expected = y.mean() if exp_id.endswith("mean") else y.median()
+                np.testing.assert_allclose(pred.predicted,expected)
+                self.assertEqual(meta["features"], [])
+        saved=json.loads((self.paths["manifests"]/"rq3_development_registry.json").read_text())
+        self.assertEqual(saved["experiments"]["p2_baseline_mean"]["split_scope"],"development_train_validation")
 
-        res = run_rq3_prediction_suite(
-            df=self.df,
-            paths=self.paths,
-            feature_registry=feat_reg,
-            experiment_registry=reg,
-            checkpoint_mgr=ckpt_mgr,
-            chronology_grade="Grade C",
-            device="cpu",
-            run_nonlinear=True,
-            batch_size=50,
-        )
+    def test_final_test_mutation_does_not_change_development(self):
+        first=self.run_development()
+        original_predictions={key:pd.read_parquet(path) for key,path in first["predictions"].items()}
+        changed=self.df.copy()
+        changed.loc[changed.split == "test",["player_survive_time","normalized_placement","player_kills"]]=np.inf
+        second=self.run_development(changed)
+        pd.testing.assert_frame_equal(first["comparison_table"],second["comparison_table"])
+        for exp_id in first["predictions"]:
+            pd.testing.assert_frame_equal(original_predictions[exp_id],pd.read_parquet(second["predictions"][exp_id]))
 
-        self.assertEqual(res["status"], "completed")
+    def test_common_cohort_and_fail_closed_features_split(self):
+        frame=self.df.copy()
+        frame.loc[0,"player_survive_time"]=np.nan
+        frame.loc[1,"normalized_placement"]=1.5
+        result=self.run_development(frame)
+        p1=pd.read_parquet(result["predictions"]["p1_ols_direct_survival"])
+        p2=pd.read_parquet(result["predictions"]["p2_ols_no_direct_survival"])
+        self.assertEqual(set(p1.row_id),set(p2.row_id))
+        self.assertEqual(len(p1),98)  # 100 development rows minus two invalid targets.
+        with self.assertRaisesRegex(KeyError,"Configured features missing"):
+            self.run_development(self.df.drop(columns="early_kills"))
+        bad=self.df.copy()
+        bad.loc[0,"split"]="validation"
+        with self.assertRaisesRegex(ValueError,"exactly one split"):
+            self.run_development(bad)
+        bad=self.df.copy()
+        bad.loc[0,"split"]=None
+        with self.assertRaisesRegex(ValueError,"invalid split"):
+            self.run_development(bad)
 
-        # Verify comparison tables exist
-        comp_csv = self.paths["tables"] / "rq3_model_comparison.csv"
-        val_sel_csv = self.paths["tables"] / "rq3_validation_selection.csv"
-        status_csv = self.paths["tables"] / "rq3_experiment_status.csv"
-        self.assertTrue(comp_csv.is_file())
-        self.assertTrue(val_sel_csv.is_file())
-        self.assertTrue(status_csv.is_file())
+    def test_config_disabled_task_and_backend_error_no_fallback(self):
+        from unittest.mock import patch
+        cfg=self.development_config()
+        cfg["rq3"]["experiments"]["p1_placement_retrospective_with_survival"]=False
+        cfg["models"]["baselines"]["train_median"]["enabled"]=False
+        result=run_rq3_prediction_suite(self.df,self.paths,config=cfg,device="cpu")
+        self.assertFalse(any(pd.read_parquet(p,columns=["task"]).task.iloc[0]=="p1" for p in result["predictions"].values()))
+        self.assertFalse(any(name.endswith("median") for name in result["models"]))
+        self.assertIn("disabled_by_config",result["experiment_status_table"].reason_code.values)
+        with patch("src.models.rq3_resources.resource_snapshot",return_value={"status":"ready","reason_code":None}), \
+             patch("src.models.linear.make_linear",side_effect=RuntimeError("GPU unavailable")):
+            with self.assertRaisesRegex(RuntimeError,"GPU unavailable"):
+                run_rq3_prediction_suite(self.df,self.paths,config=self.development_config(),device="cuda")
 
-        df_comp = pd.read_csv(comp_csv)
-        self.assertIn("p1_ols_direct_survival", df_comp["experiment_id"].values)
-        self.assertIn("p2_ols_no_direct_survival", df_comp["experiment_id"].values)
-        self.assertIn("s1_retrospective_survival", df_comp["experiment_id"].values)
-        self.assertIn("base_mean_p1", df_comp["experiment_id"].values)
+    def test_real_notebook_cells_development_handoff(self):
+        import base64, copy, io, os, shutil
+        import nbformat
+        from contextlib import redirect_stdout
+        from unittest.mock import patch
+        from src.models.training import load_rq3_development_data
+        project=Path(__file__).resolve().parents[1]
+        self.paths["interim"]=self.root/"data/interim"
+        self.paths["interim"].mkdir(parents=True)
+        self.df.drop(columns="split").to_parquet(self.paths["processed"]/"player_match_features.parquet",index=False)
+        self.df[["match_id","split"]].drop_duplicates().to_parquet(self.paths["interim"]/"split_assignments.parquet",index=False)
+        loaded=load_rq3_development_data(self.paths)
+        self.assertEqual(len(loaded),100)
+        self.assertNotIn("test",loaded.split.values)
+        ckpt=CheckpointManager(self.paths["checkpoints"]/"checkpoint_manifest.json")
+        notebook=nbformat.read(project/"notebooks/09_rq3_prediction.ipynb",as_version=4)
+        scope={"paths":self.paths,"PROJECT_ROOT":project}
+        displayed=[]
+        outputs=[]
+        def capture(value):
+            displayed.append(value)
+            if isinstance(value,pd.DataFrame):
+                outputs.append(nbformat.v4.new_output("display_data",data={"text/html":value.to_html(index=False),"text/plain":value.to_string(index=False)}))
+            elif value.__class__.__name__=="Image":
+                outputs.append(nbformat.v4.new_output("display_data",data={"image/png":base64.b64encode(value.data).decode()}))
+            elif value.__class__.__name__=="Markdown":
+                outputs.append(nbformat.v4.new_output("display_data",data={"text/markdown":value.data}))
+        with patch("src.utils.config.load_config",return_value=self.development_config()), \
+             patch("src.utils.config.resolve_paths",return_value=self.paths), \
+             patch("IPython.display.display",side_effect=capture):
+            for cell in notebook.cells:
+                if cell.cell_type != "code" or cell.metadata.get("tags"):
+                    continue
+                outputs=[]
+                stream=io.StringIO()
+                with redirect_stdout(stream):
+                    exec(compile(cell.source,"NB09-synthetic","exec"),scope)
+                cell.outputs=[nbformat.v4.new_output("stream",name="stdout",text=stream.getvalue())]+outputs
+                cell.execution_count=1
+        stages=ckpt.load_manifest()["stages"]
+        self.assertEqual(stages["rq3_development"]["status"],"completed")
+        self.assertEqual(stages["notebook/09_rq3_prediction.ipynb"]["status"],"blocked")
+        handover=pd.read_csv(self.paths["manifests"] / "notebook_handover.csv")
+        self.assertEqual(handover.status.iloc[0],"blocked")
+        self.assertIn("pending G4",handover.next_step.iloc[0])
+        with self.assertRaisesRegex(RuntimeError,"chưa hoàn tất"):
+            ckpt.begin_notebook("10_ablation_error_analysis.ipynb",["09_rq3_prediction.ipynb"])
+        expected_images=sum(Path(file).suffix==".png" for file in scope["res"]["artifacts"].values())
+        self.assertEqual(sum(v.__class__.__name__=="Image" for v in displayed),expected_images)
+        self.assertGreaterEqual(sum(isinstance(v,pd.DataFrame) for v in displayed),7)
+        self.assertFalse((self.paths["experiments"]/"predictions_p2_linear.parquet").exists())
+        evidence=os.environ.get("PUBG_PREDICTION_EVIDENCE_DIR")
+        if evidence:
+            dest=Path(evidence)
+            dest.mkdir(parents=True,exist_ok=True)
+            nbformat.write(notebook,dest/"09_fixture.ipynb")
+            from nbconvert import HTMLExporter
+            html,_=HTMLExporter().from_notebook_node(notebook)
+            (dest/"09_fixture.html").write_text(html,encoding="utf-8")
+            for name in ["tables","figures","models","experiments","manifests","checkpoints"]:
+                shutil.copytree(self.paths[name],dest/name,dirs_exist_ok=True)
 
-        # Check Grade C blocking in registry and checkpoint manifest
-        s2 = reg.get("s2_historical_survival")
-        p3 = reg.get("p3_historical_placement")
-        self.assertEqual(s2.status, "blocked")
-        self.assertEqual(s2.reason_code, "blocked_by_chronology")
-        self.assertEqual(p3.status, "blocked")
-        self.assertEqual(p3.reason_code, "blocked_by_chronology")
-
-        # Check figures generated
-        fig1 = self.paths["figures"] / "rq3_residuals_distribution.png"
-        fig2 = self.paths["figures"] / "rq3_observed_vs_predicted.png"
-        self.assertTrue(fig1.is_file())
-        self.assertTrue(fig2.is_file())
-
-        # Check checkpoint committed
-        manifest = ckpt_mgr.load_manifest()
-        self.assertIn("rq3_prediction", manifest["stages"])
-        self.assertEqual(manifest["stages"]["rq3_prediction"]["status"], "completed")
-        self.assertGreater(len(manifest["stages"]["rq3_prediction"]["artifacts"]), 4)
+    def test_real_notebook_all_core_tasks_disabled(self):
+        import os
+        from unittest.mock import patch
+        cfg=self.development_config()
+        for key in ["s1_survival_retrospective", "p1_placement_retrospective_with_survival",
+                    "p2_placement_retrospective_no_survival"]:
+            cfg["rq3"]["experiments"][key]=False
+        with patch.object(self,"development_config",return_value=cfg), patch.dict(os.environ,{"PUBG_PREDICTION_EVIDENCE_DIR":""}):
+            self.test_real_notebook_cells_development_handoff()
+        self.assertEqual(len(pd.read_csv(self.paths["tables"] / "rq3_development_validation.csv")),0)
 
 
 if __name__ == "__main__":
