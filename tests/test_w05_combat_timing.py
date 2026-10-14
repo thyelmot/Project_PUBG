@@ -582,7 +582,7 @@ for index, cell in enumerate(nb["cells"]):
             self.assertEqual(audit["valid_phase_events"], 2)
             stage = checkpoints["stages"]["notebook/04_combat_timing.ipynb"]
             self.assertEqual(stage["status"], "completed")
-            self.assertEqual(len(stage["artifacts"]), 9)
+            self.assertEqual(len(stage["artifacts"]), 11)
             for name in (
                 "nb04_absolute_timing_distribution.png",
                 "nb04_phase_event_counts.png",

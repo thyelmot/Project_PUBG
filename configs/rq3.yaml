@@ -20,9 +20,9 @@ device: "cuda" # GPU OLS for notebook 09 and paired ablation in notebook 10
 
 split:
   strategy: "auto" # "chronological" if Grade A/B, "group_by_match" if Grade C
-  train_ratio: null
-  validation_ratio: null
-  test_ratio: null # Locked after chronology/inventory evidence (Gate G4)
+  train_ratio: 0.70
+  validation_ratio: 0.15
+  test_ratio: 0.15 # Locked after chronology/inventory evidence (Gate G4)
   group_column: "match_id"
   random_state: 42
 

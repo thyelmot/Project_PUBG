@@ -6,7 +6,7 @@ import pandas as pd
 from scipy import stats
 from src.analysis.correlation import compute_bivariate_associations
 from src.analysis.mode_analysis import analyze_behavior_by_mode
-from src.data.io import atomic_write_json, atomic_write_csv
+from src.data.io import atomic_write_json, atomic_write_csv, scan_parquet_batches
 from src.utils.logging import get_logger
 
 logger = get_logger("pubg_eda")
@@ -284,11 +284,55 @@ def compute_combat_phase_by_placement_tier(
     return con.execute(query).df()
 
 
+def count_parquet_player_timestamp_overlaps(
+    con: duckdb.DuckDBPyConnection, path: Path, batch_size: int = 50000,
+) -> int:
+    """Count full-scope player/timestamp overlaps without collecting all players.
+
+    Keep the pandas mixed-format UTC parser used by run_chronology_audit.
+    DuckDB TIMESTAMP_NS retains sub-microsecond distinctions after UTC parsing.
+    """
+    from src.data.cleaning import _materialize_groups
+
+    if batch_size <= 0:
+        raise ValueError("Chronology batch_size must be positive")
+    columns = {row[0] for row in con.execute(
+        "DESCRIBE SELECT * FROM read_parquet(?)", [str(path)],
+    ).fetchall()}
+    time_column = "match_date" if "match_date" in columns else "date" if "date" in columns else None
+    if time_column is None or not {"player_name", "match_id"}.issubset(columns):
+        return 0
+    con.execute("CREATE OR REPLACE TEMP TABLE _chronology_player_times (player_name VARCHAR, match_id VARCHAR, stamp TIMESTAMP_NS)")
+    try:
+        for batch in scan_parquet_batches(path, batch_size, ["player_name", "match_id", time_column]):
+            batch["stamp"] = pd.to_datetime(
+                batch[time_column], errors="coerce", utc=True, format="mixed",
+            ).dt.tz_localize(None)
+            valid = batch.dropna(subset=["player_name", "match_id", "stamp"])
+            if valid.empty:
+                continue
+            con.register("_chronology_batch", valid[["player_name", "match_id", "stamp"]])
+            try:
+                con.execute("INSERT INTO _chronology_player_times SELECT * FROM _chronology_batch")
+            finally:
+                con.unregister("_chronology_batch")
+        _materialize_groups(con, "_chronology_overlap_keys", """
+            SELECT player_name, stamp FROM _chronology_player_times
+            WHERE __BUCKET_FILTER__
+            GROUP BY player_name, stamp HAVING count(DISTINCT match_id) > 1
+        """, "player_name, stamp")
+        return int(con.execute("SELECT count(*) FROM _chronology_overlap_keys").fetchone()[0])
+    finally:
+        con.execute("DROP TABLE IF EXISTS _chronology_overlap_keys")
+        con.execute("DROP TABLE IF EXISTS _chronology_player_times")
+
+
 def run_chronology_audit(
     meta_df: pd.DataFrame,
     has_exact_order_evidence: bool = False,
     config_grade: Optional[str] = None,
     player_match_df: Optional[pd.DataFrame] = None,
+    player_timestamp_overlap_count: Optional[int] = None,
 ) -> Dict[str, Any]:
     """Audit chronology evidence; configuration may downgrade but never upgrade evidence."""
     base = {
@@ -343,7 +387,11 @@ def run_chronology_audit(
     resolution = float(positive_deltas.min().total_seconds()) if not positive_deltas.empty else None
 
     overlap_count = 0
-    if player_match_df is not None and {"player_name", "match_id"}.issubset(player_match_df.columns):
+    if player_timestamp_overlap_count is not None:
+        if player_match_df is not None or player_timestamp_overlap_count < 0:
+            raise ValueError("Provide either player rows or a nonnegative full-scope overlap count")
+        overlap_count = int(player_timestamp_overlap_count)
+    elif player_match_df is not None and {"player_name", "match_id"}.issubset(player_match_df.columns):
         time_column = "match_date" if "match_date" in player_match_df.columns else "date" if "date" in player_match_df.columns else None
         if time_column:
             player_times = player_match_df[["player_name", "match_id", time_column]].copy()

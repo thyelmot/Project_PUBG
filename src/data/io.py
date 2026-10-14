@@ -90,6 +90,34 @@ def publish_file(local_path: Path, output: Path) -> None:
             pass  # A disconnected mount must not mask the original publish error.
 
 
+def validate_parquet_file(path: Union[str, Path], expected_rows=None, con=None) -> int:
+    """Decode every column/page in bounded batches, not just the footer.
+
+    A readable footer and a matching copy checksum do not establish that the
+    compressed data is decodable. Never publish/commit corrupt source bytes.
+    """
+    path = Path(path)
+    try:
+        with pq.ParquetFile(path) as parquet:
+            footer_rows = parquet.metadata.num_rows
+            decoded_rows = sum(batch.num_rows for batch in parquet.iter_batches(
+                batch_size=50000, use_threads=False,
+            ))
+        if con is not None:
+            # COUNT(*) may use only footer metadata; hashing each column forces
+            # the actual consumer engine to decode all pages without collecting.
+            con.execute("SELECT bit_xor(hash(COLUMNS(*))) FROM read_parquet(?)", [str(path)]).fetchone()
+    except (pa.ArrowException, OSError, duckdb.Error) as error:
+        raise ValueError(
+            f"Parquet data is unreadable: {path}. Không được commit file này; "
+            "kiểm tra storage và tạo lại từ producer, không bỏ dòng hoặc bỏ qua gate. "
+            f"Original error: {error}"
+        ) from error
+    if decoded_rows != footer_rows or (expected_rows is not None and decoded_rows != expected_rows):
+        raise ValueError(f"Row count invariant violated in Parquet: footer={footer_rows}, decoded={decoded_rows}, expected={expected_rows}")
+    return decoded_rows
+
+
 def copy_query_to_parquet(con, query: str, output: Path, expected_rows=None) -> int:
     """Execute DuckDB output locally; validate row count before replacing a checkpoint."""
     temp_root = Path(con.execute("SELECT current_setting('temp_directory')").fetchone()[0])
@@ -97,12 +125,12 @@ def copy_query_to_parquet(con, query: str, output: Path, expected_rows=None) -> 
     with tempfile.TemporaryDirectory(prefix="parquet_", dir=temp_root) as directory:
         local = Path(directory) / "result.parquet"
         safe_local = local.resolve().as_posix().replace("'", "''")
-        con.execute(f"COPY ({query.strip().rstrip(';')}) TO '{safe_local}' (FORMAT PARQUET, COMPRESSION 'ZSTD')")
-        with pq.ParquetFile(local) as parquet:
-            rows = parquet.metadata.num_rows
-        if expected_rows is not None and rows != expected_rows:
-            raise ValueError(f"Row count invariant violated: expected {expected_rows}, got {rows}")
+        # Bound the writer buffer for wide outputs; this changes only Parquet
+        # layout, not rows/schema/order rules or verified publication.
+        con.execute(f"COPY ({query.strip().rstrip(';')}) TO '{safe_local}' (FORMAT PARQUET, COMPRESSION 'ZSTD', ROW_GROUP_SIZE 50000)")
+        rows = validate_parquet_file(local, expected_rows, con=con)
         publish_file(local, output)
+        validate_parquet_file(output, rows, con=con)
     return rows
 
 

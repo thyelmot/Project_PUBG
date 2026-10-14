@@ -2,6 +2,7 @@ import ast
 import json
 import re
 import sys
+import textwrap
 from pathlib import Path
 
 NOTEBOOKS_DIR = Path(__file__).resolve().parent.parent.parent / "notebooks"
@@ -172,6 +173,22 @@ def create_notebook(filename: str, title: str, description: str, cells_data: lis
                 source = source.replace('paths = resolve_paths(cfg)\n', 'paths = resolve_paths(cfg)\n' + setup, 1)
             if int(filename[:2]) <= 7:
                 source = inline_saved_outputs(source)
+            if filename in ('02_data_quality_and_structure.ipynb', '03_build_player_match.ipynb', '04_combat_timing.ipynb'):
+                if previous_code_cell is None:
+                    stage_setup += 'PUBG_FORCE_STAGE_TAKEOVER = False  # Tiếp quản một lần; không tự ép lần sau.\n'
+                else:
+                    source = ('try:\n' + textwrap.indent(source, '    ') +
+                              '\nexcept (Exception, KeyboardInterrupt) as _nb02_error:\n'
+                              f'    _pubg_progress[{filename!r}] = -1\n'
+                              + ('    if isinstance(_nb02_error, RuntimeError) and str(_nb02_error).startswith("RUN-04_BLOCKED:"):\n'
+                                 '        raise  # Giữ trạng thái blocked của research gate.\n'
+                                 if filename == '04_combat_timing.ipynb' else '') +
+                              '    try:\n'
+                              '        import duckdb\n'
+                              f'        _pubg_checkpoint.record_failure({("notebook/" + filename)!r}, _pubg_signature, str(_nb02_error), resource_limited=isinstance(_nb02_error, (MemoryError, duckdb.OutOfMemoryException)), writer_id=_pubg_writer)\n'
+                              '    except Exception as _nb02_checkpoint_error:\n'
+                              '        print("Không ghi được trạng thái lỗi; giữ lỗi gốc và kiểm tra manifest trước khi tiếp quản:", _nb02_checkpoint_error)\n'
+                              '    raise\n')
             cell["source"] = (guard + source + '\n' + stage_setup + f'\n_pubg_progress[{filename!r}] = {i}\n').splitlines(keepends=True)
             previous_code_cell = i
         cell["id"] = f"cell-{i:03d}"
@@ -877,7 +894,11 @@ Các câu hỏi kiểm tra:
 
 Cell này chỉ đọc output canonical của Notebook 01. Nếu không có aggregate Parquet hoặc checkpoint G1 chưa hoàn tất, notebook dừng trước khi tạo output mới.
 
-Exact split proportions là quyết định nghiên cứu chưa được phép suy đoán. Nếu train_ratio, validation_ratio hoặc test_ratio còn null, các cell cleaning/roster/chronology vẫn cung cấp bằng chứng, nhưng cell split sẽ dừng và yêu cầu nhóm chốt config rồi chạy tiếp từ cell đó. Strategy auto được phân giải: Grade A/B dùng chronological; Grade C dùng group_by_match."""),
+Exact split proportions là quyết định nghiên cứu chưa được phép suy đoán. Nếu train_ratio, validation_ratio hoặc test_ratio còn null, các cell cleaning/roster/chronology vẫn cung cấp bằng chứng, nhưng cell split sẽ dừng. Sau khi nhóm chốt config, chạy lại từ cell khởi tạo để nạp cấu hình và signatures mới; chỉ chạy lại cell split sẽ dùng cấu hình cũ trong RAM. Strategy auto được phân giải: Grade A/B dùng chronological; Grade C dùng group_by_match.
+
+**Nếu báo already running under writer:** đây là khóa chống hai runtime cùng ghi, không phải lỗi cleaning. Nếu chưa chắc runtime cũ đã ngắt hoặc có thành viên đang chạy, dừng ở đây. Chỉ sau khi xác nhận runtime cũ đã ngắt và không ai đang ghi, bật PUBG_FORCE_STAGE_TAKEOVER=True ở cell cấu hình, chạy lại cell cấu hình rồi khởi tạo. Tiếp quản thành công tự trả biến về False. Không xóa manifest hay dùng ID writer cũ để giả danh phiên cũ.
+
+Khi cell xử lý lỗi hoặc bị ngắt bằng KeyboardInterrupt, notebook ghi failed/resource_limited nếu vẫn sở hữu stage, giữ lỗi gốc và yêu cầu khởi tạo lại trước khi thử lại. Nếu máy ảo bị thu hồi hoặc Drive mất kết nối, việc ghi trạng thái có thể không thực hiện được; khóa running cũ vẫn cần kiểm tra thủ công theo quy trình trên. Artifact đã commit của notebook trước không bị xóa."""),
         """
 import sys
 from pathlib import Path
@@ -940,7 +961,11 @@ Hai khái niệm không được trộn:
 
 Removal cascade chỉ loại exact duplicate, thiếu match/team key, vi phạm miền của behavior cốt lõi và identity mơ hồ. Missing behavior được giữ để task sau khai báo complete-case hoặc train-only imputation. Survival/placement không hợp lệ được giữ cho task không dùng target đó.
 
-Bảng flags là diagnostics có thể chồng lặp; tổng affected_rows của flags không phải số dòng bị loại. Task exclusions nằm ở ledger riêng."""),
+Bảng flags là diagnostics có thể chồng lặp; tổng affected_rows của flags không phải số dòng bị loại. Task exclusions nằm ở ledger riêng.
+
+**Bộ nhớ và dữ liệu đầy đủ:** kết quả loại trùng được vật chất hóa một lần trong bảng tạm DuckDB; không nạp toàn bộ dữ liệu vào pandas. Nếu gom nhóm hết RAM, chương trình thử các bucket hash đầy đủ (32, 128, 512); hash chỉ định tuyến, việc so sánh vẫn dùng toàn bộ khóa nên va chạm hash không gộp nhầm dòng. Mọi shard được xét cùng nhau; không loại trùng riêng từng shard và không lấy mẫu. Đại diện giữ nguyên cặp source_file/source_row từ cùng một dòng. Bảng tạm có thể tràn xuống thư mục temp của runtime; cần đủ dung lượng đĩa, không đặt temp trên Drive. Ghi Parquet dùng row group 50.000 dòng để giảm buffer, nhưng không bảo đảm mọi truy vấn sẽ chạy dưới bất kỳ mức RAM nào.
+
+Nếu hết tài nguyên Colab hoặc lỗi vẫn còn sau các lần thử, dừng và giữ nguyên thông báo lỗi; không gọi G2 là hoàn thành. GPU không tăng bộ nhớ cho DuckDB. Khi đổi tài khoản, dùng shortcut tới cùng thư mục Drive và đồng bộ source/notebook mới; bảng tạm không được bàn giao, các artifact/checkpoint đã kiểm chứng mới là dữ liệu bàn giao."""),
         """
 if "audit_and_clean_aggregate_data" not in globals():
     from src.data.cleaning import audit_and_clean_aggregate_data
@@ -1046,19 +1071,20 @@ Timestamp được parse và chuẩn hóa UTC. Audit ghi null count, số timest
 
 Grade A cần bằng chứng source về exact intra-day completion order; tie ratio thấp không đủ. Grade B chỉ cho phép lịch sử từ ngày nhỏ hơn ngày hiện tại. Grade C chặn S2/P3 chính thức và chỉ cho retrospective group split.
 
-chronology_report.json là nguồn có thẩm quyền. Config chỉ có thể hạ mức tin cậy, không được nâng grade vượt bằng chứng."""),
-        """
-from src.analysis.eda import run_chronology_audit
+chronology_report.json là nguồn có thẩm quyền. Config chỉ có thể hạ mức tin cậy, không được nâng grade vượt bằng chứng.
 
-meta_dates = con.execute("SELECT match_id, match_date FROM read_parquet(?)", [str(meta_pq)]).df()
-player_times = con.execute(
-    "SELECT match_id, player_name, date FROM read_parquet(?)",
-    [str(cleaned_pq)],
-).df()
+Same-player overlaps được tính trên toàn bộ cleaned Parquet bằng batch theo PUBG_BATCH_ROWS; không nạp toàn bộ player-match vào pandas. Mỗi batch dùng cùng parser UTC như kiểm toán gốc; DuckDB nhóm toàn cục nên các trận nằm ở batch khác nhau vẫn được đối chiếu. Bảng tạm có thể dùng đĩa runtime và bị xóa sau khi đếm; số đếm được lưu trong chronology report. Metadata chỉ đọc cột match_date cấp trận vào pandas; phần này vẫn cần RAM tỷ lệ với số trận, không phải số player-match."""),
+        """
+from src.analysis.eda import run_chronology_audit, count_parquet_player_timestamp_overlaps
+
+meta_dates = con.execute("SELECT match_date FROM read_parquet(?)", [str(meta_pq)]).df()
+player_overlap_count = count_parquet_player_timestamp_overlaps(
+    con, cleaned_pq, batch_size=int(globals().get("PUBG_BATCH_ROWS", 50000)),
+)
 chrono_report = run_chronology_audit(
     meta_dates,
     has_exact_order_evidence=False,
-    player_match_df=player_times,
+    player_timestamp_overlap_count=player_overlap_count,
     config_grade=cfg["preprocessing"]["chronology"].get("grade_assignment"),
 )
 chronology_path = paths["manifests"] / "chronology_report.json"
@@ -1108,7 +1134,7 @@ if any(_split_cfg.get(key) is None for key in _ratio_keys):
     raise RuntimeError(
         "Split ratios còn pending trong configs/rq3.yaml. "
         "Dựa trên Bảng 02-H và chronology report, chốt train_ratio, validation_ratio, test_ratio "
-        "sao cho tổng bằng 1; sau đó chạy lại từ cell split. Không dùng default ẩn."
+        "sao cho tổng bằng 1; sau đó chạy lại từ cell khởi tạo để nạp config/signatures mới. Không dùng default ẩn."
     )
 _requested_strategy = _split_cfg.get("strategy", "auto")
 if _requested_strategy == "auto":
@@ -1505,7 +1531,11 @@ if base_rows != _n_clean:
 
 row_id phải không null và duy nhất. Một player name rỗng chỉ được giữ khi có lineage đầy đủ; điều này bảo toàn truy vết nhưng không xác nhận danh tính.
 
-Schema manifest khóa tên và kiểu cột. Parts manifest ghi partition rule, số dòng, bytes và checksum từng part. Tổng số dòng của các part phải đúng bằng file canonical."""),
+Schema manifest khóa tên và kiểu cột. Parts manifest ghi partition rule, số dòng, bytes và checksum từng part. Tổng số dòng của các part phải đúng bằng file canonical.
+
+**Tính toàn vẹn Parquet:** footer và checksum đúng chưa chứng minh dữ liệu nén đọc được. Producer đọc giải nén toàn bộ cột theo batch bằng PyArrow và quét bằng DuckDB trước khi công bố, sau đó kiểm tra lại file đích. Kiểm tra này tăng I/O nhưng không lấy mẫu hay bỏ dòng. Nếu báo ZSTD Decompression failure, dừng, kiểm tra kết nối/storage và không commit NB03. Không đổi codec hoặc sửa manifest để che lỗi. Sau khi sửa storage, khởi tạo lại NB03 rồi chạy lại các cell từ registry tới tạo base và các cell kiểm toán; không cần chạy lại NB01/NB02 nếu upstream vẫn completed và dữ liệu hợp lệ. NB03 sẽ tạo lại base/parts đúng tên; không dùng bản lỗi làm đầu vào NB04.
+
+Nếu checkpoint còn running từ runtime đã mất, chỉ bật PUBG_FORCE_STAGE_TAKEOVER khi đã xác nhận runtime cũ ngắt và không ai đang ghi. Các lỗi xử lý NB03 được ghi failed/resource_limited nếu Drive còn ghi được; cần khởi tạo lại trước retry."""),
         """
 _schema = read_json(schema_json)
 _parts = read_json(parts_manifest_json)
@@ -1812,7 +1842,7 @@ import pandas as pd
 import duckdb
 from src.utils.config import load_config, resolve_paths
 from src.data.io import get_duckdb_connection, read_json
-from src.features.combat_timing import evaluate_combat_timing_research_gate, extract_and_aggregate_combat_timing, merge_player_match_and_timing
+from src.features.combat_timing import audit_match_duration, evaluate_combat_timing_research_gate, extract_and_aggregate_combat_timing, merge_player_match_and_timing
 from src.data.checkpoints import CheckpointManager
 from src.data.batch_ingest import staged_paths
 from src.utils.hashing import hash_file
@@ -1860,6 +1890,12 @@ _gate_table = _gate_table.rename(columns={
 })
 print("\\n--- BẢNG 04-B: RESEARCH GATE RUN-04 ---")
 print(_gate_table.to_string(index=False))
+duration_summary_csv, duration_review_pq = audit_match_duration(
+    con, meta_pq, paths["tables"], _timing_cfg["min_valid_duration_seconds"],
+)
+print("\\n--- BẢNG 04-N: DURATION CANDIDATE CẦN RÀ SOÁT ---")
+print(pd.read_csv(duration_summary_csv).to_string(index=False))
+print("Mốc 3600 chỉ để rà soát phân bố, không phải ngưỡng loại trận. Không tự sửa duration nguồn.")
 """,
         ("markdown", r"""### II. Trích xuất và Tổng hợp Thời điểm Giao tranh (Combat Timing Aggregation & Audit)
 
@@ -1873,7 +1909,11 @@ Hàm `extract_and_aggregate_combat_timing` thực thi các bước sau:
 3. **Phân tách thời gian tuyệt đối và thời gian phân pha:**
    - Nếu $t > estimated\_match\_duration$, sự kiện vẫn được giữ lại để tính thời gian tuyệt đối ($first\_kill\_time$, $avg\_kill\_time$), nhưng không được tính vào các pha $early/mid/late$.
    - Nếu duration thấp hơn ngưỡng chẩn đoán 60 giây, phase không được tính; ngưỡng này vẫn `pending_real_data_evidence`.
-4. **Lưu vết kiểm toán:** Lưu mọi row vào `event_validation_ledger.parquet`; không deduplicate potential replay trước khi nguồn cho bằng chứng."""),
+4. **Lưu vết kiểm toán:** Lưu mọi row vào `event_validation_ledger.parquet`; không deduplicate potential replay trước khi nguồn cho bằng chứng.
+
+**Bằng chứng RUN-04:** Bảng 04-N và `combat_duration_review_cases.parquet` liệt kê duration không hợp lệ, dưới ngưỡng candidate hoặc trên mốc rà soát 3600; mốc này không lọc trận hay đổi phase eligibility. Ledger bổ sung team killer/victim và cờ same-team non-self, different-team, unknown-team. Roster nhiều team cho cùng player-match hoặc thiếu team được coi unknown, không chọn team tùy ý. Cờ team chỉ phục vụ kiểm toán; different-team không tự chứng minh enemy-kill semantics và các cờ mới chưa thay đổi timing count. Không tự đặt verified hoặc loại/sửa giá trị lớn mà chưa đối chiếu nguồn và duyệt protocol.
+
+**Bộ nhớ và chạy lại:** Đếm trùng bằng nhóm khóa hẹp, tách khỏi join; khi grouping thiếu RAM, xử lý toàn bộ nhóm qua các hash bucket, không lấy mẫu. Sau khi xuất và kiểm tra ledger, các audit/timing đọc lại ledger thay vì lặp truy vấn raw. Cần đủ dung lượng đĩa tạm cho DuckDB spill; GPU không tăng bộ nhớ cho truy vấn này. Khi cell lỗi, NB04 ghi failed/resource_limited và bắt khởi tạo lại, không cho chạy cell cuối để commit nhầm. Chỉ tiếp quản writer khi runtime cũ đã dừng. Sau khi cập nhật source và notebook trên Drive, khởi tạo lại NB04 rồi chạy tuần tự; không chạy lại NB01-NB03 nếu đầu vào/checkpoint còn hợp lệ. RUN-04 pending evidence vẫn là điểm dừng nghiên cứu có chủ đích, không phải lỗi RAM."""),
         """
 timing_pq = paths["interim"] / "combat_timing.parquet"
 audit_tables_dir = paths["tables"]
@@ -1908,22 +1948,28 @@ import matplotlib.pyplot as plt
 fig_dir = paths["figures"]
 fig_dir.mkdir(parents=True, exist_ok=True)
 
-df_event_ledger = con.execute("SELECT * FROM read_parquet(?)", [str(event_ledger_pq)]).df()
+_event_ledger_rows, _absolute_rows, _phase_rows = con.execute(
+    "SELECT count(*), sum(absolute_timing_eligible), sum(phase_timing_eligible) FROM read_parquet(?)",
+    [str(event_ledger_pq)],
+).fetchone()
 _event_funnel = pd.DataFrame([
-    {"Tầng": "Dòng event nguồn", "Số event": len(df_event_ledger), "Mẫu số": len(df_event_ledger)},
-    {"Tầng": "Timing tuyệt đối đủ điều kiện", "Số event": int(df_event_ledger["absolute_timing_eligible"].sum()), "Mẫu số": len(df_event_ledger)},
-    {"Tầng": "Timing phase đủ điều kiện", "Số event": int(df_event_ledger["phase_timing_eligible"].sum()), "Mẫu số": len(df_event_ledger)},
+    {"Tầng": "Dòng event nguồn", "Số event": _event_ledger_rows, "Mẫu số": _event_ledger_rows},
+    {"Tầng": "Timing tuyệt đối đủ điều kiện", "Số event": int(_absolute_rows or 0), "Mẫu số": _event_ledger_rows},
+    {"Tầng": "Timing phase đủ điều kiện", "Số event": int(_phase_rows or 0), "Mẫu số": _event_ledger_rows},
 ])
 _event_funnel["Tỷ lệ (%)"] = (_event_funnel["Số event"] * 100 / _event_funnel["Mẫu số"].replace(0, pd.NA)).round(2)
 print("--- BẢNG 04-D: EVENT ELIGIBILITY FUNNEL ---")
 print(_event_funnel.to_string(index=False))
 
-_flag_cols = [column for column in df_event_ledger.columns if column.startswith("flag_")]
+_flag_cols = [row[0] for row in con.execute("DESCRIBE SELECT * FROM read_parquet(?)", [str(event_ledger_pq)]).fetchall()
+              if row[0].startswith("flag_")]
+_flag_sql = ", ".join('sum("' + column.replace('"', '""') + '")' for column in _flag_cols)
+_flag_counts = con.execute("SELECT " + _flag_sql + " FROM read_parquet(?)", [str(event_ledger_pq)]).fetchone()
 _flag_table = pd.DataFrame({
     "Cờ kiểm toán": _flag_cols,
-    "Số event": [int(df_event_ledger[column].sum()) for column in _flag_cols],
+    "Số event": [int(value or 0) for value in _flag_counts],
 })
-_flag_table["Tỷ lệ trên event nguồn (%)"] = (_flag_table["Số event"] * 100 / max(len(df_event_ledger), 1)).round(2)
+_flag_table["Tỷ lệ trên event nguồn (%)"] = (_flag_table["Số event"] * 100 / max(_event_ledger_rows, 1)).round(2)
 print("\\n--- BẢNG 04-E: CỜ EVENT, JOIN VÀ COVERAGE ---")
 print(_flag_table.to_string(index=False))
 
@@ -1994,6 +2040,8 @@ _diagnostic_artifacts = {
     "event_ledger": event_ledger_pq,
     "absolute_timing_figure": timing_hist_path,
     "phase_counts_figure": phase_fig_path,
+    "duration_review_summary": duration_summary_csv,
+    "duration_review_cases": duration_review_pq,
 }
 ckpt_mgr.commit(
     "combat_timing_diagnostics", _pubg_signature, _diagnostic_artifacts,
@@ -2003,13 +2051,15 @@ if not _research_gate["ready"]:
     _pubg_checkpoint.record_blocked(
         "notebook/04_combat_timing.ipynb", _pubg_signature, "RUN-04",
         metadata={
-            "message": "Bổ sung status=verified và evidence không rỗng cho event time unit, enemy eligibility và min duration.",
+            "message": "Cần đối chiếu nguồn đơn vị time/survive_time, audit team/cause và căn cứ ngưỡng duration; không chỉ đổi status để vượt chặn.",
             "research_gate": _research_gate,
             "diagnostic_stage": "combat_timing_diagnostics",
         },
     )
     print("RUN-04: Đã lưu diagnostics. NB04 dừng dự kiến; chưa tạo player_match_features và chưa bàn giao NB05.")
-    raise RuntimeError("RUN-04_BLOCKED: khóa ba tham số bằng bằng chứng dữ liệu thật trước khi chạy tiếp.")
+    _pending_parameters = ", ".join(item["parameter"] for item in _research_gate["checks"] if not item["ready"])
+    raise RuntimeError("RUN-04_BLOCKED: còn thiếu bằng chứng cho " + _pending_parameters
+                       + ". Diagnostics đã lưu; xem event_join_audit.csv và combat_duration_review_summary.csv. Không chạy cell merge/final để vượt chặn.")
 """,
         ("markdown", r"""### IV. Ghép nối Bảo toàn Số dòng và Ngữ nghĩa Không có Kill (Safe Left Join)
 
@@ -2048,17 +2098,17 @@ Sai lệch giữa `player_kills` và `event_kill_count` là bằng chứng cần
 
 `kill_discrepancy.csv` lưu đủ mọi player-match, không chỉ dòng sai lệch hay top N. `event_timing_coverage.csv` dùng mẫu số player-match; `event_join_audit.csv` dùng mẫu số event. Hai tỷ lệ không được trộn. Trạng thái `aggregate_kill_event_missing` khác về bản chất với `confirmed_no_kill_no_event`."""),
         """
-df_disc = pd.read_csv(discrepancy_csv)
-_disc_summary = (df_disc.groupby("timing_coverage_status", dropna=False)
-                 .agg(player_match_count=("match_id", "size"),
-                      aggregate_kills=("player_kills", "sum"),
-                      absolute_events=("event_kill_count", "sum"),
-                      absolute_discrepancy=("kill_discrepancy", "sum"))
-                 .reset_index())
+_discrepancy_rows = con.execute("SELECT count(*) FROM read_csv_auto(?)", [str(discrepancy_csv)]).fetchone()[0]
+_disc_summary = con.execute(\"\"\"
+    SELECT timing_coverage_status, count(*) AS player_match_count,
+           sum(player_kills) AS aggregate_kills, sum(event_kill_count) AS absolute_events,
+           sum(kill_discrepancy) AS absolute_discrepancy
+    FROM read_parquet(?) GROUP BY timing_coverage_status ORDER BY timing_coverage_status
+\"\"\", [str(final_pq)]).df()
 print("--- BẢNG 04-I: SAI LỆCH THEO TRẠNG THÁI COVERAGE ---")
 print(_disc_summary.to_string(index=False))
 print("\\n--- BẢNG 04-J: TOP 15 PLAYER-MATCH SAI LỆCH, FILE CSV VẪN GIỮ TOÀN BỘ ---")
-print(df_disc.head(15).to_string(index=False))
+print(pd.read_csv(discrepancy_csv, nrows=15).to_string(index=False))
 
 coverage_csv = paths["tables"] / "event_timing_coverage.csv"
 if coverage_csv.is_file():
@@ -2067,11 +2117,14 @@ if coverage_csv.is_file():
     print(df_cov.to_string(index=False))
 
 _examples = con.execute(\"\"\"
-    SELECT match_id, player_name, player_kills, event_kill_count,
-           phase_eligible_kill_count, first_kill_time, timing_coverage_status
-    FROM read_parquet(?)
-    QUALIFY row_number() OVER (PARTITION BY timing_coverage_status ORDER BY match_id, player_name) = 1
-    ORDER BY timing_coverage_status
+    SELECT _example.* FROM (
+        SELECT min(struct_pack(match_id := match_id, player_name := player_name,
+               player_kills := player_kills, event_kill_count := event_kill_count,
+               phase_eligible_kill_count := phase_eligible_kill_count,
+               first_kill_time := first_kill_time, timing_coverage_status := timing_coverage_status)) AS _example
+        FROM read_parquet(?) GROUP BY timing_coverage_status
+    )
+    ORDER BY _example.timing_coverage_status
 \"\"\", [str(final_pq)]).df()
 print("\\n--- BẢNG 04-K: VÍ DỤ NO-KILL, MISSING, PARTIAL VÀ EXACT ---")
 print(_examples.to_string(index=False))
@@ -2120,8 +2173,8 @@ print(inspect_df.to_string(index=False))
 
 _expected_actual = pd.DataFrame([
     {"Kiểm tra": "Bảo toàn dòng many-to-one", "Kỳ vọng": n_base, "Thực tế": final_rows, "Kết luận": "Đạt" if final_rows == n_base else "Không đạt"},
-    {"Kiểm tra": "Discrepancy đủ mọi player-match", "Kỳ vọng": final_rows, "Thực tế": len(df_disc), "Kết luận": "Đạt" if len(df_disc) == final_rows else "Không đạt"},
-    {"Kiểm tra": "Event ledger đủ dòng nguồn", "Kỳ vọng": _event_rows, "Thực tế": len(df_event_ledger), "Kết luận": "Đạt" if len(df_event_ledger) == _event_rows else "Không đạt"},
+    {"Kiểm tra": "Discrepancy đủ mọi player-match", "Kỳ vọng": final_rows, "Thực tế": _discrepancy_rows, "Kết luận": "Đạt" if _discrepancy_rows == final_rows else "Không đạt"},
+    {"Kiểm tra": "Event ledger đủ dòng nguồn", "Kỳ vọng": _event_rows, "Thực tế": _event_ledger_rows, "Kết luận": "Đạt" if _event_ledger_rows == _event_rows else "Không đạt"},
     {"Kiểm tra": "Phase counts = phase denominator", "Kỳ vọng": "Bằng nhau", "Thực tế": int((_phase_totals.sum() or 0)), "Kết luận": "Đạt" if int(_phase_totals.sum() or 0) == int(_timing_summary.iloc[0]["phase_eligible_event_count"] or 0) else "Không đạt"},
     {"Kiểm tra": "Ba quyết định dữ liệu thật", "Kỳ vọng": "verified kèm evidence", "Thực tế": f"{sum(_gate_table['Đủ điều kiện xuất bản'])}/3", "Kết luận": "Đạt" if _research_gate["ready"] else "Không đạt"},
     {"Kiểm tra": "Ba hình PNG", "Kỳ vọng": "3/3", "Thực tế": sum(path.is_file() for path in (timing_hist_path, phase_fig_path, coverage_fig_path)), "Kết luận": "Đạt" if all(path.is_file() for path in (timing_hist_path, phase_fig_path, coverage_fig_path)) else "Không đạt"},
@@ -2151,6 +2204,8 @@ _nb04_artifacts = {
     "absolute_timing_figure": timing_hist_path,
     "phase_counts_figure": phase_fig_path,
     "player_match_coverage_figure": coverage_fig_path,
+    "duration_review_summary": duration_summary_csv,
+    "duration_review_cases": duration_review_pq,
 }
 _handover = []
 for _name, _path in _nb04_artifacts.items():

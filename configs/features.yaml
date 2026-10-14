@@ -10,9 +10,12 @@ combat_timing:
   early_cutoff: 0.3333333333
   mid_cutoff: 0.6666666667
   min_valid_duration_seconds: 60.0
-  min_valid_duration_status: "pending_real_data_evidence"
-  event_time_unit_status: "pending_source_or_consistency_evidence"
-  enemy_kill_eligibility_status: "pending_team_or_cause_evidence"
+  min_valid_duration_status: "verified"
+  min_valid_duration_evidence: "User selected A on 2026-10-08: retain 60 seconds as a declared convention. Full-ledger threshold_sensitivity.csv: thresholds 1/30/60/120/180 yield 59560628 phase events; this does not identify a unique optimal threshold. See reports/appendix/nb04_completion_review_2026-10-08/decision_A.md."
+  event_time_unit_status: "verified"
+  event_time_unit_evidence: "Full-data consistency audit: 65370475 joined rows, 64851649 matched victims; 64441869 differ from survival by <=1, 64452071 by <=5; multiplying event time by1000 gives zero matches within5. Retain seconds interpretation based on consistency, not independently documented source units; preserve abnormal source values. See event_survival_unit_consistency.csv and decision_A.md in reports/appendix/nb04_completion_review_2026-10-08."
+  enemy_kill_eligibility_status: "verified"
+  enemy_kill_eligibility_evidence: "User selected A on 2026-10-08: retain credited-killer non-self semantics, including 691828 same-team and 795303 unknown-team absolute-eligible events. This historical gate name records an accepted eligibility decision; it is NOT a confirmed enemy-only claim. Team/cause cross-tab covers all 65370475 events. See reports/appendix/nb04_completion_review_2026-10-08/decision_A.md."
 
 transforms:
   log_transform_features: [] # TBD: Decided in EDA (Notebook 05)

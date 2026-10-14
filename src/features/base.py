@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
-from src.data.io import atomic_write_csv, atomic_write_json, copy_query_to_parquet, publish_file
+from src.data.io import atomic_write_csv, atomic_write_json, copy_query_to_parquet, publish_file, validate_parquet_file
 from src.features.placement import normalized_placement_sql, placement_valid_sql
 from src.features.registry import FeatureRegistry
 from src.utils.hashing import hash_file
@@ -129,19 +129,24 @@ def _write_numbered_parts(
                 COPY (
                     SELECT * FROM read_parquet('{safe_base}')
                     WHERE hash(row_id) % {bucket_count} = {bucket}
-                ) TO '{safe_local}' (FORMAT PARQUET, COMPRESSION 'ZSTD')
+                ) TO '{safe_local}' (FORMAT PARQUET, COMPRESSION 'ZSTD', ROW_GROUP_SIZE 50000)
             """)
             local_parts.append(local)
 
+        # Check all compressed pages before replacing any existing part.
+        part_rows = {part.name: validate_parquet_file(part, con=con) for part in local_parts}
+        if sum(part_rows.values()) != total_rows:
+            raise ValueError("Partition decoded row reconciliation failed")
         expected_names = {part.name for part in local_parts}
         records = []
         for bucket, local in enumerate(local_parts):
             destination = output_dir / local.name
             publish_file(local, destination)
+            validate_parquet_file(destination, part_rows[local.name], con=con)
             records.append({
                 "part": destination.name,
                 "bucket": bucket,
-                "rows": pq.ParquetFile(destination).metadata.num_rows,
+                "rows": part_rows[local.name],
                 "bytes": destination.stat().st_size,
                 "sha256": hash_file(destination),
             })

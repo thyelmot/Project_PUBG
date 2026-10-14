@@ -172,7 +172,11 @@ class CheckpointManager:
                 and current.get("writer_id") not in (None, writer_id)
                 and not force_takeover):
             raise RuntimeError(
-                f"{name} is already running under writer {current.get('writer_id')}. Confirm the old runtime stopped before takeover."
+                f"{name} is already running under writer {current.get('writer_id')}. "
+                "Checkpoint còn running, không chứng minh runtime cũ còn hoạt động. "
+                "Chỉ khi đã ngắt runtime cũ và xác nhận không ai khác đang ghi: "
+                "bật PUBG_FORCE_STAGE_TAKEOVER=True ở cell cấu hình, chạy cell đó rồi cell khởi tạo. "
+                "Không đổi PUBG_WRITER_ID thành ID cũ hoặc xóa manifest để bỏ khóa."
             )
         if (current.get("status") == "running"
                 and current.get("dependencies") == ["notebook/" + d for d in dependencies]
@@ -267,9 +271,13 @@ class CheckpointManager:
         *,
         resource_limited: bool = False,
         metadata: Optional[Dict[str, Any]] = None,
+        writer_id: Optional[str] = None,
     ) -> None:
         """Persist failure without inventing metrics or promoting partial artifacts."""
         manifest = self.load_manifest()
+        current = manifest.get("stages", {}).get(stage, {})
+        if writer_id is not None and current.get("writer_id") != writer_id:
+            raise RuntimeError(f"Stage '{stage}' is owned by writer {current.get('writer_id')}")
         status = "resource_limited" if resource_limited else "failed"
         manifest["stages"][stage] = {
             "status": status,
@@ -278,6 +286,8 @@ class CheckpointManager:
             "failed_at": datetime.now(timezone.utc).isoformat(),
             "artifacts": {},
             "metadata": metadata or {},
+            "writer_id": writer_id or current.get("writer_id"),
+            "dependencies": current.get("dependencies", []),
         }
         self.save_manifest(manifest)
         log_stage(stage, status, signature=signature, error=str(error))

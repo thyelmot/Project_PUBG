@@ -1,8 +1,10 @@
 from pathlib import Path
+import tempfile
 from typing import Any, Dict, List, Optional
 import duckdb
 import pandas as pd
-from src.data.io import copy_query_to_parquet, atomic_write_csv
+from src.data.io import copy_query_to_parquet, atomic_write_csv, publish_file
+from src.data.cleaning import _materialize_groups
 from src.utils.logging import get_logger
 
 logger = get_logger("pubg_combat_timing")
@@ -35,6 +37,28 @@ def evaluate_combat_timing_research_gate(features_config: Dict[str, Any]) -> Dic
         )
     ready = all(item["ready"] for item in checks)
     return {"ready": ready, "checks": checks, "reason_code": "ready" if ready else "RUN-04"}
+
+
+def audit_match_duration(con, metadata_parquet: Path, output_dir: Path, min_duration=60.0):
+    """Describe duration candidates; 3600 is a review bin, NEVER an exclusion."""
+    if not 0 < float(min_duration) < float("inf"):
+        raise ValueError("Duration review minimum must be finite and positive")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    query = f"""SELECT *, CASE
+        WHEN estimated_match_duration IS NULL OR NOT isfinite(estimated_match_duration)
+             OR estimated_match_duration <= 0 THEN 'invalid'
+        WHEN estimated_match_duration < {float(min_duration)} THEN 'below_candidate_minimum'
+        WHEN estimated_match_duration > 3600 THEN 'above_3600_review_only'
+        ELSE 'other_positive' END AS duration_review_category
+        FROM read_parquet('{_sql_path(metadata_parquet)}')"""
+    summary = con.execute(f"""SELECT duration_review_category, count(*) AS match_count,
+        min(estimated_match_duration) AS minimum, max(estimated_match_duration) AS maximum
+        FROM ({query}) GROUP BY duration_review_category ORDER BY duration_review_category""").df()
+    summary_path = output_dir / "combat_duration_review_summary.csv"
+    cases_path = output_dir / "combat_duration_review_cases.parquet"
+    atomic_write_csv(summary_path, summary)
+    copy_query_to_parquet(con, f"SELECT * FROM ({query}) WHERE duration_review_category <> 'other_positive'", cases_path)
+    return summary_path, cases_path
 
 
 def extract_and_aggregate_combat_timing(
@@ -131,22 +155,65 @@ def extract_and_aggregate_combat_timing(
         "CASE WHEN d.source_file IS NULL "
         "OR length(trim(CAST(d.source_file AS VARCHAR))) = 0 "
         "OR d.source_row IS NULL THEN 0 "
-        "WHEN count(*) OVER (PARTITION BY CAST(d.source_file AS VARCHAR), CAST(d.source_row AS BIGINT)) > 1 "
+        "WHEN si.source_row IS NOT NULL "
         "THEN 1 ELSE 0 END"
         if lineage_columns_available
         else "0"
     )
+    # Narrow global groups replace two windows over wide, joined event rows.
+    # Hash buckets are an OOM fallback, not sampling or content deduplication.
+    _materialize_groups(con, "timing_replay_keys", f"""
+        SELECT d.match_id, d.killer_name, {victim_expr} AS victim_name,
+               d.time, {cause_expr} AS killed_by
+        FROM raw_deaths_view d WHERE __BUCKET_FILTER__
+        GROUP BY d.match_id, d.killer_name, {victim_expr}, d.time, {cause_expr}
+        HAVING count(*) > 1
+    """, f"d.match_id, d.killer_name, {victim_expr}, d.time, {cause_expr}")
+    if lineage_columns_available:
+        _materialize_groups(con, "timing_source_conflicts", """
+            SELECT CAST(d.source_file AS VARCHAR) AS source_file,
+                   CAST(d.source_row AS BIGINT) AS source_row
+            FROM raw_deaths_view d
+            WHERE d.source_file IS NOT NULL AND d.source_row IS NOT NULL
+              AND length(trim(CAST(d.source_file AS VARCHAR))) > 0
+              AND __BUCKET_FILTER__
+            GROUP BY CAST(d.source_file AS VARCHAR), CAST(d.source_row AS BIGINT)
+            HAVING count(*) > 1
+        """, "CAST(d.source_file AS VARCHAR), CAST(d.source_row AS BIGINT)")
+    else:
+        con.execute("CREATE OR REPLACE TEMP TABLE timing_source_conflicts AS "
+                    "SELECT NULL::VARCHAR AS source_file, NULL::BIGINT AS source_row WHERE false")
     roster_available = bool(player_match_base_parquet and player_match_base_parquet.is_file())
+    team_column_available = False
+    source_conflict_join = (
+        f"{source_file_expr} = si.source_file AND {source_row_expr} = si.source_row"
+        if lineage_columns_available else "false"
+    )
     if roster_available:
-        con.execute(
-            "CREATE OR REPLACE VIEW timing_roster_view AS SELECT DISTINCT trim(match_id) AS match_id, "
-            f"trim(player_name) AS player_name FROM read_parquet('{_sql_path(player_match_base_parquet)}') "
-            "WHERE match_id IS NOT NULL AND player_name IS NOT NULL"
-        )
+        roster_columns = {row[0] for row in con.execute(
+            f"DESCRIBE SELECT * FROM read_parquet('{_sql_path(player_match_base_parquet)}')"
+        ).fetchall()}
+        team_column_available = "team_id" in roster_columns
+        if team_column_available:
+            team = "nullif(trim(CAST(team_id AS VARCHAR)), '')"
+            _materialize_groups(con, "timing_roster_view", f"""
+                SELECT trim(match_id) AS match_id, trim(player_name) AS player_name,
+                    CASE WHEN count(DISTINCT {team}) = 1 AND count(*) FILTER (WHERE {team} IS NULL) = 0
+                         THEN min({team}) ELSE NULL END AS team_id
+                FROM read_parquet('{_sql_path(player_match_base_parquet)}')
+                WHERE match_id IS NOT NULL AND player_name IS NOT NULL AND __BUCKET_FILTER__
+                GROUP BY trim(match_id), trim(player_name)
+            """, "trim(match_id), trim(player_name)")
+        else:
+            con.execute(
+                "CREATE OR REPLACE TEMP TABLE timing_roster_view AS SELECT DISTINCT trim(match_id) AS match_id, "
+                f"trim(player_name) AS player_name, NULL::VARCHAR AS team_id FROM read_parquet('{_sql_path(player_match_base_parquet)}') "
+                "WHERE match_id IS NOT NULL AND player_name IS NOT NULL"
+            )
     else:
         con.execute(
-            "CREATE OR REPLACE VIEW timing_roster_view AS "
-            "SELECT NULL::VARCHAR AS match_id, NULL::VARCHAR AS player_name WHERE false"
+            "CREATE OR REPLACE TEMP TABLE timing_roster_view AS "
+            "SELECT NULL::VARCHAR AS match_id, NULL::VARCHAR AS player_name, NULL::VARCHAR AS team_id WHERE false"
         )
 
     # Preserve source identity; potential replayed rows are audited, never silently removed.
@@ -176,11 +243,23 @@ def extract_and_aggregate_combat_timing(
         CASE WHEN regexp_matches(lower(coalesce({cause_expr}, '')), 'bluezone|redzone|fall|drown|environment') THEN 1 ELSE 0 END AS flag_environment_cause,
         CASE WHEN d.killer_name IS NULL OR length(trim(d.killer_name)) = 0 THEN NULL WHEN rk.player_name IS NULL THEN 1 ELSE 0 END AS flag_killer_unmatched_roster,
         CASE WHEN {victim_expr} IS NULL OR length(trim({victim_expr})) = 0 THEN NULL WHEN rv.player_name IS NULL THEN 1 ELSE 0 END AS flag_victim_unmatched_roster,
-        CASE WHEN count(*) OVER (PARTITION BY d.match_id, d.killer_name, {victim_expr}, d.time, {cause_expr}) > 1 THEN 1 ELSE 0 END AS flag_potential_replay
+        rk.team_id AS killer_team_id,
+        rv.team_id AS victim_team_id,
+        CASE WHEN rk.team_id = rv.team_id AND trim(d.killer_name) <> trim({victim_expr}) THEN 1 ELSE 0 END AS flag_same_team_nonself,
+        CASE WHEN rk.team_id <> rv.team_id THEN 1 ELSE 0 END AS flag_different_team,
+        CASE WHEN rk.team_id IS NULL OR rv.team_id IS NULL THEN 1 ELSE 0 END AS flag_unknown_team_pair,
+        CASE WHEN rp.replayed THEN 1 ELSE 0 END AS flag_potential_replay
     FROM raw_deaths_view d
     LEFT JOIN match_metadata_view m ON trim(d.match_id) = trim(m.match_id)
     LEFT JOIN timing_roster_view rk ON trim(d.match_id) = rk.match_id AND trim(d.killer_name) = rk.player_name
-    LEFT JOIN timing_roster_view rv ON trim(d.match_id) = rv.match_id AND trim({victim_expr}) = rv.player_name;
+    LEFT JOIN timing_roster_view rv ON trim(d.match_id) = rv.match_id AND trim({victim_expr}) = rv.player_name
+    LEFT JOIN timing_source_conflicts si ON {source_conflict_join}
+    LEFT JOIN (SELECT *, true AS replayed FROM timing_replay_keys) rp
+      ON d.match_id IS NOT DISTINCT FROM rp.match_id
+     AND d.killer_name IS NOT DISTINCT FROM rp.killer_name
+     AND {victim_expr} IS NOT DISTINCT FROM rp.victim_name
+     AND d.time IS NOT DISTINCT FROM rp.time
+     AND {cause_expr} IS NOT DISTINCT FROM rp.killed_by;
     """)
 
     valid_condition = """
@@ -199,6 +278,14 @@ def extract_and_aggregate_combat_timing(
         "FROM categorized_death_events_view",
         audit_output_dir / "event_validation_ledger.parquet",
     )
+
+    # Reuse the verified ledger: downstream audits/aggregation must not rerun
+    # the raw joins and global replay analysis on each SELECT.
+    con.execute("CREATE OR REPLACE VIEW categorized_death_events_view AS "
+                f"SELECT * FROM read_parquet('{_sql_path(audit_output_dir / 'event_validation_ledger.parquet')}')")
+    con.execute("DROP TABLE timing_replay_keys")
+    con.execute("DROP TABLE timing_source_conflicts")
+    con.execute("DROP TABLE timing_roster_view")
 
     audit_stats = con.execute("""
     SELECT
@@ -227,6 +314,10 @@ def extract_and_aggregate_combat_timing(
         missing_source_lineage_events,
         duplicate_source_identity_events,
     ) = [int(value or 0) for value in audit_stats]
+    same_team, different_team, unknown_team = con.execute("""
+        SELECT coalesce(sum(flag_same_team_nonself), 0), coalesce(sum(flag_different_team), 0),
+               coalesce(sum(flag_unknown_team_pair), 0) FROM categorized_death_events_view
+    """).fetchone()
 
     match_join_denominator = total_death_events - missing_match_id
     matched_match_events = match_join_denominator - unmatched_match
@@ -267,6 +358,10 @@ def extract_and_aggregate_combat_timing(
     """)
 
     # Global aggregation per (match_id, killer_name)
+    # SQL decimal literals can overflow when multiplied by DECIMAL duration.
+    # These ratios are Python floats already; keep their DOUBLE semantics.
+    early_boundary = f"CAST({early_cutoff_ratio} AS DOUBLE) * estimated_match_duration"
+    mid_boundary = f"CAST({mid_cutoff_ratio} AS DOUBLE) * estimated_match_duration"
     timing_aggregation_query = f"""
     SELECT
         match_id,
@@ -279,25 +374,25 @@ def extract_and_aggregate_combat_timing(
         true AS has_kill,
         -- Phase timing counts (only valid when match duration >= {min_valid_duration}s and time <= duration)
         SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 THEN 1 ELSE 0 END) AS phase_eligible_kill_count,
-        SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time < ({early_cutoff_ratio} * estimated_match_duration) THEN 1 ELSE 0 END) AS early_kills,
-        SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time >= ({early_cutoff_ratio} * estimated_match_duration) AND time < ({mid_cutoff_ratio} * estimated_match_duration) THEN 1 ELSE 0 END) AS mid_kills,
-        SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time >= ({mid_cutoff_ratio} * estimated_match_duration) AND time <= estimated_match_duration THEN 1 ELSE 0 END) AS late_kills,
+        SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time < ({early_boundary}) THEN 1 ELSE 0 END) AS early_kills,
+        SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time >= ({early_boundary}) AND time < ({mid_boundary}) THEN 1 ELSE 0 END) AS mid_kills,
+        SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time >= ({mid_boundary}) AND time <= estimated_match_duration THEN 1 ELSE 0 END) AS late_kills,
         -- Phase ratios using phase_eligible_kills as denominator (NULL if 0 phase eligible kills)
         CASE
             WHEN SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 THEN 1 ELSE 0 END) > 0
-            THEN CAST(SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time < ({early_cutoff_ratio} * estimated_match_duration) THEN 1 ELSE 0 END) AS DOUBLE) /
+            THEN CAST(SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time < ({early_boundary}) THEN 1 ELSE 0 END) AS DOUBLE) /
                  SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 THEN 1 ELSE 0 END)
             ELSE NULL
         END AS early_kill_ratio,
         CASE
             WHEN SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 THEN 1 ELSE 0 END) > 0
-            THEN CAST(SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time >= ({early_cutoff_ratio} * estimated_match_duration) AND time < ({mid_cutoff_ratio} * estimated_match_duration) THEN 1 ELSE 0 END) AS DOUBLE) /
+            THEN CAST(SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time >= ({early_boundary}) AND time < ({mid_boundary}) THEN 1 ELSE 0 END) AS DOUBLE) /
                  SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 THEN 1 ELSE 0 END)
             ELSE NULL
         END AS mid_kill_ratio,
         CASE
             WHEN SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 THEN 1 ELSE 0 END) > 0
-            THEN CAST(SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time >= ({mid_cutoff_ratio} * estimated_match_duration) AND time <= estimated_match_duration THEN 1 ELSE 0 END) AS DOUBLE) /
+            THEN CAST(SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 AND time >= ({mid_boundary}) AND time <= estimated_match_duration THEN 1 ELSE 0 END) AS DOUBLE) /
                  SUM(CASE WHEN flag_invalid_duration = 0 AND flag_below_duration_threshold = 0 AND flag_out_of_range = 0 THEN 1 ELSE 0 END)
             ELSE NULL
         END AS late_kill_ratio
@@ -307,6 +402,10 @@ def extract_and_aggregate_combat_timing(
     unique_killer_matches = copy_query_to_parquet(con, timing_aggregation_query, output_timing_parquet)
 
     audit_summary = {
+        "team_pair_audit_status": "available" if team_column_available and victim_column_available else "unavailable",
+        "same_team_nonself_events": int(same_team),
+        "different_team_events": int(different_team),
+        "unknown_team_pair_events": int(unknown_team),
         "total_death_events": total_death_events,
         "missing_match_id": missing_match_id,
         "missing_killer": missing_killer,
@@ -544,7 +643,7 @@ def merge_player_match_and_timing(
     mode_expr = "coalesce(team_size_mode, 'unknown')" if "team_size_mode" in output_columns else "coalesce(match_mode, 'unknown')"
 
     # Full player-match discrepancy ledger; notebook may display only its largest rows.
-    discrepancy_df = con.execute(f"""
+    discrepancy_query = f"""
         SELECT
             match_id,
             player_name,
@@ -557,8 +656,15 @@ def merge_player_match_and_timing(
             timing_coverage_status
         FROM read_parquet('{safe_out}')
         ORDER BY kill_discrepancy DESC, match_id, player_name;
-    """).df()
-    atomic_write_csv(discrepancy_log_path, discrepancy_df)
+    """
+    # This is a full ledger, not a small display table. Stream through DuckDB
+    # rather than loading every player-match into a pandas DataFrame.
+    scratch = con.execute("SELECT current_setting('temp_directory')").fetchone()[0]
+    with tempfile.TemporaryDirectory(prefix="timing_discrepancy_", dir=scratch or None) as directory:
+        local_csv = Path(directory) / "discrepancy.csv"
+        con.execute(f"COPY ({discrepancy_query.strip().rstrip(';')}) "
+                    f"TO '{_sql_path(local_csv)}' (FORMAT CSV, HEADER true)")
+        publish_file(local_csv, discrepancy_log_path)
 
     # Player-match coverage by mode; event-level eligibility remains in event_join_audit.csv.
     coverage_df = con.execute(f"""

@@ -18,7 +18,34 @@ BUSINESS_COLUMNS = [
 
 
 def _quoted(columns: List[str]) -> str:
-    return ", ".join(f'"{column}"' for column in columns)
+    return ", ".join('"' + column.replace('"', '""') + '"' for column in columns)
+
+
+def _materialize_groups(con, table: str, query: str, hash_columns: str) -> None:
+    """Retry a memory-limited grouping in disjoint, complete hash buckets.
+
+    Hash is only routing: SQL still compares the complete grouping key, so
+    collisions never merge records. No row sampling or independent shard dedup.
+    """
+    try:
+        con.execute(f"CREATE OR REPLACE TEMP TABLE {table} AS " + query.replace("__BUCKET_FILTER__", "TRUE"))
+        return
+    except duckdb.OutOfMemoryException:
+        logger.warning("Grouping exceeded DuckDB memory; retrying complete hash buckets: %s", table)
+    for buckets in (32, 128, 512):
+        try:
+            for bucket in range(buckets):
+                subset = query.replace(
+                    "__BUCKET_FILTER__", f"hash({hash_columns}) % {buckets} = {bucket}",
+                )
+                prefix = f"CREATE OR REPLACE TEMP TABLE {table} AS " if bucket == 0 else f"INSERT INTO {table} "
+                con.execute(prefix + subset)
+            return
+        except duckdb.OutOfMemoryException:
+            # The next attempt replaces the partial scratch table. Nothing has
+            # been published; if all attempts fail, retain the original error.
+            if buckets == 512:
+                raise
 
 
 def audit_and_clean_aggregate_data(
@@ -51,9 +78,33 @@ def audit_and_clean_aggregate_data(
     business_sql = _quoted(BUSINESS_COLUMNS)
     total_raw_rows = con.execute("SELECT count(*) FROM raw_aggregate_view").fetchone()[0]
 
-    exact_duplicates = con.execute(
-        f"SELECT count(*) - count(DISTINCT ({business_sql})) FROM raw_aggregate_view"
-    ).fetchone()[0]
+    # Materialize exact business groups once. A global ROW_NUMBER window over
+    # wide rows exhausted Colab memory and lazy views repeated it downstream.
+    # MIN of one struct keeps lineage/payload from the SAME representative row;
+    # separate MIN(source_file), MIN(source_row) can fabricate a source pair.
+    # Struct comparison, like ASC, places null fields last. Business columns
+    # remain unnormalised here so trimming cannot collapse distinct records.
+    payload_columns = lineage_columns + [
+        column for column in available
+        if column not in BUSINESS_COLUMNS and column not in lineage_columns
+    ]
+    if payload_columns:
+        fields = ", ".join(
+            f"{_quoted([column])} := {_quoted([column])}"
+            for column in payload_columns
+        )
+        dedup_query = f"""
+            SELECT {business_sql}, _payload.* FROM (
+                SELECT {business_sql}, min(struct_pack({fields})) AS _payload
+                FROM raw_aggregate_view WHERE __BUCKET_FILTER__ GROUP BY {business_sql}
+            )
+        """
+    else:
+        dedup_query = f"SELECT {business_sql} FROM raw_aggregate_view WHERE __BUCKET_FILTER__ GROUP BY {business_sql}"
+    _materialize_groups(con, "_pubg_dedup_rows", dedup_query, business_sql)
+    con.execute("CREATE OR REPLACE TEMP VIEW step1_dedup AS SELECT * FROM _pubg_dedup_rows")
+    n1 = con.execute("SELECT count(*) FROM step1_dedup").fetchone()[0]
+    exact_duplicates = total_raw_rows - n1
     missing_match_id = con.execute(
         "SELECT count(*) FROM raw_aggregate_view WHERE match_id IS NULL OR length(trim(match_id)) = 0"
     ).fetchone()[0]
@@ -92,21 +143,15 @@ def audit_and_clean_aggregate_data(
         WHERE team_placement IS NULL OR team_placement <= 0
     """).fetchone()[0]
 
-    key_conflicts = con.execute(f"""
-        WITH distinct_records AS (
-            SELECT DISTINCT {business_sql}
-            FROM raw_aggregate_view
-            WHERE match_id IS NOT NULL AND length(trim(match_id)) > 0
-              AND player_name IS NOT NULL AND length(trim(player_name)) > 0
-        ),
-        counts AS (
-            SELECT trim(match_id) AS mid, trim(player_name) AS pname, count(*) AS c
-            FROM distinct_records
-            GROUP BY trim(match_id), trim(player_name)
-            HAVING count(*) > 1
-        )
-        SELECT COALESCE(sum(c), 0) FROM counts
-    """).fetchone()[0]
+    _materialize_groups(con, "_pubg_raw_conflicts", """
+        SELECT trim(match_id) AS mid, trim(player_name) AS pname, count(*) AS c
+        FROM step1_dedup
+        WHERE match_id IS NOT NULL AND length(trim(match_id)) > 0
+          AND player_name IS NOT NULL AND length(trim(player_name)) > 0
+          AND __BUCKET_FILTER__
+        GROUP BY trim(match_id), trim(player_name) HAVING count(*) > 1
+    """, "trim(match_id), trim(player_name)")
+    key_conflicts = con.execute("SELECT COALESCE(sum(c), 0) FROM _pubg_raw_conflicts").fetchone()[0]
 
     flags_file = error_flags_path or (removal_log_path.parent / "error_flags.csv")
     flags_records = [
@@ -122,21 +167,7 @@ def audit_and_clean_aggregate_data(
     ]
     atomic_write_csv(flags_file, pd.DataFrame(flags_records))
 
-    order_sql = _quoted(lineage_columns) if lineage_columns else business_sql
-    con.execute(f"""
-        CREATE OR REPLACE TEMP VIEW step1_dedup AS
-        SELECT * EXCLUDE (_dedup_rank)
-        FROM (
-            SELECT *, row_number() OVER (
-                PARTITION BY {business_sql}
-                ORDER BY {order_sql}
-            ) AS _dedup_rank
-            FROM raw_aggregate_view
-        )
-        WHERE _dedup_rank = 1
-    """)
-    n1 = con.execute("SELECT count(*) FROM step1_dedup").fetchone()[0]
-    r1 = total_raw_rows - n1
+    r1 = exact_duplicates
 
     con.execute("""
         CREATE OR REPLACE TEMP VIEW step2_valid_keys AS
@@ -155,18 +186,19 @@ def audit_and_clean_aggregate_data(
     n3 = con.execute("SELECT count(*) FROM step3_valid_domain").fetchone()[0]
     r3 = n2 - n3
 
-    con.execute(f"""
-        CREATE OR REPLACE TEMP VIEW identity_conflict_keys AS
+    _materialize_groups(con, "_pubg_identity_conflict_keys", f"""
         WITH distinct_records AS (
-            SELECT DISTINCT {business_sql}
+            SELECT {business_sql}
             FROM step3_valid_domain
             WHERE player_name IS NOT NULL AND length(trim(player_name)) > 0
+              AND __BUCKET_FILTER__
         )
         SELECT trim(match_id) AS mid, trim(player_name) AS pname
         FROM distinct_records
         GROUP BY trim(match_id), trim(player_name)
         HAVING count(*) > 1
-    """)
+    """, "trim(match_id), trim(player_name)")
+    con.execute("CREATE OR REPLACE TEMP VIEW identity_conflict_keys AS SELECT * FROM _pubg_identity_conflict_keys")
     conflict_file = identity_conflicts_path or (removal_log_path.parent / "identity_conflicts.parquet")
     copy_query_to_parquet(con, """
         SELECT s.*,
