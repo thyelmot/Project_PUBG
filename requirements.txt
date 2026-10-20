@@ -1,0 +1,16 @@
+duckdb>=1.4,<2
+pyarrow>=18,<24
+pandas>=2.2,<3
+numpy>=2,<3
+scipy>=1.14,<2
+scikit-learn>=1.5,<2
+matplotlib>=3.9,<4
+PyYAML>=6,<7
+joblib>=1.4,<2
+nbformat>=5.10,<6
+nbclient>=0.10,<1
+nbconvert>=7.16.6,<8
+ipykernel>=6,<8
+psutil>=6,<8
+packaging>=24,<27
+# GPU: cuML tương thích CUDA/Colab được cài riêng; không cài trên Windows CPU.
