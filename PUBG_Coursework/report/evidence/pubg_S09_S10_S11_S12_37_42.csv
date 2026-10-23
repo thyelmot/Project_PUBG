@@ -1,0 +1,4 @@
+Unnamed: 0,metric,aggregation,reference,candidate,T0,T1,delta,n,time_unit_status
+0,mae,micro,T0,T1=P2,0.186802,0.173516,-0.013286,10085842,assumed_seconds
+1,rmse,micro,T0,T1=P2,0.23122,0.217318,-0.013902,10085842,assumed_seconds
+2,r2,micro,T0,T1=P2,0.413202,0.481642,0.06844,10085842,assumed_seconds

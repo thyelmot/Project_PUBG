@@ -1,0 +1,2 @@
+Unnamed: 0,status,accepted,verified,unit,label,evidence,source_reference,assumption_approved,assumption_scope,limitation
+0,assumed_seconds,True,False,seconds,"Giây (giả định, chưa xác minh)",User approved declared-seconds assumption on 2...,skihikingkevin/pubg-match-deaths/versions/3,True,skihikingkevin/pubg-match-deaths/versions/3,"Đơn vị giây là giả định được duyệt, chưa được ..."

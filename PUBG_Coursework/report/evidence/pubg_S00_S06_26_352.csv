@@ -1,0 +1,21 @@
+Unnamed: 0,stage,step,scope,elapsed_seconds,mode,target,feature
+0,S06,checking prerequisites,full,0.0,,,
+1,S06,running,full,222.08,,,
+2,S06,global relationship pair,full,451.19,Overall,player_survive_time,player_kills
+3,S06,global relationship pair,full,607.72,Overall,player_survive_time,player_dmg
+4,S06,global relationship pair,full,771.4,Overall,player_survive_time,damage_per_kill
+5,S06,global relationship pair,full,906.83,Overall,player_survive_time,player_dist_walk
+6,S06,global relationship pair,full,1099.18,Overall,player_survive_time,player_dist_ride
+7,S06,global relationship pair,full,1280.13,Overall,player_survive_time,total_distance
+8,S06,global relationship pair,full,1549.55,Overall,player_survive_time,walk_ratio
+9,S06,global relationship pair,full,1757.6,Overall,player_survive_time,player_assists
+10,S06,global relationship pair,full,1913.45,Overall,player_survive_time,player_dbno
+11,S06,global relationship pair,full,2066.09,Overall,player_survive_time,assist_ratio
+12,S06,global relationship pair,full,2227.5,Overall,player_survive_time,first_kill_time
+13,S06,global relationship pair,full,2364.26,Overall,player_survive_time,avg_kill_time
+14,S06,global relationship pair,full,2502.83,Overall,player_survive_time,has_kill
+15,S06,global relationship pair,full,2659.59,Overall,player_survive_time,early_kills
+16,S06,global relationship pair,full,2854.25,Overall,player_survive_time,mid_kills
+17,S06,global relationship pair,full,3015.1,Overall,player_survive_time,late_kills
+18,S06,global relationship pair,full,3173.83,Overall,player_survive_time,early_kill_ratio
+19,S06,global relationship pair,full,3312.26,Overall,player_survive_time,mid_kill_ratio

@@ -1,0 +1,21 @@
+Unnamed: 0,stage,step,scope,elapsed_seconds,input,partitions,partition
+0,S04,checking prerequisites,full,0.0,,,
+1,S04,running,full,355.07,,,
+2,S04,partition input once,full,364.0,events,16.0,
+3,S04,partition input once,full,494.5,metadata,16.0,
+4,S04,partition input once,full,496.53,base,16.0,
+5,S04,timing partition,full,740.76,,16.0,1.0
+6,S04,timing partition,full,782.42,,16.0,2.0
+7,S04,timing partition,full,823.32,,16.0,3.0
+8,S04,timing partition,full,865.22,,16.0,4.0
+9,S04,timing partition,full,905.0,,16.0,5.0
+10,S04,timing partition,full,947.48,,16.0,6.0
+11,S04,timing partition,full,1011.84,,16.0,7.0
+12,S04,timing partition,full,1056.54,,16.0,8.0
+13,S04,timing partition,full,1100.47,,16.0,9.0
+14,S04,timing partition,full,1140.85,,16.0,10.0
+15,S04,timing partition,full,1182.86,,16.0,11.0
+16,S04,timing partition,full,1223.3,,16.0,12.0
+17,S04,timing partition,full,1264.34,,16.0,13.0
+18,S04,timing partition,full,1306.15,,16.0,14.0
+19,S04,timing partition,full,1347.6,,16.0,15.0

@@ -1,0 +1,9 @@
+Unnamed: 0,key,value
+0,source,{'directory': '/kaggle/input/datasets/skihikin...
+1,working_root,/kaggle/working/PUBG_Coursework_v511_S08_matri...
+2,saved_version_verified,False
+3,time_unit,"{'status': 'assumed_seconds', 'accepted': True..."
+4,compute,"[{'device': 'cpu', 'python': '3.13.15', 'host_..."
+5,gpu_selection,"{'S08': {0: '0', 1: '1'}}"
+6,output_budget_gb,18.0
+7,note,"Budget nhóm, không phải quota service đã xác minh"

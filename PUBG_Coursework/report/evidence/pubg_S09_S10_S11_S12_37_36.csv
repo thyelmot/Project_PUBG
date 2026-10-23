@@ -1,0 +1,4 @@
+Unnamed: 0,experiment,slice,group,matches,n,mae,rmse,r2,r2_reason,time_unit_status,target_unit
+0,s1_linear,mode,Duo,34771,3229814,183739.196128,375817.131833,-432668.693304,,assumed_seconds,"Giây (giả định, chưa xác minh)"
+1,s1_linear,mode,Solo,22961,2110622,178440.586741,353394.408283,-404335.333569,,assumed_seconds,"Giây (giả định, chưa xác minh)"
+2,s1_linear,mode,Squad,51763,4765940,192786.321754,345115.474716,-348684.921382,,assumed_seconds,"Giây (giả định, chưa xác minh)"

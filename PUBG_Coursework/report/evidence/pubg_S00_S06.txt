@@ -1,0 +1,1988 @@
+Collecting duckdb<2,>=1.4
+
+  Downloading duckdb-1.5.6-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl.metadata (4.2 kB)
+
+Collecting nbclient<1,>=0.10
+  Downloading nbclient-0.11.0-py3-none-any.whl.metadata (7.3 kB)
+
+Collecting nbconvert<8,>=7.16.6
+  Downloading nbconvert-7.17.2-py3-none-any.whl.metadata (8.4 kB)
+
+Collecting psutil<8,>=6
+  Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+
+Requirement already satisfied: jupyter-client>=7.0.0 in /usr/local/lib/python3.13/dist-packages (from nbclient<1,>=0.10) (7.4.9)
+Requirement already satisfied: jupyter-core>=5.4.0 in /usr/local/lib/python3.13/dist-packages (from nbclient<1,>=0.10) (5.9.1)
+Requirement already satisfied: nbformat>=5.2.0 in /usr/local/lib/python3.13/dist-packages (from nbclient<1,>=0.10) (5.11.1)
+Requirement already satisfied: traitlets>=5.13 in /usr/local/lib/python3.13/dist-packages (from nbclient<1,>=0.10) (5.16.1)
+Requirement already satisfied: beautifulsoup4 in /usr/local/lib/python3.13/dist-packages (from nbconvert<8,>=7.16.6) (4.13.5)
+Requirement already satisfied: bleach!=5.0.0 in /usr/local/lib/python3.13/dist-packages (from bleach[css]!=5.0.0->nbconvert<8,>=7.16.6) (6.4.0)
+Requirement already satisfied: defusedxml in /usr/local/lib/python3.13/dist-packages (from nbconvert<8,>=7.16.6) (0.7.1)
+Requirement already satisfied: jinja2>=3.0 in /usr/local/lib/python3.13/dist-packages (from nbconvert<8,>=7.16.6) (3.1.6)
+Requirement already satisfied: jupyterlab-pygments in /usr/local/lib/python3.13/dist-packages (from nbconvert<8,>=7.16.6) (0.3.0)
+Requirement already satisfied: markupsafe>=2.0 in /usr/local/lib/python3.13/dist-packages (from nbconvert<8,>=7.16.6) (3.0.3)
+
+Collecting mistune<4,>=2.0.3 (from nbconvert<8,>=7.16.6)
+  Downloading mistune-3.4.0-py3-none-any.whl.metadata (2.1 kB)
+
+Requirement already satisfied: packaging in /usr/local/lib/python3.13/dist-packages (from nbconvert<8,>=7.16.6) (26.3)
+Requirement already satisfied: pandocfilters>=1.4.1 in /usr/local/lib/python3.13/dist-packages (from nbconvert<8,>=7.16.6) (1.5.1)
+Requirement already satisfied: pygments>=2.4.1 in /usr/local/lib/python3.13/dist-packages (from nbconvert<8,>=7.16.6) (2.21.0)
+Requirement already satisfied: webencodings in /usr/local/lib/python3.13/dist-packages (from bleach!=5.0.0->bleach[css]!=5.0.0->nbconvert<8,>=7.16.6) (0.6.1)
+Requirement already satisfied: tinycss2>=1.1.0 in /usr/local/lib/python3.13/dist-packages (from bleach[css]!=5.0.0->nbconvert<8,>=7.16.6) (1.5.1)
+Requirement already satisfied: entrypoints in /usr/local/lib/python3.13/dist-packages (from jupyter-client>=7.0.0->nbclient<1,>=0.10) (0.4)
+Requirement already satisfied: nest-asyncio>=1.5.4 in /usr/local/lib/python3.13/dist-packages (from jupyter-client>=7.0.0->nbclient<1,>=0.10) (1.6.0)
+Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.13/dist-packages (from jupyter-client>=7.0.0->nbclient<1,>=0.10) (2.9.0.post0)
+Requirement already satisfied: pyzmq>=23.0 in /usr/local/lib/python3.13/dist-packages (from jupyter-client>=7.0.0->nbclient<1,>=0.10) (26.2.1)
+Requirement already satisfied: tornado>=6.2 in /usr/local/lib/python3.13/dist-packages (from jupyter-client>=7.0.0->nbclient<1,>=0.10) (6.5.7)
+Requirement already satisfied: platformdirs>=2.5 in /usr/local/lib/python3.13/dist-packages (from jupyter-core>=5.4.0->nbclient<1,>=0.10) (4.11.7)
+Requirement already satisfied: fastjsonschema>=2.15 in /usr/local/lib/python3.13/dist-packages (from nbformat>=5.2.0->nbclient<1,>=0.10) (2.22.2)
+Requirement already satisfied: jsonschema>=2.6 in /usr/local/lib/python3.13/dist-packages (from nbformat>=5.2.0->nbclient<1,>=0.10) (4.26.0)
+
+Requirement already satisfied: soupsieve>1.2 in /usr/local/lib/python3.13/dist-packages (from beautifulsoup4->nbconvert<8,>=7.16.6) (2.9.2)
+Requirement already satisfied: typing-extensions>=4.0.0 in /usr/local/lib/python3.13/dist-packages (from beautifulsoup4->nbconvert<8,>=7.16.6) (4.16.0)
+Requirement already satisfied: attrs>=22.2.0 in /usr/local/lib/python3.13/dist-packages (from jsonschema>=2.6->nbformat>=5.2.0->nbclient<1,>=0.10) (26.1.0)
+Requirement already satisfied: jsonschema-specifications>=2023.03.6 in /usr/local/lib/python3.13/dist-packages (from jsonschema>=2.6->nbformat>=5.2.0->nbclient<1,>=0.10) (2025.9.1)
+Requirement already satisfied: referencing>=0.28.4 in /usr/local/lib/python3.13/dist-packages (from jsonschema>=2.6->nbformat>=5.2.0->nbclient<1,>=0.10) (0.37.0)
+Requirement already satisfied: rpds-py>=0.25.0 in /usr/local/lib/python3.13/dist-packages (from jsonschema>=2.6->nbformat>=5.2.0->nbclient<1,>=0.10) (2026.6.3)
+Requirement already satisfied: six>=1.5 in /usr/local/lib/python3.13/dist-packages (from python-dateutil>=2.8.2->jupyter-client>=7.0.0->nbclient<1,>=0.10) (1.17.0)
+
+Downloading duckdb-1.5.6-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl (21.6 MB)
+[?25l   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/21.6 MB[0m [31m?[0m eta [36m-:--:--[0m
+[2K   [91m╸[0m[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.4/21.6 MB[0m [31m10.6 MB/s[0m eta [36m0:00:03[0m[2K   [91m━━━━━[0m[91m╸[0m[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m3.1/21.6 MB[0m [31m45.2 MB/s[0m eta [36m0:00:01[0m
+[2K   [91m━━━━━━━━━━━━━━━━[0m[91m╸[0m[90m━━━━━━━━━━━━━━━━━━━━━━━[0m [32m9.0/21.6 MB[0m [31m87.2 MB/s[0m eta [36m0:00:01[0m
+[2K   [91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[90m╺[0m[90m━━━━━━━━━━[0m [32m15.9/21.6 MB[0m [31m194.4 MB/s[0m eta [36m0:00:01[0m
+[2K   [91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[91m╸[0m [32m21.6/21.6 MB[0m [31m209.9 MB/s[0m eta [36m0:00:01[0m[2K   [91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[91m╸[0m [32m21.6/21.6 MB[0m [31m209.9 MB/s[0m eta [36m0:00:01[0m
+[2K   [91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m[91m╸[0m [32m21.6/21.6 MB[0m [31m209.9 MB/s[0m eta [36m0:00:01[0m[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m21.6/21.6 MB[0m [31m72.5 MB/s[0m eta [36m0:00:00[0m
+[?25hDownloading nbclient-0.11.0-py3-none-any.whl (25 kB)
+
+Downloading nbconvert-7.17.2-py3-none-any.whl (262 kB)
+[?25l   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/262.1 kB[0m [31m?[0m eta [36m-:--:--[0m
+[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m262.1/262.1 kB[0m [31m9.6 MB/s[0m eta [36m0:00:00[0m
+[?25hDownloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+[?25l   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/155.6 kB[0m [31m?[0m eta [36m-:--:--[0m
+[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m155.6/155.6 kB[0m [31m5.5 MB/s[0m eta [36m0:00:00[0m
+[?25hDownloading mistune-3.4.0-py3-none-any.whl (70 kB)
+[?25l   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m0.0/70.4 kB[0m [31m?[0m eta [36m-:--:--[0m
+[2K   [90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[0m [32m70.4/70.4 kB[0m [31m2.9 MB/s[0m eta [36m0:00:00[0m
+[?25h
+Installing collected packages: psutil, mistune, duckdb, nbclient, nbconvert
+  Attempting uninstall: psutil
+
+    Found existing installation: psutil 5.9.5
+    Uninstalling psutil-5.9.5:
+
+      Successfully uninstalled psutil-5.9.5
+
+  Attempting uninstall: mistune
+
+    Found existing installation: mistune 0.8.4
+    Uninstalling mistune-0.8.4:
+
+      Successfully uninstalled mistune-0.8.4
+
+  Attempting uninstall: duckdb
+
+    Found existing installation: duckdb 1.3.2
+    Uninstalling duckdb-1.3.2:
+
+      Successfully uninstalled duckdb-1.3.2
+
+  Attempting uninstall: nbclient
+
+    Found existing installation: nbclient 0.5.13
+
+    Uninstalling nbclient-0.5.13:
+      Successfully uninstalled nbclient-0.5.13
+
+  Attempting uninstall: nbconvert
+
+    Found existing installation: nbconvert 6.4.5
+
+    Uninstalling nbconvert-6.4.5:
+
+      Successfully uninstalled nbconvert-6.4.5
+
+[31mERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+google-colab 1.0.0 requires jupyter-server==2.20.0, but you have jupyter-server 2.12.5 which is incompatible.
+google-colab 1.0.0 requires pandas==2.2.3, but you have pandas 2.3.3 which is incompatible.
+google-colab 1.0.0 requires requests==2.32.4, but you have requests 2.34.2 which is incompatible.[0m[31m
+[0mSuccessfully installed duckdb-1.5.6 mistune-3.4.0 nbclient-0.11.0 nbconvert-7.17.2 psutil-7.2.2
+
+Note: you may need to restart the kernel to use updated packages.
+
+Pham vi: S01 S06
+Du lieu: full
+Lan chay: CPU, khong chay S07-S10
+Thu muc ket qua: /kaggle/working/PUBG_Coursework_v511
+
+{'code_version': '5.11-normalized-storage', 'source_sha256': '4e3f9a191e589c963727c12bbf00ec656ee6bf17de0621ca6a6f520b3641dd3c', 'import_root': '/kaggle/input/datasets/quangthinng/pubg-coursework-code'}
+
+  stage                                               step scope  \
+0   S06  completed runtime; Kaggle Version chưa được xá...  full   
+
+   elapsed_seconds  
+0         15292.53  
+                project_id scope                                  root  \
+0  pubg-coursework-2026-v5  full  /kaggle/working/PUBG_Coursework_v511   
+
+                  writer   python duckdb  free_runtime_disk_GiB  \
+0  bfb808f05ed6-af5665e6  3.13.15  1.5.6            1067.210838   
+
+   available_host_RAM_GiB                                           software  \
+0               30.189251  {"python": "3.13.15", "numpy": "2.1.3", "panda...   
+
+                                                note  
+0  Disk runtime không phải giới hạn saved output/...  
+                      key                                              value
+0                  source  {'directory': '/kaggle/input/datasets/skihikin...
+1            working_root               /kaggle/working/PUBG_Coursework_v511
+2  saved_version_verified                                              False
+3               time_unit  {'status': 'assumed_seconds', 'accepted': True...
+4                 compute  [{'device': 'cpu', 'python': '3.13.15', 'host_...
+5           gpu_selection                                                 {}
+6        output_budget_gb                                               18.0
+7                    note  Budget nhóm, không phải quota service đã xác minh
+            status  accepted  verified     unit  \
+0  assumed_seconds      True     False  seconds   
+
+                            label  \
+0  Giây (giả định, chưa xác minh)   
+
+                                            evidence  \
+0  User approved declared-seconds assumption on 2...   
+
+                              source_reference  assumption_approved  \
+0  skihikingkevin/pubg-match-deaths/versions/3                 True   
+
+                              assumption_scope  \
+0  skihikingkevin/pubg-match-deaths/versions/3   
+
+                                          limitation  
+0  Đơn vị giây là giả định được duyệt, chưa được ...  
+GIỚI HẠN ĐƠN VỊ: Đơn vị giây là giả định được duyệt, chưa được tác giả nguồn xác nhận. Đối chiếu mẫu hỗ trợ cùng thang đo, không xác minh đơn vị tuyệt đối; không tự đổi thang hoặc bỏ dòng lệch.
+
+              key                                              value
+0      project_id                            pubg-coursework-2026-v5
+1    spec_version                            5.11-normalized-storage
+2         storage  {'mode': 'local', 'project_root': '/kaggle/wor...
+3          source  {'directory': '/kaggle/input/datasets/skihikin...
+4          schema  {'aliases': {'aggregate': {}, 'event': {'time'...
+5         runtime  {'batch_rows': 50000, 'seed': 42, 'threads': 2...
+6   preprocessing  {'decision_mode': 'auto', 'mode_mapping': {1: ...
+7           split                      {'ratios': [0.7, 0.15, 0.15]}
+8        features  {'decision_mode': 'auto', 'log_columns': [], '...
+9          timing  {'partitions': 16, 'unit_status': 'assumed_sec...
+10            rq2  {'decision_mode': 'auto', 'device': 'cuda', 'g...
+11            rq3  {'decision_mode': 'auto', 'device': 'cuda', 'g...
+12         models           {'linear': True, 'random_forest': False}
+13         report  {'bootstrap_replicates': 0, 'bootstrap_seed': 42}
+Empty DataFrame
+Columns: []
+Index: []
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+source_inventory.csv
+
+       group                                 file      rows       bytes  \
+0  aggregate      aggregate/agg_match_stats_0.csv  13849287  2164643468   
+1  aggregate      aggregate/agg_match_stats_1.csv  13844275  2163801011   
+2  aggregate      aggregate/agg_match_stats_2.csv  13841504  2163465683   
+3  aggregate      aggregate/agg_match_stats_3.csv  13840680  2163358264   
+4  aggregate      aggregate/agg_match_stats_4.csv  11993485  1874565038   
+5      event  deaths/kill_match_stats_final_0.csv  13426348  2002938578   
+6      event  deaths/kill_match_stats_final_1.csv  13440889  2005229101   
+7      event  deaths/kill_match_stats_final_2.csv  13431052  2003700531   
+8      event  deaths/kill_match_stats_final_3.csv  13431331  2003662636   
+9      event  deaths/kill_match_stats_final_4.csv  11640855  1736557269   
+
+                                              sha256  
+0  63d437f51455b32c2dc58f730a5e891dbc38a8b834825f...  
+1  e0ed422fc3dba8025245472cebfbfe093458584562fc32...  
+2  4f82464cea87982ebc3f4e5bafbde6bc092c86ca73b58a...  
+3  4f7b2aa346be2d63252ff3c7d6b37d5aa209d82b69799c...  
+4  d061f9aeafdea2ebdd9b534a5f684b8f9a62ddd270a2c0...  
+5  8c40331ba496bdda621bf061b110e9c953a5cd723f0e98...  
+6  f5fbf24a815f54a176a744bd9fc0cc6c03a551a1122acc...  
+7  aa7d5f3db00c01054e4dcd134a40440ce83686e5b9f872...  
+8  ce12aeb76ede4b4ed8af980822cf8bee4f266a3ff97bbc...  
+9  5bbc59a62ba5a0d2e7f3b5b1965f58e3b7ba69decef1ab...  
+parse_report.csv
+
+        group                   file               column  original_missing  \
+0   aggregate  agg_match_stats_0.csv             match_id                 0   
+1   aggregate  agg_match_stats_0.csv          player_name             20249   
+2   aggregate  agg_match_stats_0.csv              team_id                 0   
+3   aggregate  agg_match_stats_0.csv                 date                 0   
+4   aggregate  agg_match_stats_0.csv           party_size                 0   
+5   aggregate  agg_match_stats_0.csv            game_size                 0   
+6   aggregate  agg_match_stats_0.csv         player_kills                 0   
+7   aggregate  agg_match_stats_0.csv           player_dmg                 0   
+8   aggregate  agg_match_stats_0.csv       player_assists                 0   
+9   aggregate  agg_match_stats_0.csv          player_dbno                 0   
+10  aggregate  agg_match_stats_0.csv     player_dist_walk                 0   
+11  aggregate  agg_match_stats_0.csv     player_dist_ride                 0   
+12  aggregate  agg_match_stats_0.csv  player_survive_time                 0   
+13  aggregate  agg_match_stats_0.csv       team_placement                 0   
+14  aggregate  agg_match_stats_1.csv             match_id                 0   
+15  aggregate  agg_match_stats_1.csv          player_name             20066   
+16  aggregate  agg_match_stats_1.csv              team_id                 0   
+17  aggregate  agg_match_stats_1.csv                 date                 0   
+18  aggregate  agg_match_stats_1.csv           party_size                 0   
+19  aggregate  agg_match_stats_1.csv            game_size                 0   
+
+    parse_error  non_integer      rows  
+0             0            0  13849287  
+1             0            0  13849287  
+2             0            0  13849287  
+3             0            0  13849287  
+4             0            0  13849287  
+5             0            0  13849287  
+6             0            0  13849287  
+7             0            0  13849287  
+8             0            0  13849287  
+9             0            0  13849287  
+10            0            0  13849287  
+11            0            0  13849287  
+12            0            0  13849287  
+13            0            0  13849287  
+14            0            0  13844275  
+15            0            0  13844275  
+16            0            0  13844275  
+17            0            0  13844275  
+18            0            0  13844275  
+19            0            0  13844275  
+schema_report.csv
+
+        group                   file        source_column     canonical_column
+0   aggregate  agg_match_stats_0.csv                 date                 date
+1   aggregate  agg_match_stats_0.csv            game_size            game_size
+2   aggregate  agg_match_stats_0.csv             match_id             match_id
+3   aggregate  agg_match_stats_0.csv           match_mode           match_mode
+4   aggregate  agg_match_stats_0.csv           party_size           party_size
+5   aggregate  agg_match_stats_0.csv       player_assists       player_assists
+6   aggregate  agg_match_stats_0.csv          player_dbno          player_dbno
+7   aggregate  agg_match_stats_0.csv     player_dist_ride     player_dist_ride
+8   aggregate  agg_match_stats_0.csv     player_dist_walk     player_dist_walk
+9   aggregate  agg_match_stats_0.csv           player_dmg           player_dmg
+10  aggregate  agg_match_stats_0.csv         player_kills         player_kills
+11  aggregate  agg_match_stats_0.csv          player_name          player_name
+12  aggregate  agg_match_stats_0.csv  player_survive_time  player_survive_time
+13  aggregate  agg_match_stats_0.csv              team_id              team_id
+14  aggregate  agg_match_stats_0.csv       team_placement       team_placement
+15  aggregate  agg_match_stats_1.csv                 date                 date
+16  aggregate  agg_match_stats_1.csv            game_size            game_size
+17  aggregate  agg_match_stats_1.csv             match_id             match_id
+18  aggregate  agg_match_stats_1.csv           match_mode           match_mode
+19  aggregate  agg_match_stats_1.csv           party_size           party_size
+ingest_storage.csv
+
+       group      rows  shards  temporary_bytes_removed  canonical_bytes  \
+0  aggregate  67369231       5               4582278519       3407130759   
+1      event  65370475       5               5653422380       4469684314   
+
+   temporary_files_remaining  
+0                          0  
+1                          0  
+source_rows_source.csv
+
+       group                                 file      rows       bytes  \
+0  aggregate      aggregate/agg_match_stats_0.csv  13849287  2164643468   
+1  aggregate      aggregate/agg_match_stats_1.csv  13844275  2163801011   
+2  aggregate      aggregate/agg_match_stats_2.csv  13841504  2163465683   
+3  aggregate      aggregate/agg_match_stats_3.csv  13840680  2163358264   
+4  aggregate      aggregate/agg_match_stats_4.csv  11993485  1874565038   
+5      event  deaths/kill_match_stats_final_0.csv  13426348  2002938578   
+6      event  deaths/kill_match_stats_final_1.csv  13440889  2005229101   
+7      event  deaths/kill_match_stats_final_2.csv  13431052  2003700531   
+8      event  deaths/kill_match_stats_final_3.csv  13431331  2003662636   
+9      event  deaths/kill_match_stats_final_4.csv  11640855  1736557269   
+
+                                              sha256  
+0  63d437f51455b32c2dc58f730a5e891dbc38a8b834825f...  
+1  e0ed422fc3dba8025245472cebfbfe093458584562fc32...  
+2  4f82464cea87982ebc3f4e5bafbde6bc092c86ca73b58a...  
+3  4f7b2aa346be2d63252ff3c7d6b37d5aa209d82b69799c...  
+4  d061f9aeafdea2ebdd9b534a5f684b8f9a62ddd270a2c0...  
+5  8c40331ba496bdda621bf061b110e9c953a5cd723f0e98...  
+6  f5fbf24a815f54a176a744bd9fc0cc6c03a551a1122acc...  
+7  aa7d5f3db00c01054e4dcd134a40440ce83686e5b9f872...  
+8  ce12aeb76ede4b4ed8af980822cf8bee4f266a3ff97bbc...  
+9  5bbc59a62ba5a0d2e7f3b5b1965f58e3b7ba69decef1ab...  
+<IPython.core.display.Image object>
+source_parse_source.csv
+
+                 column  original_missing  parse_error  non_integer
+0                  date                 0            0            0
+1            event_time                 0            0            0
+2             game_size                 0            0            0
+3           killer_name           4517469            0            0
+4              match_id                 0            0            0
+5            party_size                 0            0            0
+6        player_assists                 0            0            0
+7           player_dbno                 0            0            0
+8      player_dist_ride                 0            0            0
+9      player_dist_walk                 0            0            0
+10           player_dmg                 0            0            0
+11         player_kills                 0            0            0
+12          player_name             97653            0            0
+13  player_survive_time                 0            0            0
+14              team_id                 0            0            0
+15       team_placement                 0            0            0
+16          victim_name                 0            0            0
+<IPython.core.display.Image object>
+progress_S01.csv
+
+   stage                       step scope  elapsed_seconds  group  \
+0    S01  batch parsed, provisional  full          3408.97  event   
+1    S01  batch parsed, provisional  full          3409.09  event   
+2    S01  batch parsed, provisional  full          3409.20  event   
+3    S01  batch parsed, provisional  full          3409.31  event   
+4    S01  batch parsed, provisional  full          3409.42  event   
+5    S01  batch parsed, provisional  full          3409.52  event   
+6    S01  batch parsed, provisional  full          3409.63  event   
+7    S01  batch parsed, provisional  full          3409.73  event   
+8    S01  batch parsed, provisional  full          3409.84  event   
+9    S01  batch parsed, provisional  full          3409.95  event   
+10   S01  batch parsed, provisional  full          3410.06  event   
+11   S01  batch parsed, provisional  full          3410.18  event   
+12   S01  batch parsed, provisional  full          3410.29  event   
+13   S01  batch parsed, provisional  full          3410.42  event   
+14   S01  batch parsed, provisional  full          3410.53  event   
+15   S01  batch parsed, provisional  full          3410.64  event   
+16   S01  batch parsed, provisional  full          3410.75  event   
+17   S01  batch parsed, provisional  full          3410.86  event   
+18   S01  batch parsed, provisional  full          3410.98  event   
+19   S01  batch parsed, provisional  full          3411.09  event   
+
+                            file   rows_read  batch_rows  rows  shards  \
+0   kill_match_stats_final_4.csv  10262199.0      7028.0   NaN     NaN   
+1   kill_match_stats_final_4.csv  10269218.0      7019.0   NaN     NaN   
+2   kill_match_stats_final_4.csv  10276245.0      7027.0   NaN     NaN   
+3   kill_match_stats_final_4.csv  10283268.0      7023.0   NaN     NaN   
+4   kill_match_stats_final_4.csv  10290303.0      7035.0   NaN     NaN   
+5   kill_match_stats_final_4.csv  10297344.0      7041.0   NaN     NaN   
+6   kill_match_stats_final_4.csv  10304353.0      7009.0   NaN     NaN   
+7   kill_match_stats_final_4.csv  10311390.0      7037.0   NaN     NaN   
+8   kill_match_stats_final_4.csv  10318422.0      7032.0   NaN     NaN   
+9   kill_match_stats_final_4.csv  10325448.0      7026.0   NaN     NaN   
+10  kill_match_stats_final_4.csv  10332471.0      7023.0   NaN     NaN   
+11  kill_match_stats_final_4.csv  10339490.0      7019.0   NaN     NaN   
+12  kill_match_stats_final_4.csv  10346530.0      7040.0   NaN     NaN   
+13  kill_match_stats_final_4.csv  10353556.0      7026.0   NaN     NaN   
+14  kill_match_stats_final_4.csv  10360591.0      7035.0   NaN     NaN   
+15  kill_match_stats_final_4.csv  10367611.0      7020.0   NaN     NaN   
+16  kill_match_stats_final_4.csv  10374647.0      7036.0   NaN     NaN   
+17  kill_match_stats_final_4.csv  10381681.0      7034.0   NaN     NaN   
+18  kill_match_stats_final_4.csv  10388696.0      7015.0   NaN     NaN   
+19  kill_match_stats_final_4.csv  10395720.0      7024.0   NaN     NaN   
+
+    temporary_bytes_removed  canonical_bytes  temporary_files_remaining  
+0                       NaN              NaN                        NaN  
+1                       NaN              NaN                        NaN  
+2                       NaN              NaN                        NaN  
+3                       NaN              NaN                        NaN  
+4                       NaN              NaN                        NaN  
+5                       NaN              NaN                        NaN  
+6                       NaN              NaN                        NaN  
+7                       NaN              NaN                        NaN  
+8                       NaN              NaN                        NaN  
+9                       NaN              NaN                        NaN  
+10                      NaN              NaN                        NaN  
+11                      NaN              NaN                        NaN  
+12                      NaN              NaN                        NaN  
+13                      NaN              NaN                        NaN  
+14                      NaN              NaN                        NaN  
+15                      NaN              NaN                        NaN  
+16                      NaN              NaN                        NaN  
+17                      NaN              NaN                        NaN  
+18                      NaN              NaN                        NaN  
+19                      NaN              NaN                        NaN  
+  stage     status reason  artifacts  \
+0   S01  completed                15   
+
+                                          checkpoint  
+0  /kaggle/working/PUBG_Coursework_v511/outputs/f...  
+Checkpoint runtime đã ghi; không cần Save Version giữa các stage. Chưa có bản lưu bền vững.
+
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+identity_conflicts.csv
+
+   conflict_keys  conflict_rows
+0              0            0.0
+quality_flags.csv
+
+     n_rows  missing_match  invalid_numeric
+0  67369231              0                0
+removal_ledger.csv
+
+                               step    before  removed     after
+0                  exact_duplicates  67369231        0  67369231
+1                identity_conflicts  67369231        0  67369231
+2  missing_match_or_invalid_numeric  67369231        0  67369231
+roster_summary.csv
+
+     index                                           match_id        n_teams  \
+0    count                                             729969  729969.000000   
+1   unique                                             729969            NaN   
+2      top  2U4GBNA0YmnzzzpkgqMzuilU798gLLPHs_OE-u-InomgX8...            NaN   
+3     freq                                                  1            NaN   
+4     mean                                                NaN      46.870164   
+5      min                                                NaN       1.000000   
+6      25%                                                NaN      27.000000   
+7      50%                                                NaN      42.000000   
+8      75%                                                NaN      50.000000   
+9      max                                                NaN     100.000000   
+10     std                                                NaN      25.160565   
+
+      roster_rows  missing_team_rows  max_placement  duration_proxy  \
+0   729969.000000           729969.0  729969.000000    7.299690e+05   
+1             NaN                NaN            NaN             NaN   
+2             NaN                NaN            NaN             NaN   
+3             NaN                NaN            NaN             NaN   
+4       92.290537                0.0      46.915198    4.378290e+05   
+5        1.000000                0.0       1.000000    1.219000e+00   
+6       91.000000                0.0      27.000000    1.812341e+03   
+7       95.000000                0.0      42.000000    1.872427e+03   
+8       97.000000                0.0      50.000000    1.924197e+03   
+9      101.000000                0.0     100.000000    6.364822e+10   
+10       7.835807                0.0      25.178117    1.665762e+08   
+
+                    match_time     dates  party_values  bad_dates  \
+0                       729969  729969.0      729969.0   729969.0   
+1                          NaN       NaN           NaN        NaN   
+2                          NaN       NaN           NaN        NaN   
+3                          NaN       NaN           NaN        NaN   
+4   2017-12-02 22:32:50.916624       1.0           1.0        0.0   
+5          2017-10-20 08:01:07       1.0           1.0        0.0   
+6          2017-11-12 02:20:46       1.0           1.0        0.0   
+7          2017-12-03 07:04:43       1.0           1.0        0.0   
+8          2017-12-25 23:03:56       1.0           1.0        0.0   
+9          2018-01-10 12:02:16       1.0           1.0        0.0   
+10                         NaN       0.0           0.0        0.0   
+
+    conflicting_teams  
+0            729969.0  
+1                 NaN  
+2                 NaN  
+3                 NaN  
+4                 0.0  
+5                 0.0  
+6                 0.0  
+7                 0.0  
+8                 0.0  
+9                 0.0  
+10                0.0  
+split_summary.csv
+
+        split  matches                first                 last
+0        test   109495  2017-10-20 08:04:07  2018-01-10 12:02:16
+1       train   510979  2017-10-20 08:01:21  2018-01-10 12:01:33
+2  validation   109495  2017-10-20 08:01:07  2018-01-10 11:48:53
+removal_steps_source.csv
+
+                               step    before  removed     after
+0                  exact_duplicates  67369231        0  67369231
+1                identity_conflicts  67369231        0  67369231
+2  missing_match_or_invalid_numeric  67369231        0  67369231
+<IPython.core.display.Image object>
+date_coverage_source.csv
+
+           day  matches
+0   2017-10-20     3660
+1   2017-10-21     8548
+2   2017-10-22     9591
+3   2017-10-23     7854
+4   2017-10-24     7473
+5   2017-10-25     7422
+6   2017-10-26     6864
+7   2017-10-27     7461
+8   2017-10-28     9292
+9   2017-10-29     9705
+10  2017-10-30     7649
+11  2017-10-31     7478
+12  2017-11-01     7427
+13  2017-11-02     7659
+14  2017-11-03     8041
+15  2017-11-04     9162
+16  2017-11-05     9277
+17  2017-11-06     7802
+18  2017-11-07     7381
+19  2017-11-08     6855
+<IPython.core.display.Image object>
+progress_S02.csv
+
+  stage                                               step scope  \
+0   S02                             checking prerequisites  full   
+1   S02                                            running  full   
+2   S02  quality/roster/split; không đổi cohort bằng lấ...  full   
+3   S02  roster metadata: independent aggregates, then ...  full   
+4   S02  completed runtime; Kaggle Version chưa được xá...  full   
+
+   elapsed_seconds  
+0             0.00  
+1           203.53  
+2           203.53  
+3          2025.66  
+4          2498.64  
+  stage     status reason  artifacts  \
+0   S02  completed                18   
+
+                                          checkpoint  
+0  /kaggle/working/PUBG_Coursework_v511/outputs/f...  
+Checkpoint runtime đã ghi; không cần Save Version giữa các stage. Chưa có bản lưu bền vững.
+
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+feature_validation.csv
+
+           n     valid  min           max               feature
+0   67369231  67369231  0.0  9.400000e+01          player_kills
+1   67369231  67369231  0.0  9.408000e+03            player_dmg
+2   67369231  28249181  0.0  1.797000e+03       damage_per_kill
+3   67369231  67369231  0.0  1.273645e+06      player_dist_walk
+4   67369231  67369231  0.0  5.061754e+05      player_dist_ride
+5   67369231  67369231  0.0  1.275177e+06        total_distance
+6   67369231  65846522  0.0  1.000000e+00            walk_ratio
+7   67369231  67369231  0.0  1.300000e+01        player_assists
+8   67369231  67369231  0.0  1.480000e+02           player_dbno
+9   67369231  32411373  0.0  1.000000e+00          assist_ratio
+10  67369231  67239102  0.0  1.000000e+00  normalized_placement
+11  67369231  67369117  0.0  1.023454e+02      kills_per_minute
+12  67369231  67369117  0.0  2.484326e+03         walk_velocity
+feature_dictionary.csv
+
+                 feature                                            formula  \
+0           player_kills             Nguồn aggregate: số kill được ghi nhận   
+1             player_dmg                       Nguồn aggregate: tổng damage   
+2       player_dist_walk                 Nguồn aggregate: khoảng cách đi bộ   
+3       player_dist_ride     Nguồn aggregate: khoảng cách di chuyển bằng xe   
+4         player_assists                         Nguồn aggregate: số hỗ trợ   
+5            player_dbno                     Nguồn aggregate: số lần hạ gục   
+6        damage_per_kill                            player_dmg/player_kills   
+7         total_distance                  player_dist_walk+player_dist_ride   
+8             walk_ratio                                   walk/(walk+ride)   
+9           assist_ratio                            assists/(kills+assists)   
+10   player_survive_time  Nguồn aggregate; valid_survival kiểm finite và...   
+11  normalized_placement  1-(rank-1)/(N_teams-1); roster valid trước lọc...   
+12        duration_proxy  max(nonnegative finite player_survive_time) tr...   
+13      kills_per_minute                60*player_kills/player_survive_time   
+14     damage_per_minute                  60*player_dmg/player_survive_time   
+15         walk_velocity               player_dist_walk/player_survive_time   
+16         ride_velocity               player_dist_ride/player_survive_time   
+17       first_kill_time  min(event_time) của credited-killer non-self h...   
+18         avg_kill_time  sum(event_time)/event_kill_count; không mean c...   
+19              has_kill         1 nếu aggregate player_kills>0, ngược lại0   
+
+                                                unit  \
+0                                             Số lần   
+1                                Đơn vị damage nguồn   
+2             Đơn vị khoảng cách nguồn, cần xác minh   
+3             Đơn vị khoảng cách nguồn, cần xác minh   
+4                                             Số lần   
+5                                             Số lần   
+6                                        Damage/kill   
+7                           Đơn vị khoảng cách nguồn   
+8                                        Tỷ lệ [0,1]   
+9                                        Tỷ lệ [0,1]   
+10                    Giây (giả định, chưa xác minh)   
+11                      Tỷ lệ [0,1], cao hơn tốt hơn   
+12                    Giây (giả định, chưa xác minh)   
+13               Kill/phút (thời gian giả định giây)   
+14             Damage/phút (thời gian giả định giây)   
+15  Khoảng cách nguồn/giây (thời gian giả định giây)   
+16  Khoảng cách nguồn/giây (thời gian giả định giây)   
+17                    Giây (giả định, chưa xác minh)   
+18                    Giây (giả định, chưa xác minh)   
+19                                       Chỉ báo 0/1   
+
+                                             missing  survival_primary  \
+0                 Raw thiếu/không hợp lệ xử lý ở S02              True   
+1                 Raw thiếu/không hợp lệ xử lý ở S02              True   
+2                 Raw thiếu/không hợp lệ xử lý ở S02              True   
+3                 Raw thiếu/không hợp lệ xử lý ở S02              True   
+4                 Raw thiếu/không hợp lệ xử lý ở S02              True   
+5                 Raw thiếu/không hợp lệ xử lý ở S02              True   
+6                NaN nếu kills=0; không thêm epsilon              True   
+7                              NaN nếu đầu vào thiếu              True   
+8                         NaN nếu tổng khoảng cách=0              True   
+9                            NaN nếu kills+assists=0              True   
+10                        Invalid chỉ loại cohort S1             False   
+11  NaN nếu roster/rank không hợp lệ hoặc N_teams<=1             False   
+12                  NaN nếu không có survival hợp lệ             False   
+13           NaN nếu survival<=0; không predictor S1             False   
+14           NaN nếu survival<=0; không predictor S1             False   
+15           NaN nếu survival<=0; không predictor S1             False   
+16           NaN nếu survival<=0; không predictor S1             False   
+17   NaN nếu không có event hợp lệ; không thay bằng0              True   
+18                     NaN nếu không có event hợp lệ              True   
+19          Theo aggregate, không suy từ thiếu event              True   
+
+    S1_predictor  P2_predictor  T0_predictor  target  \
+0           True          True          True   False   
+1           True          True          True   False   
+2           True          True          True   False   
+3           True          True          True   False   
+4           True          True          True   False   
+5           True          True          True   False   
+6           True          True          True   False   
+7           True          True          True   False   
+8           True          True          True   False   
+9           True          True          True   False   
+10         False         False         False    True   
+11         False         False         False    True   
+12         False         False         False   False   
+13         False         False         False   False   
+14         False         False         False   False   
+15         False         False         False   False   
+16         False         False         False   False   
+17          True          True         False   False   
+18          True          True         False   False   
+19          True          True         False   False   
+
+    survival_leakage_blocked available_stage time_unit_status  \
+0                      False             S03   not_applicable   
+1                      False             S03   not_applicable   
+2                      False             S03   not_applicable   
+3                      False             S03   not_applicable   
+4                      False             S03   not_applicable   
+5                      False             S03   not_applicable   
+6                      False             S03   not_applicable   
+7                      False             S03   not_applicable   
+8                      False             S03   not_applicable   
+9                      False             S03   not_applicable   
+10                      True             S03  assumed_seconds   
+11                     False             S03   not_applicable   
+12                      True             S03  assumed_seconds   
+13                      True             S03  assumed_seconds   
+14                      True             S03  assumed_seconds   
+15                      True             S03  assumed_seconds   
+16                      True             S03  assumed_seconds   
+17                     False             S04  assumed_seconds   
+18                     False             S04  assumed_seconds   
+19                     False             S04   not_applicable   
+
+                                   time_unit_evidence  
+0                                                 NaN  
+1                                                 NaN  
+2                                                 NaN  
+3                                                 NaN  
+4                                                 NaN  
+5                                                 NaN  
+6                                                 NaN  
+7                                                 NaN  
+8                                                 NaN  
+9                                                 NaN  
+10  User approved declared-seconds assumption on 2...  
+11                                                NaN  
+12  User approved declared-seconds assumption on 2...  
+13  User approved declared-seconds assumption on 2...  
+14  User approved declared-seconds assumption on 2...  
+15  User approved declared-seconds assumption on 2...  
+16  User approved declared-seconds assumption on 2...  
+17  User approved declared-seconds assumption on 2...  
+18  User approved declared-seconds assumption on 2...  
+19                                                NaN  
+feature_example.csv
+
+   player_kills  player_dmg  damage_per_kill  team_placement  n_teams  \
+0           1.0       100.0            100.0            49.0       93   
+1           0.0         6.0              NaN            26.0       28   
+2           0.0         0.0              NaN            87.0       95   
+3           1.0        29.0             29.0            34.0       39   
+4           2.0       196.0             98.0            18.0       46   
+5           2.0       205.0            102.5            16.0       49   
+6           2.0       111.0             55.5             9.0       27   
+7           0.0        99.0              NaN            34.0       48   
+
+   normalized_placement  
+0              0.478261  
+1              0.074074  
+2              0.085106  
+3              0.131579  
+4              0.622222  
+5              0.687500  
+6              0.692308  
+7              0.297872  
+feature_coverage_source.csv
+
+           n     valid  min           max               feature   missing
+0   67369231  67369231  0.0  9.400000e+01          player_kills         0
+1   67369231  67369231  0.0  9.408000e+03            player_dmg         0
+2   67369231  28249181  0.0  1.797000e+03       damage_per_kill  39120050
+3   67369231  67369231  0.0  1.273645e+06      player_dist_walk         0
+4   67369231  67369231  0.0  5.061754e+05      player_dist_ride         0
+5   67369231  67369231  0.0  1.275177e+06        total_distance         0
+6   67369231  65846522  0.0  1.000000e+00            walk_ratio   1522709
+7   67369231  67369231  0.0  1.300000e+01        player_assists         0
+8   67369231  67369231  0.0  1.480000e+02           player_dbno         0
+9   67369231  32411373  0.0  1.000000e+00          assist_ratio  34957858
+10  67369231  67239102  0.0  1.000000e+00  normalized_placement    130129
+11  67369231  67369117  0.0  1.023454e+02      kills_per_minute       114
+12  67369231  67369117  0.0  2.484326e+03         walk_velocity       114
+<IPython.core.display.Image object>
+progress_S03.csv
+
+  stage                                               step scope  \
+0   S03                             checking prerequisites  full   
+1   S03                                            running  full   
+2   S03  completed runtime; Kaggle Version chưa được xá...  full   
+
+   elapsed_seconds  
+0             0.00  
+1           421.15  
+2           997.51  
+  stage     status reason  artifacts  \
+0   S03  completed                 8   
+
+                                          checkpoint  
+0  /kaggle/working/PUBG_Coursework_v511/outputs/f...  
+Checkpoint runtime đã ghi; không cần Save Version giữa các stage. Chưa có bản lưu bền vững.
+
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+event_unit_diagnostics.csv
+
+     events  invalid_time  minimum  maximum  above_proxy
+0  65370475             0     23.0   2374.0       345590
+timing_partition_audit.csv
+
+    partition  input_events  unique_events  absolute_eligible  phase_eligible  \
+0           0       4066496        4066479            3724328         3704234   
+1           1       4060584        4060565            3718491         3698596   
+2           2       4068125        4068110            3727950         3707947   
+3           3       4081838        4081828            3739705         3719467   
+4           4       4101268        4101255            3758238         3737683   
+5           5       4071023        4071014            3729436         3709297   
+6           6       4106519        4106501            3761613         3741414   
+7           7       4099306        4099293            3756111         3735961   
+8           8       4083113        4083101            3739707         3719235   
+9           9       4107704        4107695            3763684         3743164   
+10         10       4086309        4086296            3744182         3724223   
+11         11       4070618        4070602            3728932         3708774   
+12         12       4123054        4123045            3776084         3755871   
+13         13       4064727        4064717            3723448         3703358   
+14         14       4085697        4085688            3742577         3722413   
+15         15       4094094        4094075            3749248         3728991   
+
+    player_rows_before  player_rows_after  
+0              4190589            4190589  
+1              4183576            4183576  
+2              4189338            4189338  
+3              4201542            4201542  
+4              4224301            4224301  
+5              4196646            4196646  
+6              4230227            4230227  
+7              4227383            4227383  
+8              4208873            4208873  
+9              4234374            4234374  
+10             4208217            4208217  
+11             4197420            4197420  
+12             4249025            4249025  
+13             4194880            4194880  
+14             4213197            4213197  
+15             4219643            4219643  
+timing_coverage.csv
+
+   team_size_mode      timing_status    n_rows
+0             Duo     phase_observed   8950584
+1           Squad  confirmed_no_kill  18346600
+2            Solo  confirmed_no_kill   7919978
+3             Duo      event_missing    152223
+4             Duo      absolute_only      5331
+5            Solo     phase_observed   6012922
+6           Squad     phase_observed  13144182
+7             Duo  confirmed_no_kill  12500130
+8           Squad      event_missing    215107
+9           Squad      absolute_only     15425
+10           Solo      event_missing    105817
+11           Solo      absolute_only       932
+timing_discrepancy_summary.csv
+
+       timing_status         n  mean_abs_discrepancy
+0     phase_observed  28107688              0.024840
+1      event_missing    473147                   NaN
+2      absolute_only     21688              0.004749
+3  confirmed_no_kill  38766708                   NaN
+timing_phase_summary.csv
+
+  team_size_mode       early        mid       late  phase_rows
+0            Duo  10372029.0  4501562.0  4255858.0     8950584
+1           Solo   6986720.0  2900627.0  2444555.0     6012922
+2          Squad  14097187.0  6469287.0  7122842.0    13144182
+timing_audit.csv
+
+   input_events  unique_events  absolute_eligible  phase_eligible  \
+0      65370475       65370264           59883734        59560628   
+
+   player_rows_before  player_rows_after  \
+0            67369231           67369231   
+
+                                    semantics time_unit_status  \
+0  credited-killer non-self; không enemy-only  assumed_seconds   
+
+   time_unit_verified                 time_unit_label  \
+0               False  Giây (giả định, chưa xác minh)   
+
+                                time_unit_limitation  
+0  Đơn vị giây là giả định được duyệt, chưa được ...  
+timing_coverage_source.csv
+
+       timing_status         n
+0  confirmed_no_kill  38766708
+1     phase_observed  28107688
+2      event_missing    473147
+3      absolute_only     21688
+<IPython.core.display.Image object>
+timing_phases_source.csv
+
+  team_size_mode       early        mid       late
+0            Duo  10372029.0  4501562.0  4255858.0
+1           Solo   6986720.0  2900627.0  2444555.0
+2          Squad  14097187.0  6469287.0  7122842.0
+<IPython.core.display.Image object>
+progress_S04.csv
+
+   stage                    step scope  elapsed_seconds     input  partitions  \
+0    S04  checking prerequisites  full             0.00       NaN         NaN   
+1    S04                 running  full           355.07       NaN         NaN   
+2    S04    partition input once  full           364.00    events        16.0   
+3    S04    partition input once  full           494.50  metadata        16.0   
+4    S04    partition input once  full           496.53      base        16.0   
+5    S04        timing partition  full           740.76       NaN        16.0   
+6    S04        timing partition  full           782.42       NaN        16.0   
+7    S04        timing partition  full           823.32       NaN        16.0   
+8    S04        timing partition  full           865.22       NaN        16.0   
+9    S04        timing partition  full           905.00       NaN        16.0   
+10   S04        timing partition  full           947.48       NaN        16.0   
+11   S04        timing partition  full          1011.84       NaN        16.0   
+12   S04        timing partition  full          1056.54       NaN        16.0   
+13   S04        timing partition  full          1100.47       NaN        16.0   
+14   S04        timing partition  full          1140.85       NaN        16.0   
+15   S04        timing partition  full          1182.86       NaN        16.0   
+16   S04        timing partition  full          1223.30       NaN        16.0   
+17   S04        timing partition  full          1264.34       NaN        16.0   
+18   S04        timing partition  full          1306.15       NaN        16.0   
+19   S04        timing partition  full          1347.60       NaN        16.0   
+
+    partition  
+0         NaN  
+1         NaN  
+2         NaN  
+3         NaN  
+4         NaN  
+5         1.0  
+6         2.0  
+7         3.0  
+8         4.0  
+9         5.0  
+10        6.0  
+11        7.0  
+12        8.0  
+13        9.0  
+14       10.0  
+15       11.0  
+16       12.0  
+17       13.0  
+18       14.0  
+19       15.0  
+  stage     status reason  artifacts  \
+0   S04  completed                18   
+
+                                          checkpoint  
+0  /kaggle/working/PUBG_Coursework_v511/outputs/f...  
+Checkpoint runtime đã ghi; không cần Save Version giữa các stage. Chưa có bản lưu bền vững.
+
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+eda_statistics.csv
+
+           n     valid          mean       median           std   min  \
+0   57262855  57262855      0.887266     0.000000  1.554518e+00   0.0   
+1   57262855  57262855    123.947985    77.000000  1.695204e+02   0.0   
+2   57262855  24010076    122.661529   106.800000  5.968775e+01   0.0   
+3   57262855  57262855   1284.166530   848.921265  4.216373e+03   0.0   
+4   57262855  57262855   1156.069937     0.000000  1.998891e+03   0.0   
+5   57262855  57262855   2440.236466  1168.344240  5.126863e+03   0.0   
+6   57262855  55968425      0.774040     1.000000  2.998938e-01   0.0   
+7   57262855  57262855      0.229631     0.000000  5.756245e-01   0.0   
+8   57262855  57262855      0.584432     0.000000  1.119646e+00   0.0   
+9   57262855  27548635      0.221148     0.000000  3.495714e-01   0.0   
+10  57262855  23908776    516.181880   312.000000  4.595712e+02  46.0   
+11  57262855  23908776    634.991257   473.200000  4.839284e+02  46.0   
+12  57262855  57262855      0.419296     0.000000  4.934439e-01   0.0   
+13  57262855  56842895      0.470390     0.000000  8.961076e-01   0.0   
+14  57262855  56842895      0.207417     0.000000  6.349646e-01   0.0   
+15  57262855  56842895      0.206710     0.000000  7.671094e-01   0.0   
+16  57262855  23890358      0.606997     1.000000  4.486158e-01   0.0   
+17  57262855  23890358      0.214731     0.000000  3.598316e-01   0.0   
+18  57262855  23890358      0.178271     0.000000  3.402277e-01   0.0   
+19  57262855  57262855  50803.765211   653.354000  5.642214e+07   0.0   
+
+             max         q25          q75         skew      zero  \
+0   9.400000e+01    0.000000     1.000000     3.755944  33252779   
+1   9.408000e+03    0.000000   174.000000     3.483482  15047037   
+2   1.797000e+03   91.500000   145.000000     1.867581     48949   
+3   1.273645e+06  209.813164  2057.595335   153.487990   1297774   
+4   5.061754e+05    0.000000  1898.843505    14.446430  33229774   
+5   1.275177e+06  220.134674  4229.335075   109.920357   1294430   
+6   1.000000e+00    0.493175     1.000000    -0.839647      3344   
+7   1.300000e+01    0.000000     0.000000     3.276868  47342421   
+8   1.480000e+02    0.000000     1.000000     3.943617  37903222   
+9   1.000000e+00    0.000000     0.333333     1.361393  17628201   
+10  2.304000e+03  163.000000   765.000000     1.191492         0   
+11  2.304000e+03  214.500000   989.000000     0.762851         0   
+12  1.000000e+00    0.000000     1.000000     0.327106  33252779   
+13  6.200000e+01    0.000000     1.000000     2.676413  40168002   
+14  4.600000e+01    0.000000     0.000000     4.600181  49305892   
+15  7.700000e+01    0.000000     0.000000     5.906447  50845626   
+16  1.000000e+00    0.000000     1.000000    -0.421599   7215465   
+17  1.000000e+00    0.000000     0.333333     1.390399  16353355   
+18  1.000000e+00    0.000000     0.142857     1.653889  17893089   
+19  6.364822e+10  247.033000  1300.070000  1128.053614       111   
+
+                feature   missing time_unit_status  \
+0          player_kills         0  assumed_seconds   
+1            player_dmg         0  assumed_seconds   
+2       damage_per_kill  33252779  assumed_seconds   
+3      player_dist_walk         0  assumed_seconds   
+4      player_dist_ride         0  assumed_seconds   
+5        total_distance         0  assumed_seconds   
+6            walk_ratio   1294430  assumed_seconds   
+7        player_assists         0  assumed_seconds   
+8           player_dbno         0  assumed_seconds   
+9          assist_ratio  29714220  assumed_seconds   
+10      first_kill_time  33354079  assumed_seconds   
+11        avg_kill_time  33354079  assumed_seconds   
+12             has_kill         0  assumed_seconds   
+13          early_kills    419960  assumed_seconds   
+14            mid_kills    419960  assumed_seconds   
+15           late_kills    419960  assumed_seconds   
+16     early_kill_ratio  33372497  assumed_seconds   
+17       mid_kill_ratio  33372497  assumed_seconds   
+18      late_kill_ratio  33372497  assumed_seconds   
+19  player_survive_time         0  assumed_seconds   
+
+                              unit  
+0           Xem feature_dictionary  
+1           Xem feature_dictionary  
+2           Xem feature_dictionary  
+3           Xem feature_dictionary  
+4           Xem feature_dictionary  
+5           Xem feature_dictionary  
+6           Xem feature_dictionary  
+7           Xem feature_dictionary  
+8           Xem feature_dictionary  
+9           Xem feature_dictionary  
+10  Giây (giả định, chưa xác minh)  
+11  Giây (giả định, chưa xác minh)  
+12          Xem feature_dictionary  
+13          Xem feature_dictionary  
+14          Xem feature_dictionary  
+15          Xem feature_dictionary  
+16          Xem feature_dictionary  
+17          Xem feature_dictionary  
+18          Xem feature_dictionary  
+19  Giây (giả định, chưa xác minh)  
+mode_statistics.csv
+
+  team_size_mode         n     kills      damage         walk       survival  \
+0            Duo  18378454  0.897220  124.799243  1235.902203   14618.113726   
+1           Solo  11929027  0.897445  112.528904  1165.078421  171459.479217   
+2          Squad  26955374  0.875974  128.421072  1369.775766   22079.662225   
+
+   placement time_unit_status                   survival_unit  
+0   0.489676  assumed_seconds  Giây (giả định, chưa xác minh)  
+1   0.487917  assumed_seconds  Giây (giả định, chưa xác minh)  
+2   0.499680  assumed_seconds  Giây (giả định, chưa xác minh)  
+hist_player_kills_source.csv
+
+    bin         n  left_edge  right_edge           source_unit
+0     0  53902815   0.000000    3.133333  đơn vị giá trị nguồn
+1     1   2668011   3.133333    6.266667  đơn vị giá trị nguồn
+2     2    495773   6.266667    9.400000  đơn vị giá trị nguồn
+3     3    128593   9.400000   12.533333  đơn vị giá trị nguồn
+4     4     41040  12.533333   15.666667  đơn vị giá trị nguồn
+5     5     13769  15.666667   18.800000  đơn vị giá trị nguồn
+6     6      5833  18.800000   21.933333  đơn vị giá trị nguồn
+7     7      3507  21.933333   25.066667  đơn vị giá trị nguồn
+8     8      1328  25.066667   28.200000  đơn vị giá trị nguồn
+9     9       761  28.200000   31.333333  đơn vị giá trị nguồn
+10   10       465  31.333333   34.466667  đơn vị giá trị nguồn
+11   11       268  34.466667   37.600000  đơn vị giá trị nguồn
+12   12       224  37.600000   40.733333  đơn vị giá trị nguồn
+13   13       141  40.733333   43.866667  đơn vị giá trị nguồn
+14   14       119  43.866667   47.000000  đơn vị giá trị nguồn
+15   15       103  47.000000   50.133333  đơn vị giá trị nguồn
+16   16        46  50.133333   53.266667  đơn vị giá trị nguồn
+17   17        26  53.266667   56.400000  đơn vị giá trị nguồn
+18   18        12  56.400000   59.533333  đơn vị giá trị nguồn
+19   19        11  59.533333   62.666667  đơn vị giá trị nguồn
+<IPython.core.display.Image object>
+hist_player_dmg_source.csv
+
+    bin         n  left_edge  right_edge           source_unit
+0     0  51543622        0.0       313.6  đơn vị giá trị nguồn
+1     1   4634259      313.6       627.2  đơn vị giá trị nguồn
+2     2    791128      627.2       940.8  đơn vị giá trị nguồn
+3     3    191737      940.8      1254.4  đơn vị giá trị nguồn
+4     4     61140     1254.4      1568.0  đơn vị giá trị nguồn
+5     5     22469     1568.0      1881.6  đơn vị giá trị nguồn
+6     6      9382     1881.6      2195.2  đơn vị giá trị nguồn
+7     7      4170     2195.2      2508.8  đơn vị giá trị nguồn
+8     8      2127     2508.8      2822.4  đơn vị giá trị nguồn
+9     9      1103     2822.4      3136.0  đơn vị giá trị nguồn
+10   10       643     3136.0      3449.6  đơn vị giá trị nguồn
+11   11       394     3449.6      3763.2  đơn vị giá trị nguồn
+12   12       248     3763.2      4076.8  đơn vị giá trị nguồn
+13   13       157     4076.8      4390.4  đơn vị giá trị nguồn
+14   14       115     4390.4      4704.0  đơn vị giá trị nguồn
+15   15        86     4704.0      5017.6  đơn vị giá trị nguồn
+16   16        40     5017.6      5331.2  đơn vị giá trị nguồn
+17   17        16     5331.2      5644.8  đơn vị giá trị nguồn
+18   18         7     5644.8      5958.4  đơn vị giá trị nguồn
+19   19         5     5958.4      6272.0  đơn vị giá trị nguồn
+<IPython.core.display.Image object>
+hist_player_survive_time_source.csv
+
+    bin         n     left_edge    right_edge                     source_unit
+0     0  57262810  0.000000e+00  2.121607e+09  Giây (giả định, chưa xác minh)
+1     1         0  2.121607e+09  4.243214e+09  Giây (giả định, chưa xác minh)
+2     2         0  4.243214e+09  6.364822e+09  Giây (giả định, chưa xác minh)
+3     3         0  6.364822e+09  8.486429e+09  Giây (giả định, chưa xác minh)
+4     4         0  8.486429e+09  1.060804e+10  Giây (giả định, chưa xác minh)
+5     5         0  1.060804e+10  1.272964e+10  Giây (giả định, chưa xác minh)
+6     6         0  1.272964e+10  1.485125e+10  Giây (giả định, chưa xác minh)
+7     7         0  1.485125e+10  1.697286e+10  Giây (giả định, chưa xác minh)
+8     8         0  1.697286e+10  1.909446e+10  Giây (giả định, chưa xác minh)
+9     9         0  1.909446e+10  2.121607e+10  Giây (giả định, chưa xác minh)
+10   10         0  2.121607e+10  2.333768e+10  Giây (giả định, chưa xác minh)
+11   11         0  2.333768e+10  2.545929e+10  Giây (giả định, chưa xác minh)
+12   12         0  2.545929e+10  2.758089e+10  Giây (giả định, chưa xác minh)
+13   13         0  2.758089e+10  2.970250e+10  Giây (giả định, chưa xác minh)
+14   14         0  2.970250e+10  3.182411e+10  Giây (giả định, chưa xác minh)
+15   15         0  3.182411e+10  3.394571e+10  Giây (giả định, chưa xác minh)
+16   16         0  3.394571e+10  3.606732e+10  Giây (giả định, chưa xác minh)
+17   17         0  3.606732e+10  3.818893e+10  Giây (giả định, chưa xác minh)
+18   18         0  3.818893e+10  4.031054e+10  Giây (giả định, chưa xác minh)
+19   19         0  4.031054e+10  4.243214e+10  Giây (giả định, chưa xác minh)
+<IPython.core.display.Image object>
+hist_normalized_placement_source.csv
+
+    bin        n  left_edge  right_edge      source_unit
+0     0  2780085   0.000000    0.033333  placement [0,1]
+1     1  2040613   0.033333    0.066667  placement [0,1]
+2     2  1816727   0.066667    0.100000  placement [0,1]
+3     3  2106696   0.100000    0.133333  placement [0,1]
+4     4  2061223   0.133333    0.166667  placement [0,1]
+5     5  1909090   0.166667    0.200000  placement [0,1]
+6     6  1861830   0.200000    0.233333  placement [0,1]
+7     7  1725603   0.233333    0.266667  placement [0,1]
+8     8  2017066   0.266667    0.300000  placement [0,1]
+9     9  1618448   0.300000    0.333333  placement [0,1]
+10   10  2048317   0.333333    0.366667  placement [0,1]
+11   11  1786243   0.366667    0.400000  placement [0,1]
+12   12  1914319   0.400000    0.433333  placement [0,1]
+13   13  1828082   0.433333    0.466667  placement [0,1]
+14   14  1366030   0.466667    0.500000  placement [0,1]
+15   15  2002958   0.500000    0.533333  placement [0,1]
+16   16  1789773   0.533333    0.566667  placement [0,1]
+17   17  1587348   0.566667    0.600000  placement [0,1]
+18   18  1898068   0.600000    0.633333  placement [0,1]
+19   19  1428605   0.633333    0.666667  placement [0,1]
+<IPython.core.display.Image object>
+hist_first_kill_time_source.csv
+
+    bin        n    left_edge   right_edge                     source_unit
+0     0  2810722    46.000000   121.266667  Giây (giả định, chưa xác minh)
+1     1  5015922   121.266667   196.533333  Giây (giả định, chưa xác minh)
+2     2  2966291   196.533333   271.800000  Giây (giả định, chưa xác minh)
+3     3  2013803   271.800000   347.066667  Giây (giả định, chưa xác minh)
+4     4  1436652   347.066667   422.333333  Giây (giả định, chưa xác minh)
+5     5  1088790   422.333333   497.600000  Giây (giả định, chưa xác minh)
+6     6   855008   497.600000   572.866667  Giây (giả định, chưa xác minh)
+7     7   726937   572.866667   648.133333  Giây (giả định, chưa xác minh)
+8     8   658253   648.133333   723.400000  Giây (giả định, chưa xác minh)
+9     9   645987   723.400000   798.666667  Giây (giả định, chưa xác minh)
+10   10   593047   798.666667   873.933333  Giây (giả định, chưa xác minh)
+11   11   554657   873.933333   949.200000  Giây (giả định, chưa xác minh)
+12   12   518494   949.200000  1024.466667  Giây (giả định, chưa xác minh)
+13   13   483365  1024.466667  1099.733333  Giây (giả định, chưa xác minh)
+14   14   444766  1099.733333  1175.000000  Giây (giả định, chưa xác minh)
+15   15   434374  1175.000000  1250.266667  Giây (giả định, chưa xác minh)
+16   16   428598  1250.266667  1325.533333  Giây (giả định, chưa xác minh)
+17   17   411447  1325.533333  1400.800000  Giây (giả định, chưa xác minh)
+18   18   408887  1400.800000  1476.066667  Giây (giả định, chưa xác minh)
+19   19   418938  1476.066667  1551.333333  Giây (giả định, chưa xác minh)
+<IPython.core.display.Image object>
+eda_missing_source.csv
+
+           n     valid          mean       median           std   min  \
+0   57262855  57262855      0.887266     0.000000  1.554518e+00   0.0   
+1   57262855  57262855    123.947985    77.000000  1.695204e+02   0.0   
+2   57262855  24010076    122.661529   106.800000  5.968775e+01   0.0   
+3   57262855  57262855   1284.166530   848.921265  4.216373e+03   0.0   
+4   57262855  57262855   1156.069937     0.000000  1.998891e+03   0.0   
+5   57262855  57262855   2440.236466  1168.344240  5.126863e+03   0.0   
+6   57262855  55968425      0.774040     1.000000  2.998938e-01   0.0   
+7   57262855  57262855      0.229631     0.000000  5.756245e-01   0.0   
+8   57262855  57262855      0.584432     0.000000  1.119646e+00   0.0   
+9   57262855  27548635      0.221148     0.000000  3.495714e-01   0.0   
+10  57262855  23908776    516.181880   312.000000  4.595712e+02  46.0   
+11  57262855  23908776    634.991257   473.200000  4.839284e+02  46.0   
+12  57262855  57262855      0.419296     0.000000  4.934439e-01   0.0   
+13  57262855  56842895      0.470390     0.000000  8.961076e-01   0.0   
+14  57262855  56842895      0.207417     0.000000  6.349646e-01   0.0   
+15  57262855  56842895      0.206710     0.000000  7.671094e-01   0.0   
+16  57262855  23890358      0.606997     1.000000  4.486158e-01   0.0   
+17  57262855  23890358      0.214731     0.000000  3.598316e-01   0.0   
+18  57262855  23890358      0.178271     0.000000  3.402277e-01   0.0   
+19  57262855  57262855  50803.765211   653.354000  5.642214e+07   0.0   
+
+             max         q25          q75         skew      zero  \
+0   9.400000e+01    0.000000     1.000000     3.755944  33252779   
+1   9.408000e+03    0.000000   174.000000     3.483482  15047037   
+2   1.797000e+03   91.500000   145.000000     1.867581     48949   
+3   1.273645e+06  209.813164  2057.595335   153.487990   1297774   
+4   5.061754e+05    0.000000  1898.843505    14.446430  33229774   
+5   1.275177e+06  220.134674  4229.335075   109.920357   1294430   
+6   1.000000e+00    0.493175     1.000000    -0.839647      3344   
+7   1.300000e+01    0.000000     0.000000     3.276868  47342421   
+8   1.480000e+02    0.000000     1.000000     3.943617  37903222   
+9   1.000000e+00    0.000000     0.333333     1.361393  17628201   
+10  2.304000e+03  163.000000   765.000000     1.191492         0   
+11  2.304000e+03  214.500000   989.000000     0.762851         0   
+12  1.000000e+00    0.000000     1.000000     0.327106  33252779   
+13  6.200000e+01    0.000000     1.000000     2.676413  40168002   
+14  4.600000e+01    0.000000     0.000000     4.600181  49305892   
+15  7.700000e+01    0.000000     0.000000     5.906447  50845626   
+16  1.000000e+00    0.000000     1.000000    -0.421599   7215465   
+17  1.000000e+00    0.000000     0.333333     1.390399  16353355   
+18  1.000000e+00    0.000000     0.142857     1.653889  17893089   
+19  6.364822e+10  247.033000  1300.070000  1128.053614       111   
+
+                feature   missing time_unit_status  \
+0          player_kills         0  assumed_seconds   
+1            player_dmg         0  assumed_seconds   
+2       damage_per_kill  33252779  assumed_seconds   
+3      player_dist_walk         0  assumed_seconds   
+4      player_dist_ride         0  assumed_seconds   
+5        total_distance         0  assumed_seconds   
+6            walk_ratio   1294430  assumed_seconds   
+7        player_assists         0  assumed_seconds   
+8           player_dbno         0  assumed_seconds   
+9          assist_ratio  29714220  assumed_seconds   
+10      first_kill_time  33354079  assumed_seconds   
+11        avg_kill_time  33354079  assumed_seconds   
+12             has_kill         0  assumed_seconds   
+13          early_kills    419960  assumed_seconds   
+14            mid_kills    419960  assumed_seconds   
+15           late_kills    419960  assumed_seconds   
+16     early_kill_ratio  33372497  assumed_seconds   
+17       mid_kill_ratio  33372497  assumed_seconds   
+18      late_kill_ratio  33372497  assumed_seconds   
+19  player_survive_time         0  assumed_seconds   
+
+                              unit  
+0           Xem feature_dictionary  
+1           Xem feature_dictionary  
+2           Xem feature_dictionary  
+3           Xem feature_dictionary  
+4           Xem feature_dictionary  
+5           Xem feature_dictionary  
+6           Xem feature_dictionary  
+7           Xem feature_dictionary  
+8           Xem feature_dictionary  
+9           Xem feature_dictionary  
+10  Giây (giả định, chưa xác minh)  
+11  Giây (giả định, chưa xác minh)  
+12          Xem feature_dictionary  
+13          Xem feature_dictionary  
+14          Xem feature_dictionary  
+15          Xem feature_dictionary  
+16          Xem feature_dictionary  
+17          Xem feature_dictionary  
+18          Xem feature_dictionary  
+19  Giây (giả định, chưa xác minh)  
+<IPython.core.display.Image object>
+mode_kills_source.csv
+
+  team_size_mode         n     kills      damage         walk       survival  \
+0            Duo  18378454  0.897220  124.799243  1235.902203   14618.113726   
+1           Solo  11929027  0.897445  112.528904  1165.078421  171459.479217   
+2          Squad  26955374  0.875974  128.421072  1369.775766   22079.662225   
+
+   placement time_unit_status                   survival_unit  
+0   0.489676  assumed_seconds  Giây (giả định, chưa xác minh)  
+1   0.487917  assumed_seconds  Giây (giả định, chưa xác minh)  
+2   0.499680  assumed_seconds  Giây (giả định, chưa xác minh)  
+<IPython.core.display.Image object>
+progress_S05.csv
+
+   stage                                              step scope  \
+0    S05                            checking prerequisites  full   
+1    S05                                           running  full   
+2    S05  EDA scalar statistics and exact global quantiles  full   
+3    S05                               exact EDA quantiles  full   
+4    S05                               exact EDA quantiles  full   
+5    S05                               exact EDA quantiles  full   
+6    S05                               exact EDA quantiles  full   
+7    S05                               exact EDA quantiles  full   
+8    S05                               exact EDA quantiles  full   
+9    S05                               exact EDA quantiles  full   
+10   S05                               exact EDA quantiles  full   
+11   S05                               exact EDA quantiles  full   
+12   S05                               exact EDA quantiles  full   
+13   S05                               exact EDA quantiles  full   
+14   S05                               exact EDA quantiles  full   
+15   S05                               exact EDA quantiles  full   
+16   S05                               exact EDA quantiles  full   
+17   S05                               exact EDA quantiles  full   
+18   S05                               exact EDA quantiles  full   
+19   S05                               exact EDA quantiles  full   
+
+    elapsed_seconds           feature  column_index  columns       valid  
+0              0.00               NaN           NaN      NaN         NaN  
+1            197.75               NaN           NaN      NaN         NaN  
+2            198.13               NaN           NaN      NaN         NaN  
+3            886.42      player_kills           1.0     21.0  57262855.0  
+4           1030.26        player_dmg           2.0     21.0  57262855.0  
+5           1201.28   damage_per_kill           3.0     21.0  24010076.0  
+6           1304.77  player_dist_walk           4.0     21.0  57262855.0  
+7           1430.21  player_dist_ride           5.0     21.0  57262855.0  
+8           1567.27    total_distance           6.0     21.0  57262855.0  
+9           1699.84        walk_ratio           7.0     21.0  55968425.0  
+10          1871.55    player_assists           8.0     21.0  57262855.0  
+11          2004.88       player_dbno           9.0     21.0  57262855.0  
+12          2126.54      assist_ratio          10.0     21.0  27548635.0  
+13          2215.53   first_kill_time          11.0     21.0  23908776.0  
+14          2365.85     avg_kill_time          12.0     21.0  23908776.0  
+15          2564.92          has_kill          13.0     21.0  57262855.0  
+16          2694.23       early_kills          14.0     21.0  56842895.0  
+17          2814.25         mid_kills          15.0     21.0  56842895.0  
+18          2947.38        late_kills          16.0     21.0  56842895.0  
+19          3108.86  early_kill_ratio          17.0     21.0  23890358.0  
+  stage     status reason  artifacts  \
+0   S05  completed                26   
+
+                                          checkpoint  
+0  /kaggle/working/PUBG_Coursework_v511/outputs/f...  
+Checkpoint runtime đã ghi; không cần Save Version giữa các stage. Chưa có bản lưu bền vững.
+
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))
+rq1_relationships.csv
+
+             n   pearson  spearman     mode                target  \
+0   57262855.0 -0.000438  0.400674  Overall   player_survive_time   
+1   57262855.0 -0.000523  0.439757  Overall   player_survive_time   
+2   24010076.0 -0.000019  0.085727  Overall   player_survive_time   
+3   57262855.0  0.001197  0.909129  Overall   player_survive_time   
+4   57262855.0  0.002876  0.683670  Overall   player_survive_time   
+5   57262855.0  0.002106  0.896043  Overall   player_survive_time   
+6   55968425.0 -0.000478 -0.616498  Overall   player_survive_time   
+7   57262855.0 -0.000351  0.285879  Overall   player_survive_time   
+8   57262855.0 -0.000442  0.264434  Overall   player_survive_time   
+9   27548635.0 -0.000240  0.129278  Overall   player_survive_time   
+10  23908776.0 -0.000291  0.598188  Overall   player_survive_time   
+11  23908776.0 -0.000369  0.809219  Overall   player_survive_time   
+12  57262855.0 -0.000590  0.352902  Overall   player_survive_time   
+13  56842895.0 -0.000356  0.079553  Overall   player_survive_time   
+14  56842895.0 -0.000287  0.382726  Overall   player_survive_time   
+15  56842895.0 -0.000235  0.485130  Overall   player_survive_time   
+16  23890358.0  0.000343 -0.703588  Overall   player_survive_time   
+17  23890358.0 -0.000237  0.355938  Overall   player_survive_time   
+18  23890358.0 -0.000201  0.667962  Overall   player_survive_time   
+19  57153260.0  0.372175  0.374387  Overall  normalized_placement   
+
+             feature    analysis_scope  primary status time_unit_status  \
+0       player_kills  train+validation     True     ok  assumed_seconds   
+1         player_dmg  train+validation     True     ok  assumed_seconds   
+2    damage_per_kill  train+validation     True     ok  assumed_seconds   
+3   player_dist_walk  train+validation     True     ok  assumed_seconds   
+4   player_dist_ride  train+validation     True     ok  assumed_seconds   
+5     total_distance  train+validation     True     ok  assumed_seconds   
+6         walk_ratio  train+validation     True     ok  assumed_seconds   
+7     player_assists  train+validation     True     ok  assumed_seconds   
+8        player_dbno  train+validation     True     ok  assumed_seconds   
+9       assist_ratio  train+validation     True     ok  assumed_seconds   
+10   first_kill_time  train+validation     True     ok  assumed_seconds   
+11     avg_kill_time  train+validation     True     ok  assumed_seconds   
+12          has_kill  train+validation     True     ok  assumed_seconds   
+13       early_kills  train+validation    False     ok  assumed_seconds   
+14         mid_kills  train+validation    False     ok  assumed_seconds   
+15        late_kills  train+validation    False     ok  assumed_seconds   
+16  early_kill_ratio  train+validation    False     ok  assumed_seconds   
+17    mid_kill_ratio  train+validation    False     ok  assumed_seconds   
+18   late_kill_ratio  train+validation    False     ok  assumed_seconds   
+19      player_kills  train+validation     True     ok  assumed_seconds   
+
+   coefficient_unit  
+0     dimensionless  
+1     dimensionless  
+2     dimensionless  
+3     dimensionless  
+4     dimensionless  
+5     dimensionless  
+6     dimensionless  
+7     dimensionless  
+8     dimensionless  
+9     dimensionless  
+10    dimensionless  
+11    dimensionless  
+12    dimensionless  
+13    dimensionless  
+14    dimensionless  
+15    dimensionless  
+16    dimensionless  
+17    dimensionless  
+18    dimensionless  
+19    dimensionless  
+rq1_player_survive_time_source.csv
+
+             n   pearson  spearman     mode               target  \
+0   57262855.0 -0.000438  0.400674  Overall  player_survive_time   
+1   57262855.0 -0.000523  0.439757  Overall  player_survive_time   
+2   24010076.0 -0.000019  0.085727  Overall  player_survive_time   
+3   57262855.0  0.001197  0.909129  Overall  player_survive_time   
+4   57262855.0  0.002876  0.683670  Overall  player_survive_time   
+5   57262855.0  0.002106  0.896043  Overall  player_survive_time   
+6   55968425.0 -0.000478 -0.616498  Overall  player_survive_time   
+7   57262855.0 -0.000351  0.285879  Overall  player_survive_time   
+8   57262855.0 -0.000442  0.264434  Overall  player_survive_time   
+9   27548635.0 -0.000240  0.129278  Overall  player_survive_time   
+10  23908776.0 -0.000291  0.598188  Overall  player_survive_time   
+11  23908776.0 -0.000369  0.809219  Overall  player_survive_time   
+12  57262855.0 -0.000590  0.352902  Overall  player_survive_time   
+13  56842895.0 -0.000356  0.079553  Overall  player_survive_time   
+14  56842895.0 -0.000287  0.382726  Overall  player_survive_time   
+15  56842895.0 -0.000235  0.485130  Overall  player_survive_time   
+16  23890358.0  0.000343 -0.703588  Overall  player_survive_time   
+17  23890358.0 -0.000237  0.355938  Overall  player_survive_time   
+18  23890358.0 -0.000201  0.667962  Overall  player_survive_time   
+
+             feature    analysis_scope  primary status time_unit_status  \
+0       player_kills  train+validation     True     ok  assumed_seconds   
+1         player_dmg  train+validation     True     ok  assumed_seconds   
+2    damage_per_kill  train+validation     True     ok  assumed_seconds   
+3   player_dist_walk  train+validation     True     ok  assumed_seconds   
+4   player_dist_ride  train+validation     True     ok  assumed_seconds   
+5     total_distance  train+validation     True     ok  assumed_seconds   
+6         walk_ratio  train+validation     True     ok  assumed_seconds   
+7     player_assists  train+validation     True     ok  assumed_seconds   
+8        player_dbno  train+validation     True     ok  assumed_seconds   
+9       assist_ratio  train+validation     True     ok  assumed_seconds   
+10   first_kill_time  train+validation     True     ok  assumed_seconds   
+11     avg_kill_time  train+validation     True     ok  assumed_seconds   
+12          has_kill  train+validation     True     ok  assumed_seconds   
+13       early_kills  train+validation    False     ok  assumed_seconds   
+14         mid_kills  train+validation    False     ok  assumed_seconds   
+15        late_kills  train+validation    False     ok  assumed_seconds   
+16  early_kill_ratio  train+validation    False     ok  assumed_seconds   
+17    mid_kill_ratio  train+validation    False     ok  assumed_seconds   
+18   late_kill_ratio  train+validation    False     ok  assumed_seconds   
+
+   coefficient_unit  
+0     dimensionless  
+1     dimensionless  
+2     dimensionless  
+3     dimensionless  
+4     dimensionless  
+5     dimensionless  
+6     dimensionless  
+7     dimensionless  
+8     dimensionless  
+9     dimensionless  
+10    dimensionless  
+11    dimensionless  
+12    dimensionless  
+13    dimensionless  
+14    dimensionless  
+15    dimensionless  
+16    dimensionless  
+17    dimensionless  
+18    dimensionless  
+<IPython.core.display.Image object>
+rq1_normalized_placement_source.csv
+
+             n   pearson  spearman     mode                target  \
+0   57153260.0  0.372175  0.374387  Overall  normalized_placement   
+1   57153260.0  0.395892  0.403764  Overall  normalized_placement   
+2   23963557.0  0.085413  0.069593  Overall  normalized_placement   
+3   57153260.0  0.224755  0.817044  Overall  normalized_placement   
+4   57153260.0  0.508084  0.623494  Overall  normalized_placement   
+5   57153260.0  0.382926  0.805862  Overall  normalized_placement   
+6   55861461.0 -0.501890 -0.555350  Overall  normalized_placement   
+7   57153260.0  0.267860  0.260973  Overall  normalized_placement   
+8   57153260.0  0.232195  0.206608  Overall  normalized_placement   
+9   27496315.0  0.023656  0.109417  Overall  normalized_placement   
+10  23865135.0  0.532205  0.530154  Overall  normalized_placement   
+11  23865135.0  0.707694  0.737909  Overall  normalized_placement   
+12  57153260.0  0.328562  0.329056  Overall  normalized_placement   
+13  56736670.0  0.082720  0.070939  Overall  normalized_placement   
+14  56736670.0  0.314736  0.356112  Overall  normalized_placement   
+15  56736670.0  0.383593  0.463209  Overall  normalized_placement   
+16  23846748.0 -0.635282 -0.649110  Overall  normalized_placement   
+17  23846748.0  0.281538  0.325638  Overall  normalized_placement   
+18  23846748.0  0.539896  0.629308  Overall  normalized_placement   
+
+             feature    analysis_scope  primary status time_unit_status  \
+0       player_kills  train+validation     True     ok  assumed_seconds   
+1         player_dmg  train+validation     True     ok  assumed_seconds   
+2    damage_per_kill  train+validation     True     ok  assumed_seconds   
+3   player_dist_walk  train+validation     True     ok  assumed_seconds   
+4   player_dist_ride  train+validation     True     ok  assumed_seconds   
+5     total_distance  train+validation     True     ok  assumed_seconds   
+6         walk_ratio  train+validation     True     ok  assumed_seconds   
+7     player_assists  train+validation     True     ok  assumed_seconds   
+8        player_dbno  train+validation     True     ok  assumed_seconds   
+9       assist_ratio  train+validation     True     ok  assumed_seconds   
+10   first_kill_time  train+validation     True     ok  assumed_seconds   
+11     avg_kill_time  train+validation     True     ok  assumed_seconds   
+12          has_kill  train+validation     True     ok  assumed_seconds   
+13       early_kills  train+validation     True     ok  assumed_seconds   
+14         mid_kills  train+validation     True     ok  assumed_seconds   
+15        late_kills  train+validation     True     ok  assumed_seconds   
+16  early_kill_ratio  train+validation     True     ok  assumed_seconds   
+17    mid_kill_ratio  train+validation     True     ok  assumed_seconds   
+18   late_kill_ratio  train+validation     True     ok  assumed_seconds   
+
+   coefficient_unit  
+0     dimensionless  
+1     dimensionless  
+2     dimensionless  
+3     dimensionless  
+4     dimensionless  
+5     dimensionless  
+6     dimensionless  
+7     dimensionless  
+8     dimensionless  
+9     dimensionless  
+10    dimensionless  
+11    dimensionless  
+12    dimensionless  
+13    dimensionless  
+14    dimensionless  
+15    dimensionless  
+16    dimensionless  
+17    dimensionless  
+18    dimensionless  
+<IPython.core.display.Image object>
+progress_S06.csv
+
+   stage                      step scope  elapsed_seconds     mode  \
+0    S06    checking prerequisites  full             0.00      NaN   
+1    S06                   running  full           222.08      NaN   
+2    S06  global relationship pair  full           451.19  Overall   
+3    S06  global relationship pair  full           607.72  Overall   
+4    S06  global relationship pair  full           771.40  Overall   
+5    S06  global relationship pair  full           906.83  Overall   
+6    S06  global relationship pair  full          1099.18  Overall   
+7    S06  global relationship pair  full          1280.13  Overall   
+8    S06  global relationship pair  full          1549.55  Overall   
+9    S06  global relationship pair  full          1757.60  Overall   
+10   S06  global relationship pair  full          1913.45  Overall   
+11   S06  global relationship pair  full          2066.09  Overall   
+12   S06  global relationship pair  full          2227.50  Overall   
+13   S06  global relationship pair  full          2364.26  Overall   
+14   S06  global relationship pair  full          2502.83  Overall   
+15   S06  global relationship pair  full          2659.59  Overall   
+16   S06  global relationship pair  full          2854.25  Overall   
+17   S06  global relationship pair  full          3015.10  Overall   
+18   S06  global relationship pair  full          3173.83  Overall   
+19   S06  global relationship pair  full          3312.26  Overall   
+
+                 target           feature  
+0                   NaN               NaN  
+1                   NaN               NaN  
+2   player_survive_time      player_kills  
+3   player_survive_time        player_dmg  
+4   player_survive_time   damage_per_kill  
+5   player_survive_time  player_dist_walk  
+6   player_survive_time  player_dist_ride  
+7   player_survive_time    total_distance  
+8   player_survive_time        walk_ratio  
+9   player_survive_time    player_assists  
+10  player_survive_time       player_dbno  
+11  player_survive_time      assist_ratio  
+12  player_survive_time   first_kill_time  
+13  player_survive_time     avg_kill_time  
+14  player_survive_time          has_kill  
+15  player_survive_time       early_kills  
+16  player_survive_time         mid_kills  
+17  player_survive_time        late_kills  
+18  player_survive_time  early_kill_ratio  
+19  player_survive_time    mid_kill_ratio  
+  stage     status reason  artifacts  \
+0   S06  completed                 9   
+
+                                          checkpoint  
+0  /kaggle/working/PUBG_Coursework_v511/outputs/f...  
+Gói bàn giao runtime: /kaggle/working/PUBG_Coursework_v511/handoff_full.json ; chưa xác minh Kaggle Version đã lưu.
+
+S07: ngoài khoảng thực thi; không tính lại
+
+S08: ngoài khoảng thực thi; không tính lại
+
+S09: ngoài khoảng thực thi; không tính lại
+
+S10: ngoài khoảng thực thi; không tính lại
+
+Chưa tới finalization; chỉ đọc diagnostics/stage đã chạy, chưa có final summary
+
+  stage     status reason  outputs                 writer
+0   S01  completed              15  bfb808f05ed6-af5665e6
+1   S02  completed              18  bfb808f05ed6-af5665e6
+2   S03  completed               8  bfb808f05ed6-af5665e6
+3   S04  completed              18  bfb808f05ed6-af5665e6
+4   S05  completed              26  bfb808f05ed6-af5665e6
+5   S06  completed               9  bfb808f05ed6-af5665e6
+Runtime outputs (chưa chứng minh Kaggle đã lưu): /kaggle/working/PUBG_Coursework_v511/outputs/full
+Manifest bàn giao: /kaggle/working/PUBG_Coursework_v511/outputs/full/checkpoints/stages.json
+Notebook cần lưu đúng tên PUBG_COURSEWORK.ipynb trên local và cùng Kaggle notebook identity; không thêm (1)/(2).
+
+Chưa xác minh Kaggle Version đã lưu; kiểm Output và gắn version cụ thể trước bàn giao.

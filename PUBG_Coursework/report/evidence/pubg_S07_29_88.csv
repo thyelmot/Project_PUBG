@@ -1,0 +1,4 @@
+Unnamed: 0,cluster,avg_kills,avg_damage,avg_walk,avg_ride,avg_walk_ratio,avg_assists,avg_dbno,avg_assist_ratio,std_kills,std_damage,avg_early_kill_ratio,avg_mid_kill_ratio,avg_late_kill_ratio,early_combat_match_ratio
+0,0,-1.353289,-1.315301,-0.178111,-0.246717,0.099086,-0.9249,-1.305729,4.151988,-1.716023,-1.2743,,,,-1.809764
+1,1,-1.363661,-1.668171,-1.440762,-1.872103,,-1.551501,-1.474501,,-1.747527,-1.785213,,,,-1.84789
+2,2,0.011346,0.011033,0.001514,0.002095,-0.000829,0.007765,0.01095,-0.024616,0.014388,0.010692,-5.000125e-16,-6.606545e-16,-3.160348e-16,0.015174

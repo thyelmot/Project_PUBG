@@ -1,0 +1,4 @@
+Unnamed: 0,experiment,target,split,device,time_unit_status,target_unit,aggregation,n,mae,rmse,r2,r2_reason
+0,s1_mean,player_survive_time,validation,cpu,assumed_seconds,"Giây (giả định, chưa xác minh)",micro,10104260,60734.082079,60736.813969,-11115.511,
+1,s1_median,player_survive_time,validation,cpu,assumed_seconds,"Giây (giả định, chưa xác minh)",micro,10104260,499.487342,591.234419,-0.053377,
+2,s1_linear,player_survive_time,validation,cuda,assumed_seconds,"Giây (giả định, chưa xác minh)",micro,10104260,187006.669646,351149.030935,-371574.813401,

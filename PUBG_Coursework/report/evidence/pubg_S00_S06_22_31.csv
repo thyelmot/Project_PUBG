@@ -1,0 +1,4 @@
+Unnamed: 0,team_size_mode,n,kills,damage,walk,survival,placement,time_unit_status,survival_unit
+0,Duo,18378454,0.89722,124.799243,1235.902203,14618.113726,0.489676,assumed_seconds,"Giây (giả định, chưa xác minh)"
+1,Solo,11929027,0.897445,112.528904,1165.078421,171459.479217,0.487917,assumed_seconds,"Giây (giả định, chưa xác minh)"
+2,Squad,26955374,0.875974,128.421072,1369.775766,22079.662225,0.49968,assumed_seconds,"Giây (giả định, chưa xác minh)"

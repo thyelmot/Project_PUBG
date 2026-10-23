@@ -1,0 +1,2 @@
+# Runtime guards hash exact source bytes; keep them unchanged on every OS.
+* -text

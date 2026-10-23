@@ -1,0 +1,21 @@
+Unnamed: 0,group,file,column,original_missing,parse_error,non_integer,rows
+0,aggregate,agg_match_stats_0.csv,match_id,0,0,0,13849287
+1,aggregate,agg_match_stats_0.csv,player_name,20249,0,0,13849287
+2,aggregate,agg_match_stats_0.csv,team_id,0,0,0,13849287
+3,aggregate,agg_match_stats_0.csv,date,0,0,0,13849287
+4,aggregate,agg_match_stats_0.csv,party_size,0,0,0,13849287
+5,aggregate,agg_match_stats_0.csv,game_size,0,0,0,13849287
+6,aggregate,agg_match_stats_0.csv,player_kills,0,0,0,13849287
+7,aggregate,agg_match_stats_0.csv,player_dmg,0,0,0,13849287
+8,aggregate,agg_match_stats_0.csv,player_assists,0,0,0,13849287
+9,aggregate,agg_match_stats_0.csv,player_dbno,0,0,0,13849287
+10,aggregate,agg_match_stats_0.csv,player_dist_walk,0,0,0,13849287
+11,aggregate,agg_match_stats_0.csv,player_dist_ride,0,0,0,13849287
+12,aggregate,agg_match_stats_0.csv,player_survive_time,0,0,0,13849287
+13,aggregate,agg_match_stats_0.csv,team_placement,0,0,0,13849287
+14,aggregate,agg_match_stats_1.csv,match_id,0,0,0,13844275
+15,aggregate,agg_match_stats_1.csv,player_name,20066,0,0,13844275
+16,aggregate,agg_match_stats_1.csv,team_id,0,0,0,13844275
+17,aggregate,agg_match_stats_1.csv,date,0,0,0,13844275
+18,aggregate,agg_match_stats_1.csv,party_size,0,0,0,13844275
+19,aggregate,agg_match_stats_1.csv,game_size,0,0,0,13844275

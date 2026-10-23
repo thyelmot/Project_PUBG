@@ -1,0 +1,14 @@
+Unnamed: 0,experiment,feature,coefficient,scale,time_unit_status,coefficient_unit
+0,t0_linear,player_kills,0.023337,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+1,t0_linear,player_dmg,0.068314,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+2,t0_linear,damage_per_kill,-0.004488,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+3,t0_linear,player_dist_walk,0.012377,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+4,t0_linear,player_dist_ride,0.038405,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+5,t0_linear,total_distance,0.025194,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+6,t0_linear,walk_ratio,-0.084534,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+7,t0_linear,player_assists,0.027697,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+8,t0_linear,player_dbno,-0.043693,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+9,t0_linear,assist_ratio,0.005452,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+10,t0_linear,missingindicator_damage_per_kill,-0.037049,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+11,t0_linear,missingindicator_walk_ratio,-0.03941,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn
+12,t0_linear,missingindicator_assist_ratio,0.003656,StandardScaler train-only,assumed_seconds,Placement/độ lệch chuẩn

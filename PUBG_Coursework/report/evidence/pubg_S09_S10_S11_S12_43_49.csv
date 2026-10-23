@@ -1,0 +1,13 @@
+Unnamed: 0,experiment,slice,group,matches,n,mae,rmse,r2,r2_reason,time_unit_status,target_unit
+0,s1_linear,mode,Duo,34771,3229814,183739.196128,375817.131833,-432668.7,,assumed_seconds,"Giây (giả định, chưa xác minh)"
+1,s1_linear,mode,Solo,22961,2110622,178440.586741,353394.408283,-404335.3,,assumed_seconds,"Giây (giả định, chưa xác minh)"
+2,s1_linear,mode,Squad,51763,4765940,192786.321754,345115.474716,-348684.9,,assumed_seconds,"Giây (giả định, chưa xác minh)"
+3,s1_linear,train_target_region,"(-inf, 332.757]",109492,3334141,133511.324016,215982.665584,-10148840.0,,assumed_seconds,"Giây (giả định, chưa xác minh)"
+4,s1_linear,train_target_region,"(332.757, 1070.24]",109493,3436349,157889.899996,336706.706097,-2383587.0,,assumed_seconds,"Giây (giả định, chưa xác minh)"
+5,s1_linear,train_target_region,"(1070.24, inf]",109490,3335886,270141.641243,471717.935048,-3629086.0,,assumed_seconds,"Giây (giả định, chưa xác minh)"
+6,p2_linear,mode,Duo,34611,3220788,0.165859,0.208053,0.5193688,,assumed_seconds,"Placement [0,1]"
+7,p2_linear,mode,Solo,22867,2104567,0.158561,0.200848,0.5428004,,assumed_seconds,"Placement [0,1]"
+8,p2_linear,mode,Squad,51653,4760487,0.185307,0.230084,0.4309449,,assumed_seconds,"Placement [0,1]"
+9,p2_linear,train_target_region,"(-inf, 0.308]",109131,3338791,0.199023,0.222717,-4.469352,,assumed_seconds,"Placement [0,1]"
+10,p2_linear,train_target_region,"(0.308, 0.675]",109119,3418514,0.109781,0.147639,-0.9423964,,assumed_seconds,"Placement [0,1]"
+11,p2_linear,train_target_region,"(0.675, inf]",109131,3328537,0.213388,0.266387,-6.477538,,assumed_seconds,"Placement [0,1]"

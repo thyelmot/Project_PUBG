@@ -1,0 +1,21 @@
+Unnamed: 0,group,file,source_column,canonical_column
+0,aggregate,agg_match_stats_0.csv,date,date
+1,aggregate,agg_match_stats_0.csv,game_size,game_size
+2,aggregate,agg_match_stats_0.csv,match_id,match_id
+3,aggregate,agg_match_stats_0.csv,match_mode,match_mode
+4,aggregate,agg_match_stats_0.csv,party_size,party_size
+5,aggregate,agg_match_stats_0.csv,player_assists,player_assists
+6,aggregate,agg_match_stats_0.csv,player_dbno,player_dbno
+7,aggregate,agg_match_stats_0.csv,player_dist_ride,player_dist_ride
+8,aggregate,agg_match_stats_0.csv,player_dist_walk,player_dist_walk
+9,aggregate,agg_match_stats_0.csv,player_dmg,player_dmg
+10,aggregate,agg_match_stats_0.csv,player_kills,player_kills
+11,aggregate,agg_match_stats_0.csv,player_name,player_name
+12,aggregate,agg_match_stats_0.csv,player_survive_time,player_survive_time
+13,aggregate,agg_match_stats_0.csv,team_id,team_id
+14,aggregate,agg_match_stats_0.csv,team_placement,team_placement
+15,aggregate,agg_match_stats_1.csv,date,date
+16,aggregate,agg_match_stats_1.csv,game_size,game_size
+17,aggregate,agg_match_stats_1.csv,match_id,match_id
+18,aggregate,agg_match_stats_1.csv,match_mode,match_mode
+19,aggregate,agg_match_stats_1.csv,party_size,party_size

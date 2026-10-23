@@ -1,0 +1,15 @@
+Unnamed: 0,key,value
+0,project_id,pubg-coursework-2026-v5
+1,spec_version,5.11-normalized-storage
+2,storage,"{'mode': 'local', 'project_root': '/kaggle/wor..."
+3,source,{'directory': '/kaggle/input/datasets/skihikin...
+4,schema,"{'aliases': {'aggregate': {}, 'event': {'time'..."
+5,runtime,"{'batch_rows': 50000, 'seed': 42, 'threads': 2..."
+6,preprocessing,"{'decision_mode': 'auto', 'mode_mapping': {1: ..."
+7,split,"{'ratios': [0.7, 0.15, 0.15]}"
+8,features,"{'decision_mode': 'auto', 'log_columns': [], '..."
+9,timing,"{'partitions': 16, 'unit_status': 'assumed_sec..."
+10,rq2,"{'decision_mode': 'auto', 'device': 'cuda', 'g..."
+11,rq3,"{'decision_mode': 'auto', 'device': 'cuda', 'g..."
+12,models,"{'linear': True, 'random_forest': False}"
+13,report,"{'bootstrap_replicates': 0, 'bootstrap_seed': 42}"

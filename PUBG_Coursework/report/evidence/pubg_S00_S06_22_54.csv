@@ -1,0 +1,21 @@
+Unnamed: 0,stage,step,scope,elapsed_seconds,feature,column_index,columns,valid
+0,S05,checking prerequisites,full,0.0,,,,
+1,S05,running,full,197.75,,,,
+2,S05,EDA scalar statistics and exact global quantiles,full,198.13,,,,
+3,S05,exact EDA quantiles,full,886.42,player_kills,1.0,21.0,57262855.0
+4,S05,exact EDA quantiles,full,1030.26,player_dmg,2.0,21.0,57262855.0
+5,S05,exact EDA quantiles,full,1201.28,damage_per_kill,3.0,21.0,24010076.0
+6,S05,exact EDA quantiles,full,1304.77,player_dist_walk,4.0,21.0,57262855.0
+7,S05,exact EDA quantiles,full,1430.21,player_dist_ride,5.0,21.0,57262855.0
+8,S05,exact EDA quantiles,full,1567.27,total_distance,6.0,21.0,57262855.0
+9,S05,exact EDA quantiles,full,1699.84,walk_ratio,7.0,21.0,55968425.0
+10,S05,exact EDA quantiles,full,1871.55,player_assists,8.0,21.0,57262855.0
+11,S05,exact EDA quantiles,full,2004.88,player_dbno,9.0,21.0,57262855.0
+12,S05,exact EDA quantiles,full,2126.54,assist_ratio,10.0,21.0,27548635.0
+13,S05,exact EDA quantiles,full,2215.53,first_kill_time,11.0,21.0,23908776.0
+14,S05,exact EDA quantiles,full,2365.85,avg_kill_time,12.0,21.0,23908776.0
+15,S05,exact EDA quantiles,full,2564.92,has_kill,13.0,21.0,57262855.0
+16,S05,exact EDA quantiles,full,2694.23,early_kills,14.0,21.0,56842895.0
+17,S05,exact EDA quantiles,full,2814.25,mid_kills,15.0,21.0,56842895.0
+18,S05,exact EDA quantiles,full,2947.38,late_kills,16.0,21.0,56842895.0
+19,S05,exact EDA quantiles,full,3108.86,early_kill_ratio,17.0,21.0,23890358.0

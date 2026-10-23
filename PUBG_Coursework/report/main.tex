@@ -1,0 +1,228 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx,amsmath,array,float}
+\newcommand{\toprule}{\hline}
+\newcommand{\midrule}{\hline}
+\newcommand{\bottomrule}{\hline}
+\usepackage[unicode,hidelinks]{hyperref}
+\renewcommand{\figurename}{Hình}
+\renewcommand{\tablename}{Bảng}
+\renewcommand{\contentsname}{MỤC LỤC}
+\renewcommand{\refname}{TÀI LIỆU THAM KHẢO}
+\setlength{\parindent}{1cm}
+\setlength{\parskip}{5pt}
+\linespread{1.25}
+\emergencystretch=3em
+\newcommand{\source}[1]{{\small\textit{Nguồn: #1.}}}
+\newcommand{\fitwidth}[1]{\sbox0{#1}\ifdim\wd0>\linewidth\resizebox{\linewidth}{!}{\usebox0}\else\usebox0\fi}
+\newcommand{\resultfigure}[3]{\begin{figure}[H]\centering\includegraphics[width=\linewidth,height=.60\textheight,keepaspectratio]{#1}\caption{#2}\end{figure}\noindent\textbf{Nhận xét:} #3\par}
+\begin{document}
+% A4 cover frame only; shipout coordinates start at the upper-left corner.
+\AddToHookNext{shipout/background}{%
+  \begingroup
+  \setlength{\unitlength}{1mm}%
+  \linethickness{0.8pt}%
+  \put(15,-282){\framebox(180,267){}}%
+  \linethickness{0.3pt}%
+  \put(17,-280){\framebox(176,263){}}%
+  \endgroup
+}
+\begin{titlepage}
+\centering
+\textbf{ĐẠI HỌC PHENIKAA}\\[6pt]
+\textbf{TRƯỜNG CÔNG NGHỆ THÔNG TIN PHENIKAA}\\[16pt]
+\includegraphics[width=2.8cm]{figures/logo.png}\\[20pt]
+{\Large\bfseries BÁO CÁO BÀI TẬP LỚN}\\[10pt]
+{\large\bfseries NHÓM 3}\\[6pt]
+{\large\bfseries MÔN: KHAI PHÁ DỮ LIỆU}\\[10pt]
+{\large\bfseries PHÂN TÍCH HÀNH VI NGƯỜI CHƠI PUBG,\\ PHÂN CỤM VÀ HỒI QUY KẾT QUẢ SAU TRẬN}
+\vspace{1.5cm}
+\begin{center}
+\textbf{Giảng viên hướng dẫn:} ThS. Phạm Kim Thành\\[14pt]
+\textbf{Thành viên thực hiện:}\\[8pt]
+{\small
+24100093 - Kiều Thị Thu Trang - 24100093@st.phenikaa-uni.edu.vn\\
+24100012 - Trần Minh Sang - 24100012@st.phenikaa-uni.edu.vn\\
+24102651 - Ngô Quang Thiện - 24102651@st.phenikaa-uni.edu.vn
+}
+\end{center}
+\vfill
+\textit{Mã nguồn dự án:} \url{https://github.com/thyelmot/Project_PUBG}\\[1cm]
+Hà Nội, tháng 10 năm 2026
+\end{titlepage}
+\pagenumbering{roman}\tableofcontents\clearpage
+\pagenumbering{arabic}
+\section{GIỚI THIỆU BÀI TOÁN}
+\subsection{Đặt vấn đề}
+Trong các trò chơi sinh tồn nhiều người tham gia, kết quả cuối cùng được hình thành từ hàng loạt quyết định: lựa chọn giao tranh, di chuyển, sử dụng phương tiện và hỗ trợ đồng đội. PUBG cung cấp một bối cảnh phù hợp để nghiên cứu những quyết định này thông qua dữ liệu trận đấu. Tuy nhiên, một bảng xếp hạng chỉ phản ánh kết quả cuối cùng; để hiểu hành vi phía sau kết quả, cần kết hợp thống kê người chơi với diễn biến sự kiện trong trận.
+
+Bài toán đặt ra cho nhóm là: từ dữ liệu sau trận, có thể nhận diện những mối liên hệ hành vi nào, hình thành các nhóm người chơi ra sao, và giải thích được bao nhiêu biến thiên của thời gian sống sót hoặc thứ hạng? Đây là bài toán khai phá dữ liệu có cả thành phần mô tả và thành phần hồi quy. Đầu ra được sử dụng để phân tích hồi cứu; các biến tổng kết sau trận chưa sẵn có tại thời điểm bắt đầu trận đấu.
+
+Thứ nhất, dữ liệu có quy mô hàng chục triệu dòng và được chia thành nhiều tệp. Việc ghép sự kiện với thống kê người chơi phải bảo toàn số dòng và tránh nhân bản quan sát. Thứ hai, đơn vị, giá trị thiếu và ngoại lệ có thể ảnh hưởng trực tiếp đến kết luận. Thứ ba, dữ liệu có cấu trúc nhóm: nhiều người chơi cùng trận và nhiều đồng đội cùng thứ hạng. Nếu bỏ qua cấu trúc này, phép đánh giá có thể tạo ra cảm giác chính xác hơn thực tế.
+\subsection{Đầu vào và đầu ra của bài toán}
+Đầu vào gồm hai nhóm dữ liệu: bảng tổng hợp theo người chơi trong từng trận và bảng sự kiện hạ gục. Các biến hành vi chính bao gồm số lần hạ gục, sát thương, quãng đường đi bộ, quãng đường di chuyển bằng phương tiện, hỗ trợ và trạng thái hạ gục đối thủ. Thông tin thời điểm giao tranh được bổ sung từ bảng sự kiện.
+
+Đầu ra gồm ba nhóm: bảng thống kê và quan hệ hành vi; nhãn cụm cùng mô tả hành vi cho từng chế độ Solo, Duo, Squad; kết quả hồi quy và phân tích sai số trên hai mục tiêu. Toàn bộ kết quả được lưu cùng thông tin cấu hình, nguồn và các bước thực thi.
+\subsection{Ý nghĩa và câu hỏi nghiên cứu}
+Về học thuật, đề tài vận dụng quy trình khám phá tri thức, thống kê, tiền xử lý, hồi quy và phân cụm trong một bài toán thống nhất. Về thực hành, đề tài giúp nhóm hiểu rằng chất lượng của một mô hình phụ thuộc vào cách xác định đơn vị quan sát, thiết kế đặc trưng và kiểm soát chất lượng dữ liệu.
+\begin{itemize}
+\item RQ1: Hành vi nào có liên hệ với thời gian sống sót và thứ hạng?
+\item RQ2: Có thể hình thành những nhóm hành vi nào khi phân cụm riêng từng chế độ chơi?
+\item RQ3: Các đặc trưng sau trận giải thích kết quả đến mức nào; thông tin thời điểm giao tranh đóng góp thêm bao nhiêu?
+\end{itemize}
+\subsection{Các hướng tiếp cận và giải pháp đề xuất}
+Thống kê mô tả giúp nhận biết phân phối và ngoại lệ nhưng chưa tạo thành nhóm hành vi. Phân cụm KMeans bổ sung góc nhìn về sự tương đồng giữa người chơi, song nhạy với thang đo và giá trị cực đoan. Hồi quy tuyến tính cho phép so sánh với mô hình cơ sở và diễn giải hệ số, nhưng không bảo đảm mô tả tốt mọi quan hệ phi tuyến. Vì vậy, nhóm kết hợp ba hướng tiếp cận thay vì coi một thuật toán là lời giải cho mọi câu hỏi.
+
+Quy trình đề xuất gồm kiểm nguồn, làm sạch và chia tập; tạo đặc trưng; khám phá quan hệ; phân cụm; hồi quy; đánh giá và đóng gói báo cáo. Hai mô hình dự đoán hằng số bằng trung bình và trung vị tập huấn luyện được sử dụng làm mốc so sánh. Nhóm giữ nguyên toàn bộ dữ liệu hợp lệ theo từng bài toán và tổ chức tính toán theo khối để đáp ứng giới hạn bộ nhớ.
+\clearpage
+\section{XÂY DỰNG TẬP DỮ LIỆU}
+\subsection{Giới thiệu bộ dữ liệu}
+Nguồn nghiên cứu là PUBG Match Deaths and Statistics, phiên bản 3, của tác giả Kaggle \texttt{skihikingkevin}. Thông tin giấy phép trong cấu hình chạy là CC0: Public Domain. Kiểm kê thực thi ghi nhận 5 tệp aggregate và 5 tệp sự kiện. Tổng số dòng lần lượt là 67.369.231 và 65.370.475. Đây là số bản ghi, không phải số người chơi duy nhất.
+\input{tables/inventory.tex}
+\subsection{Đơn vị quan sát và biến mục tiêu}
+Phân tích quan hệ và hồi quy sử dụng đơn vị người chơi--trận đấu. Phân cụm sử dụng hồ sơ người chơi--chế độ, được tổng hợp qua nhiều trận. Một người có thể xuất hiện trong nhiều hồ sơ nếu tham gia nhiều chế độ; tên hiển thị chưa phải bằng chứng về định danh tài khoản bất biến.
+
+Mục tiêu thứ nhất là \texttt{player\_survive\_time}, yêu cầu hữu hạn và không âm. Đơn vị giây đang được sử dụng theo giả định đã phê duyệt; nguồn chạy ghi rõ \texttt{assumed\_seconds}, chưa phải đơn vị đã được tác giả xác minh. Mục tiêu thứ hai là thứ hạng đội chuẩn hóa:
+\[
+y_{\mathrm{placement}}=1-\frac{r-1}{N_{\mathrm{teams}}-1}.
+\]
+Trong đó $r$ là thứ hạng đội và $N_{\mathrm{teams}}$ là số đội hợp lệ trong trận trước khi lọc theo mục tiêu. Giá trị gần 1 biểu thị thứ hạng tốt hơn. Các trận không đủ điều kiện xác định mẫu số hoặc có thứ hạng mâu thuẫn được xử lý bằng cờ hợp lệ của riêng mục tiêu đó.
+\subsection{Kiểm tra chất lượng và bảo toàn dữ liệu}
+Sổ đối soát ghi nhận 67.369.231 dòng trước và sau ba bước kiểm tra: trùng lặp chính xác, xung đột định danh và thiếu mã trận hoặc giá trị số không hợp lệ. Số dòng bị loại ở các bước này bằng 0. Kết quả đó chỉ xác nhận các quy tắc đã kiểm không loại dòng; nó không có nghĩa dữ liệu hoàn toàn không có ngoại lệ hoặc không có vấn đề về ngữ nghĩa.
+
+Sau khử trùng sự kiện, số bản ghi còn 65.370.264, giảm 211 dòng. Có 59.883.734 sự kiện đủ điều kiện timing tuyệt đối và 59.560.628 đủ điều kiện timing theo pha. Sau ghép, số dòng người chơi vẫn là 67.369.231. Phép đối soát này giúp phát hiện ghép nhiều--nhiều ngoài ý muốn.
+\subsection{Khám phá phân phối và giá trị thiếu}
+\input{tables/eda.tex}
+Trung vị số lần hạ gục bằng 0, trong khi trung bình xấp xỉ 0,887. Trung vị quãng đường đi xe bằng 0 cho thấy không thể mặc định mọi người chơi đều sử dụng phương tiện. Các tỷ số cần được diễn giải theo mẫu số: sát thương trên mỗi lần hạ gục không xác định khi số lần hạ gục bằng 0. Gán tất cả những trường hợp này thành 0 sẽ làm thay đổi ý nghĩa biến.
+
+Đặc biệt, thời gian sống có trung vị 653,354 nhưng trung bình 50.803,765 và giá trị lớn nhất khoảng $6,365\times10^{10}$ trong bảng EDA. Khoảng cách rất lớn giữa trung bình và trung vị là bằng chứng cần điều tra giá trị cực đoan. Bảng này chưa đủ để kết luận nguyên nhân là đơn vị, lỗi nguồn hay lỗi xử lý. Nhóm giữ kết quả hiện có và công bố giới hạn thay vì tự loại ngoại lệ sau khi xem hiệu năng.
+\input{figures/eda_selected.tex}
+\subsection{Chia tập và chống rò rỉ dữ liệu}
+Tất cả dòng thuộc cùng một trận được đưa vào cùng một tập. Số trận trong train, validation và test lần lượt là 510.979, 109.495 và 109.495; tổng cộng 729.969 trận. Tỷ lệ xấp xỉ 70/15/15. Khoảng thời gian của ba tập chồng lấn trong bảng kết quả, vì vậy không diễn giải phép đánh giá này như dự báo các trận tương lai theo thời gian.
+
+Các tham số điền thiếu, chuẩn hóa và hồi quy được học từ tập huấn luyện. Tập validation phục vụ kiểm tra và quyết định trước khi mở test. Quan hệ phục vụ phát triển được tính trên train và validation. Các đặc trưng chứa trực tiếp thời gian sống hoặc có mẫu số phụ thuộc mục tiêu không được dùng để dự đoán thời gian sống. Việc đã quan sát test trong lịch sử dự án là giới hạn cần lưu ý khi mở thêm thí nghiệm.
+\subsection{Xây dựng Combat Timing}
+Thời gian trận được xấp xỉ bằng giá trị thời gian sống lớn nhất trong trận. Sự kiện được chia thành ba pha theo tỷ lệ thời điểm so với thời lượng xấp xỉ: đầu trận $[0,1/3)$, giữa trận $[1/3,2/3)$ và cuối trận $[2/3,1]$. Đây là quy ước khai phá, không phải thời lượng chính thức từ máy chủ.
+
+Cần phân biệt người chơi được xác nhận không có lần hạ gục với người có số kill trong aggregate nhưng thiếu sự kiện tương ứng. Trường hợp thứ hai phản ánh độ bao phủ dữ liệu, không thể thay bằng không giao tranh. Những sự kiện có timing tuyệt đối hợp lệ nhưng pha không hợp lệ được giữ trạng thái riêng. Các tỷ lệ pha chỉ sử dụng mẫu số pha hợp lệ.
+
+Timing theo pha phụ thuộc gián tiếp vào thời gian sống qua mẫu số xấp xỉ. Vì vậy, nhóm loại nhóm biến này khỏi hồi quy survival nhưng công bố sự phụ thuộc khi sử dụng trong placement. Event được ghi nhận theo killer, loại tự hạ gục và kiểm match/time; thiết kế chưa bảo đảm tất cả sự kiện đều là hạ gục đối phương khác đội.
+\clearpage
+\section{CÁC PHƯƠNG PHÁP KHAI PHÁ DỮ LIỆU}
+\subsection{Tương quan Pearson và Spearman}
+Pearson đo liên hệ tuyến tính giữa hai biến; Spearman đo liên hệ đơn điệu thông qua thứ hạng. Với các biến có phân phối lệch và ngoại lệ lớn, hai hệ số có thể khác nhau rõ rệt. Nhóm báo cả hai thay vì chọn hệ số thuận lợi hơn cho kết luận:
+\[
+r=\frac{\sum_i(x_i-\bar x)(y_i-\bar y)}{\sqrt{\sum_i(x_i-\bar x)^2\sum_i(y_i-\bar y)^2}}.
+\]
+Spearman được tính trên thứ hạng toàn phạm vi, có xử lý đồng hạng. Không lấy trung bình tương quan từng khối dữ liệu. Mỗi cặp biến có số quan sát hợp lệ riêng; các cặp có biến tỷ số hoặc timing thường có ít quan sát hơn các biến gốc.
+\subsection{Phân cụm KMeans theo chế độ chơi}
+KMeans tìm các tâm cụm để tối thiểu hóa tổng khoảng cách bình phương:
+\[
+\min_{C_1,\ldots,C_K}\sum_{k=1}^{K}\sum_{\boldsymbol{x}_i\in C_k}\|\boldsymbol{x}_i-\boldsymbol{\mu}_k\|_2^2.
+\]
+Nhóm xây dựng hồ sơ từ trung bình và độ lệch chuẩn của kills, damage cùng các đặc trưng di chuyển, hỗ trợ và timing. Số trận được dùng để lọc độ tin cậy, không làm đầu vào chính. Ngưỡng tối thiểu 10 trận là quy ước thiết kế; chưa được chứng minh tối ưu.
+
+Mỗi chế độ Solo, Duo và Squad có mô hình riêng. Các biến được điền thiếu và chuẩn hóa trước khi tính khoảng cách. K được xét trong khoảng 2 đến 8, chọn theo silhouette development hữu hạn lớn nhất; trường hợp hòa chính xác ưu tiên K nhỏ hơn. Silhouette dùng mẫu chẩn đoán 2.000 hồ sơ với seed 42, trong khi quá trình fit dùng toàn bộ hồ sơ đủ điều kiện. Davies--Bouldin, tỷ trọng cụm nhỏ nhất và ARI qua seed được báo để đánh giá chất lượng bổ sung.
+
+Silhouette cao chưa đủ chứng minh các cụm có ý nghĩa. Một nhóm rất nhỏ gồm điểm cực đoan có thể tách xa phần còn lại và làm chỉ số có vẻ tốt. Vì vậy, số lượng thành viên, tâm cụm và độ ổn định phải được đọc đồng thời. Tên mô tả cụm được đặt từ hành vi; kết quả sống sót và thứ hạng chỉ được đối chiếu sau khi khóa phân cụm.
+\subsection{Mô hình cơ sở và hồi quy tuyến tính}
+Mô hình mean dự đoán bằng trung bình mục tiêu trên train; mô hình median dự đoán bằng trung vị train. Hai mốc cơ sở giúp trả lời liệu việc đưa đặc trưng vào mô hình có tạo ra giá trị thực tế. Với mục tiêu có ngoại lệ, median thường phản ánh vị trí điển hình tốt hơn mean nhưng kết quả phải được kiểm bằng dữ liệu cụ thể.
+
+Hồi quy tuyến tính có dạng $\hat y_i=\beta_0+\boldsymbol{x}_i^T\boldsymbol{\beta}$ và tối thiểu hóa tổng bình phương phần dư. Đầu vào được chuẩn hóa bằng thống kê train. Do quy mô lớn, hệ thống dùng QR theo khối và SVD trên ma trận nhỏ để giải bài toán bình phương tối thiểu toàn cục. Mỗi khối tối đa 50.000 dòng; đây không phải huấn luyện các mô hình riêng rồi lấy trung bình hệ số.
+
+Thiết kế có bảy lần fit logic: S1 mean, median, linear cho survival; P2 mean, median, linear cho placement; T0 linear cho placement không có timing. T1 dùng lại P2 linear. Hai nhánh T0/T1 được so sánh trên cùng row IDs, mục tiêu và split. Không sử dụng thuật toán học sâu trong bài chính.
+\subsection{Thước đo đánh giá}
+\[
+\mathrm{MAE}=\frac1n\sum_i|y_i-\hat y_i|,\quad
+\mathrm{RMSE}=\sqrt{\frac1n\sum_i(y_i-\hat y_i)^2},\quad
+R^2=1-\frac{\sum_i(y_i-\hat y_i)^2}{\sum_i(y_i-\bar y)^2}.
+\]
+MAE dễ đọc theo đơn vị mục tiêu; RMSE nhạy hơn với lỗi lớn. $R^2$ có thể âm và không phải accuracy. Với placement, ngoài micro theo dòng người chơi, nhóm tính match-aware với trọng số nghịch đảo số dòng của trận và team-aware theo đội. Không lấy trung bình RMSE hay $R^2$ của từng khối để thay cho kết quả toàn tập.
+\clearpage
+\section{THỬ NGHIỆM VÀ KẾT QUẢ}
+\subsection{Thiết lập và nguồn bằng chứng}
+Kết quả được tổng hợp từ bốn notebook đã chạy: S00--S06, S07, S08 và S09--S12. Môi trường thể hiện Python 3.13.15, DuckDB 1.5.6, với các bước mô hình sử dụng GPU T4 theo cấu hình. SQL, thống kê và đánh giá chạy trên CPU. Bộ nhớ GPU không thay thế RAM của các thao tác SQL.
+
+Bản báo cáo sử dụng các bảng và hình đã nhúng trong notebook. Một số bảng chỉ hiển thị 20 hoặc 25 dòng đầu, nên các nhận xét chỉ dùng hàng thực sự có trong nguồn. Các CSV trích kèm báo cáo cũng là bảng hiển thị, không được gọi là bản CSV đầy đủ của pipeline. Trạng thái completed của S01--S10 xác nhận quy trình thực thi hoàn tất; chất lượng mô hình vẫn phải được đánh giá bằng số liệu.
+\subsection{RQ1: Quan hệ giữa hành vi và kết quả}
+\input{tables/correlation.tex}
+Trên 57.262.855 quan sát hợp lệ ở các cặp biến gốc với survival, Spearman của quãng đường đi bộ đạt 0,909129, trong khi Pearson chỉ 0,001197. Với số kill, hai giá trị lần lượt là 0,400674 và -0,000438. Sự khác biệt lớn này phù hợp với cảnh báo về phân phối thời gian sống có giá trị cực đoan, nhưng riêng tương quan chưa xác định được nguyên nhân.
+
+Đối với placement, Pearson của sát thương là 0,395892 và Spearman là 0,403764 trên 57.153.260 dòng. Đây là liên hệ quan sát có mức độ vừa, không đủ để khẳng định tăng sát thương sẽ làm tăng thứ hạng. Người sống lâu có nhiều thời gian tích lũy di chuyển và giao tranh; chiều tác động có thể đan xen.
+\input{figures/correlation_selected.tex}
+\subsection{RQ2: Phân nhóm hành vi}
+\input{tables/clusters.tex}
+Kết quả cuối cùng có 4 cụm Duo, 2 cụm Solo và 3 cụm Squad. Solo phân chia tương đối rõ về mức độ giao tranh: cụm 0 có trung bình 1,627 kill và 190,983 sát thương mỗi trận; cụm 1 lần lượt là 0,617 và 83,189. Có thể mô tả hai nhóm là giao tranh cao hơn và giao tranh thấp hơn trong chính chế độ Solo, tránh quy chúng thành hai kiểu người chơi tuyệt đối.
+
+Duo và Squad có phân bố rất lệch. Cụm Duo 0 chiếm khoảng 99,268\%, còn cụm Duo 1 chỉ có 4 hồ sơ. Cụm Squad 2 chiếm khoảng 99,169\%, trong khi cụm Squad 1 có 13 hồ sơ. Cụm Duo 2 có trung bình quãng đường đi bộ khoảng 36.375,383 theo đơn vị nguồn, cao hơn rõ rệt nhóm chính. Những kết quả này gợi ý cần xem xét sự chi phối của ngoại lệ và cấu trúc giá trị thiếu trước khi gắn nhãn phong cách chơi.
+
+Trong chẩn đoán development, cấu hình Duo với K=4 có silhouette 0,765926 nhưng ARI qua seed chỉ 0,027045. Đây là ví dụ trực tiếp cho thấy độ tách biệt trên mẫu và độ ổn định nhãn không đồng nghĩa. Không nên công bố bộ cụm này như một hệ phân loại hành vi bền vững khi chưa có phân tích bổ sung.
+\input{figures/clusters_selected.tex}
+\subsection{RQ3: Kết quả hồi quy trên validation}
+\input{tables/validation.tex}
+Với placement, hồi quy P2 đạt MAE 0,173490 và $R^2=0,481143$ trên validation, tốt hơn mốc mean có MAE 0,262794 và $R^2$ xấp xỉ 0. T0 chưa có timing đạt MAE 0,186753. Như vậy, các đặc trưng hành vi cung cấp thông tin giải thích thứ hạng trong thiết kế hồi cứu này.
+
+Ngược lại, S1 linear có MAE 187.006,670 và $R^2$ khoảng $-3,716\times10^5$ trên validation. Baseline median có MAE 499,487, thấp hơn rất nhiều. Baseline mean cũng kém với MAE 60.734,082. Sự thất bại đồng thời của mean và hồi quy là một dấu hiệu cần kiểm tra phân phối train, thang đo và tính nhất quán của chuỗi xử lý; không thể quy toàn bộ vấn đề cho thuật toán tuyến tính khi chưa đối soát sâu hơn.
+\subsection{Đóng góp của Combat Timing trên test}
+\input{tables/timing.tex}
+Trên cùng 10.085.842 dòng test, T1=P2 giảm MAE từ 0,186802 xuống 0,173516, tương đương khoảng 7,11\% so với T0. RMSE giảm từ 0,231220 xuống 0,217318, khoảng 6,01\%. $R^2$ tăng từ 0,413202 lên 0,481642, tức tăng 0,068440 điểm. Match-aware và team-aware cùng cho hướng cải thiện.
+
+Các con số trên mô tả chênh lệch thực nghiệm của đúng cohort đã chạy. Cấu hình bootstrap\_replicates bằng 0, nên chưa có khoảng tin cậy bootstrap và chưa có cơ sở tuyên bố ý nghĩa thống kê. Do timing pha chứa thông tin từ proxy thời lượng hậu trận, kết quả cũng không chứng minh khả năng dự báo trước trận hay tác động nhân quả của việc giao tranh sớm/muộn.
+\input{figures/timing_selected.tex}
+\subsection{Phân tích sai số}
+\input{tables/errors.tex}
+\input{figures/errors_selected.tex}
+Đường dự đoán bằng thực tế là mốc trực quan để xem mức độ lệch. Hình scatter chỉ lấy mẫu để trình bày; các metric được tính trên toàn bộ cohort hợp lệ. Vì vậy, không suy ra số lượng ngoại lệ toàn tập chỉ từ mật độ điểm trên hình.
+\clearpage
+\section{THẢO LUẬN KẾT QUẢ}
+\subsection{Vai trò của chất lượng dữ liệu}
+Kết quả nổi bật nhất về mặt phương pháp là sự khác biệt giữa hợp lệ theo kiểu dữ liệu và hợp lý về mặt nội dung. Một số thời gian sống rất lớn vẫn hữu hạn và không âm, nên vượt qua quy tắc hợp lệ ban đầu. Điều này giải thích vì sao sổ loại dòng bằng 0 không mâu thuẫn với việc EDA phát hiện phân phối bất thường. Bước tiếp theo cần đối chiếu bản ghi nguồn và quy tắc ngữ nghĩa trước khi xây dựng phiên bản làm sạch mới.
+
+Không tự quy đổi toàn bộ thời gian theo một hệ số chỉ vì metric lớn. Nếu có nhiều nhóm đơn vị hoặc một số bản ghi lỗi, một phép đổi đơn vị đồng loạt có thể làm sai phần dữ liệu vốn hợp lý. Các giả thuyết cần được kiểm bằng lineage, thống kê theo shard, theo split và bản ghi nguồn cụ thể.
+\subsection{Giá trị và giới hạn của phân cụm}
+Solo tạo ra hai nhóm có khác biệt về mức độ giao tranh và quy mô đủ lớn để mô tả. Duo và Squad cho thấy các cụm cực nhỏ và một cụm chi phối gần như toàn bộ hồ sơ. Về ứng dụng, đây là tín hiệu chẩn đoán dữ liệu và không gian đặc trưng hơn là bằng chứng chắc chắn về các phong cách chiến thuật riêng biệt.
+
+Việc đặt tên như ``người chơi giỏi'', ``người chơi yếu'' hoặc ``gian lận'' không được bảo đảm từ KMeans. Outcome có thể hỗ trợ diễn giải sau khóa, nhưng không biến một phân cụm không giám sát thành bộ phân loại năng lực hoặc phát hiện gian lận đã được kiểm định.
+\subsection{Diễn giải hiệu năng hồi quy}
+Placement cho kết quả nhất quán hơn survival trong bằng chứng hiện có. T0/T1 cùng cohort giúp giảm một nguồn sai lệch khi so sánh các nhóm đặc trưng. Tuy nhiên, mức tăng $R^2$ là kết quả của một thiết kế và bộ dữ liệu cụ thể; không thể khái quát thành kết luận timing luôn cải thiện mọi mô hình hoặc mọi mùa giải.
+
+Đối với survival, baseline median là mốc thực nghiệm quan trọng vì cho sai số nhỏ hơn rõ rệt trong bảng hiển thị. Báo cáo chưa lựa chọn một mô hình survival để triển khai. Cần ưu tiên kiểm tra nguồn và kiểm định số học trước khi đề xuất thuật toán phức tạp hơn. Việc thêm mô hình mạnh hơn có thể che triệu chứng mà chưa giải quyết nguyên nhân.
+\subsection{Hạn chế và hướng phát triển}
+Các giới hạn chính gồm đơn vị thời gian chưa được xác minh độc lập; ngoại lệ survival rất lớn; sự phụ thuộc giữa các người chơi cùng trận và cùng đội; tên người chơi có thể không ổn định; timing phụ thuộc proxy hậu trận; độ bao phủ event khác aggregate; và chưa có khoảng tin cậy cho so sánh T0/T1. Một số bảng xuất trong notebook bị giới hạn số dòng hiển thị nên bộ báo cáo hiện tại chưa thay thế kho artifact đầy đủ.
+
+Hướng phát triển phù hợp là đối soát dữ liệu theo shard và theo split, kiểm tra tác động của quy tắc chất lượng được đăng ký trước, đánh giá lại độ ổn định cụm và thực hiện bootstrap theo trận. Nếu mở rộng sang mô hình phi tuyến, cần giữ cùng cohort và thiết kế đánh giá để so sánh công bằng. Mọi thay đổi phải có phiên bản kết quả riêng; không dùng test hiện có để chỉnh rồi báo lại như kiểm định độc lập.
+\clearpage
+\section{TỔ CHỨC HỆ THỐNG VÀ KHẢ NĂNG TÁI LẬP}
+\subsection{Quy trình thực thi S01--S12}
+Các bước được tổ chức theo chuỗi: S01 kiểm nguồn; S02 làm sạch và chia tập; S03 tạo đặc trưng cơ sở; S04 tổng hợp timing; S05 EDA; S06 quan hệ; S07 phân cụm; S08 hồi quy; S09 so sánh và sai số; S10 khóa kết quả. S11 đọc báo cáo đã khóa và S12 tổng hợp thông tin bàn giao.
+
+S10 không huấn luyện lại mô hình. Bước này kiểm tra phụ thuộc và các bảng bắt buộc, sao chụp kết quả được chọn, tạo manifest và con trỏ đến release. Do đó, số artifact riêng của S10 nhỏ không có nghĩa toàn dự án thiếu kết quả. Bằng chứng notebook cuối cho thấy S01--S10 đều completed và báo cáo S11 đã được hiển thị.
+\subsection{Xử lý dữ liệu vượt bộ nhớ}
+Dữ liệu được lưu dưới dạng Parquet và xử lý bằng SQL trên đĩa. Các thao tác ghép và sắp xếp lớn được tách pha để tránh đồng thời giữ nhiều cấu trúc trong RAM. Hồi quy dùng ma trận số dạng ánh xạ bộ nhớ, dự đoán theo lô và tổng hợp metric toàn cục. Hai GPU thực hiện các công việc độc lập; VRAM không được cộng thành một vùng nhớ chung.
+
+Đây là lựa chọn tổ chức thực thi nhằm bảo toàn phạm vi dữ liệu. Việc chia khối không cho phép thay trung vị toàn train bằng trung bình trung vị các khối, cũng không cho phép thay RMSE toàn tập bằng trung bình RMSE từng lô. Mỗi bước phải giữ đúng đại lượng toán học cần tính.
+\subsection{Bàn giao và truy vết}
+Mỗi phiên tiếp tục khôi phục từ kết quả đã lưu, kiểm checksum và thông tin môi trường rồi chạy phần tiếp theo. Bộ notebook người dùng cung cấp phản ánh chuỗi S00--S06, S07, S08 và S09--S12. Báo cáo kèm một bảng ánh xạ nguồn để xác định mỗi bảng, hình đã trích từ notebook và output nào.
+
+Phần ứng dụng trong đề tài là notebook phân tích và trình đọc kết quả. Không có bằng chứng triển khai một website hay hệ thống dự đoán thời gian thực, vì vậy báo cáo không mô tả những chức năng đó như sản phẩm đã hoàn thành. Khi bảo vệ, nhóm có thể dùng các bảng và hình đã lưu để trình bày mà không phải chạy lại dữ liệu lớn.
+\clearpage
+\section{KẾT LUẬN}
+Đề tài đã xây dựng quy trình khai phá dữ liệu PUBG từ kiểm nguồn, tạo đặc trưng và khám phá quan hệ đến phân cụm, hồi quy và phân tích sai số. Bằng chứng thực thi có 67.369.231 dòng aggregate và 65.370.475 dòng event đầu vào, với phạm vi toàn bộ dữ liệu hợp lệ theo từng bài toán.
+
+Đối với RQ1, các hệ số cho thấy liên hệ giữa hành vi và kết quả nhưng đồng thời bộc lộ tác động của phân phối lệch. Đối với RQ2, Solo có hai nhóm khác biệt về mức độ giao tranh; Duo và Squad cần thận trọng vì phân bố cụm mất cân đối và độ ổn định chưa đồng đều. Đối với RQ3, mô hình placement có giá trị giải thích và timing giúp giảm sai số trên cohort test đã chạy; mô hình survival chưa đạt chất lượng sử dụng.
+
+Qua quá trình thực hiện, nhóm nhận thấy đóng góp của khai phá dữ liệu không chỉ nằm ở việc chạy thành công thuật toán. Khả năng nhận biết giới hạn, kiểm tra tính hợp lý của dữ liệu và trình bày trung thực kết quả là điều kiện để các mẫu tìm được có ý nghĩa. Báo cáo vì vậy giữ cả kết quả tích cực và các bất thường cần tiếp tục điều tra.
+\begin{thebibliography}{9}
+\bibitem{data} Nhóm dự án. Thông tin nguồn PUBG Match Deaths and Statistics, Version 3, ghi trong cấu hình và source inventory của notebook thực nghiệm. Kaggle: \url{https://www.kaggle.com/datasets/skihikingkevin/pubg-match-deaths}.
+\bibitem{spec} Nhóm 3. \textit{PUBG Research Spec}, thiết kế 5.11 và các cập nhật thực thi đến ngày 22/10/2026. Tài liệu nội bộ dự án.
+\bibitem{plan} Nhóm 3. \textit{PUBG Implementation Plan}. Tài liệu triển khai và kiểm thử nội bộ dự án.
+\bibitem{results} Nhóm 3. Bộ kết quả thực nghiệm: \texttt{pubg\_S00\_S06.ipynb}, \texttt{pubg\_S07.ipynb}, \texttt{pubg\_S08.ipynb}, \texttt{pubg\_S09\_S10\_S11\_S12.ipynb}. Bản người dùng cung cấp ngày 23/10/2026.
+\end{thebibliography}
+\clearpage\appendix
+\section{NGUỒN BẰNG CHỨNG VÀ PHẠM VI BẢNG TRÍCH}
+Các bảng trong báo cáo được định dạng lại từ HTML nhúng trong notebook; hình được trích nguyên PNG. Mã trích xuất không thực thi cell nghiên cứu. Thư mục \texttt{evidence} chứa bảng xem trước và chỉ mục ánh xạ; các con số bị rút gọn trong nguồn không được khôi phục bằng suy đoán. Tệp \texttt{SOURCE\_MAP.md} liệt kê nguồn tương ứng để đối chiếu.
+
+Danh sách thành viên, email và bố cục bìa dựa trên báo cáo môn Học máy do người dùng cung cấp. Giảng viên hướng dẫn môn Khai phá dữ liệu là ThS. Phạm Kim Thành theo thông tin người dùng xác nhận.
+\end{document}

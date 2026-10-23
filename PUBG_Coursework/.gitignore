@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+data/
+outputs/
+.ipynb_checkpoints/
+*.partial
+*.lock
+*.joblib
+.env
+handoff_*.json

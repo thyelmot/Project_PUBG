@@ -1,0 +1,6 @@
+Unnamed: 0,stage,step,scope,elapsed_seconds
+0,S02,checking prerequisites,full,0.0
+1,S02,running,full,203.53
+2,S02,quality/roster/split; không đổi cohort bằng lấ...,full,203.53
+3,S02,"roster metadata: independent aggregates, then ...",full,2025.66
+4,S02,completed runtime; Kaggle Version chưa được xá...,full,2498.64

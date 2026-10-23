@@ -1,0 +1,13 @@
+Unnamed: 0,team_size_mode,timing_status,n_rows
+0,Duo,phase_observed,8950584
+1,Squad,confirmed_no_kill,18346600
+2,Solo,confirmed_no_kill,7919978
+3,Duo,event_missing,152223
+4,Duo,absolute_only,5331
+5,Solo,phase_observed,6012922
+6,Squad,phase_observed,13144182
+7,Duo,confirmed_no_kill,12500130
+8,Squad,event_missing,215107
+9,Squad,absolute_only,15425
+10,Solo,event_missing,105817
+11,Solo,absolute_only,932

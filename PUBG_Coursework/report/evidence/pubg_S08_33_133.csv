@@ -1,0 +1,5 @@
+Unnamed: 0,experiment,target,split,device,time_unit_status,target_unit,aggregation,n,mae,rmse,r2,r2_reason
+0,p2_mean,normalized_placement,validation,cpu,assumed_seconds,"Placement [0,1]",micro,10084731,0.262794,0.301826,-5.12551e-08,
+1,p2_median,normalized_placement,validation,cpu,assumed_seconds,"Placement [0,1]",micro,10084731,0.262756,0.301891,-0.0004322009,
+2,p2_linear,normalized_placement,validation,cuda,assumed_seconds,"Placement [0,1]",micro,10084731,0.17349,0.21741,0.4811433,
+3,t0_linear,normalized_placement,validation,cuda,assumed_seconds,"Placement [0,1]",micro,10084731,0.186753,0.231319,0.4126303,

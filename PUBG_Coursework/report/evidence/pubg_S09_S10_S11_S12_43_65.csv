@@ -1,0 +1,10 @@
+Unnamed: 0,metric,aggregation,reference,candidate,T0,T1,delta,n,time_unit_status
+0,mae,micro,T0,T1=P2,0.186802,0.173516,-0.013286,10085842,assumed_seconds
+1,rmse,micro,T0,T1=P2,0.23122,0.217318,-0.013902,10085842,assumed_seconds
+2,r2,micro,T0,T1=P2,0.413202,0.481642,0.06844,10085842,assumed_seconds
+3,mae,match_aware,T0,T1=P2,0.186962,0.173608,-0.013355,10085842,assumed_seconds
+4,rmse,match_aware,T0,T1=P2,0.23147,0.217483,-0.013987,10085842,assumed_seconds
+5,r2,match_aware,T0,T1=P2,0.412739,0.481567,0.068827,10085842,assumed_seconds
+6,mae,team_aware,T0,T1=P2,0.176237,0.160499,-0.015738,5118612,assumed_seconds
+7,rmse,team_aware,T0,T1=P2,0.216231,0.198686,-0.017545,5118612,assumed_seconds
+8,r2,team_aware,T0,T1=P2,0.486572,0.566512,0.07994,5118612,assumed_seconds

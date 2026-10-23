@@ -1,0 +1,4 @@
+Unnamed: 0,experiment,slice,group,matches,n,mae,rmse,r2,r2_reason,time_unit_status,target_unit
+0,p2_linear,mode,Duo,34611,3220788,0.165859,0.208053,0.519369,,assumed_seconds,"Placement [0,1]"
+1,p2_linear,mode,Solo,22867,2104567,0.158561,0.200848,0.5428,,assumed_seconds,"Placement [0,1]"
+2,p2_linear,mode,Squad,51653,4760487,0.185307,0.230084,0.430945,,assumed_seconds,"Placement [0,1]"

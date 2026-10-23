@@ -1,0 +1,20 @@
+Unnamed: 0,n,pearson,spearman,mode,target,feature,analysis_scope,primary,status,time_unit_status,coefficient_unit
+0,57153260.0,0.372175,0.374387,Overall,normalized_placement,player_kills,train+validation,True,ok,assumed_seconds,dimensionless
+1,57153260.0,0.395892,0.403764,Overall,normalized_placement,player_dmg,train+validation,True,ok,assumed_seconds,dimensionless
+2,23963557.0,0.085413,0.069593,Overall,normalized_placement,damage_per_kill,train+validation,True,ok,assumed_seconds,dimensionless
+3,57153260.0,0.224755,0.817044,Overall,normalized_placement,player_dist_walk,train+validation,True,ok,assumed_seconds,dimensionless
+4,57153260.0,0.508084,0.623494,Overall,normalized_placement,player_dist_ride,train+validation,True,ok,assumed_seconds,dimensionless
+5,57153260.0,0.382926,0.805862,Overall,normalized_placement,total_distance,train+validation,True,ok,assumed_seconds,dimensionless
+6,55861461.0,-0.50189,-0.55535,Overall,normalized_placement,walk_ratio,train+validation,True,ok,assumed_seconds,dimensionless
+7,57153260.0,0.26786,0.260973,Overall,normalized_placement,player_assists,train+validation,True,ok,assumed_seconds,dimensionless
+8,57153260.0,0.232195,0.206608,Overall,normalized_placement,player_dbno,train+validation,True,ok,assumed_seconds,dimensionless
+9,27496315.0,0.023656,0.109417,Overall,normalized_placement,assist_ratio,train+validation,True,ok,assumed_seconds,dimensionless
+10,23865135.0,0.532205,0.530154,Overall,normalized_placement,first_kill_time,train+validation,True,ok,assumed_seconds,dimensionless
+11,23865135.0,0.707694,0.737909,Overall,normalized_placement,avg_kill_time,train+validation,True,ok,assumed_seconds,dimensionless
+12,57153260.0,0.328562,0.329056,Overall,normalized_placement,has_kill,train+validation,True,ok,assumed_seconds,dimensionless
+13,56736670.0,0.08272,0.070939,Overall,normalized_placement,early_kills,train+validation,True,ok,assumed_seconds,dimensionless
+14,56736670.0,0.314736,0.356112,Overall,normalized_placement,mid_kills,train+validation,True,ok,assumed_seconds,dimensionless
+15,56736670.0,0.383593,0.463209,Overall,normalized_placement,late_kills,train+validation,True,ok,assumed_seconds,dimensionless
+16,23846748.0,-0.635282,-0.64911,Overall,normalized_placement,early_kill_ratio,train+validation,True,ok,assumed_seconds,dimensionless
+17,23846748.0,0.281538,0.325638,Overall,normalized_placement,mid_kill_ratio,train+validation,True,ok,assumed_seconds,dimensionless
+18,23846748.0,0.539896,0.629308,Overall,normalized_placement,late_kill_ratio,train+validation,True,ok,assumed_seconds,dimensionless

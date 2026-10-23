@@ -1,0 +1,20 @@
+Unnamed: 0,n,pearson,spearman,mode,target,feature,analysis_scope,primary,status,time_unit_status,coefficient_unit
+0,57262855.0,-0.000438,0.400674,Overall,player_survive_time,player_kills,train+validation,True,ok,assumed_seconds,dimensionless
+1,57262855.0,-0.000523,0.439757,Overall,player_survive_time,player_dmg,train+validation,True,ok,assumed_seconds,dimensionless
+2,24010076.0,-1.9e-05,0.085727,Overall,player_survive_time,damage_per_kill,train+validation,True,ok,assumed_seconds,dimensionless
+3,57262855.0,0.001197,0.909129,Overall,player_survive_time,player_dist_walk,train+validation,True,ok,assumed_seconds,dimensionless
+4,57262855.0,0.002876,0.68367,Overall,player_survive_time,player_dist_ride,train+validation,True,ok,assumed_seconds,dimensionless
+5,57262855.0,0.002106,0.896043,Overall,player_survive_time,total_distance,train+validation,True,ok,assumed_seconds,dimensionless
+6,55968425.0,-0.000478,-0.616498,Overall,player_survive_time,walk_ratio,train+validation,True,ok,assumed_seconds,dimensionless
+7,57262855.0,-0.000351,0.285879,Overall,player_survive_time,player_assists,train+validation,True,ok,assumed_seconds,dimensionless
+8,57262855.0,-0.000442,0.264434,Overall,player_survive_time,player_dbno,train+validation,True,ok,assumed_seconds,dimensionless
+9,27548635.0,-0.00024,0.129278,Overall,player_survive_time,assist_ratio,train+validation,True,ok,assumed_seconds,dimensionless
+10,23908776.0,-0.000291,0.598188,Overall,player_survive_time,first_kill_time,train+validation,True,ok,assumed_seconds,dimensionless
+11,23908776.0,-0.000369,0.809219,Overall,player_survive_time,avg_kill_time,train+validation,True,ok,assumed_seconds,dimensionless
+12,57262855.0,-0.00059,0.352902,Overall,player_survive_time,has_kill,train+validation,True,ok,assumed_seconds,dimensionless
+13,56842895.0,-0.000356,0.079553,Overall,player_survive_time,early_kills,train+validation,False,ok,assumed_seconds,dimensionless
+14,56842895.0,-0.000287,0.382726,Overall,player_survive_time,mid_kills,train+validation,False,ok,assumed_seconds,dimensionless
+15,56842895.0,-0.000235,0.48513,Overall,player_survive_time,late_kills,train+validation,False,ok,assumed_seconds,dimensionless
+16,23890358.0,0.000343,-0.703588,Overall,player_survive_time,early_kill_ratio,train+validation,False,ok,assumed_seconds,dimensionless
+17,23890358.0,-0.000237,0.355938,Overall,player_survive_time,mid_kill_ratio,train+validation,False,ok,assumed_seconds,dimensionless
+18,23890358.0,-0.000201,0.667962,Overall,player_survive_time,late_kill_ratio,train+validation,False,ok,assumed_seconds,dimensionless

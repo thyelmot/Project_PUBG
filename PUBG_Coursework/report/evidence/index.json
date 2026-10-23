@@ -1,0 +1,3049 @@
+[
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 4,
+    "output": 1,
+    "label": "Note: you may need to restart the kernel to use updated packages.",
+    "table": "evidence/pubg_S00_S06_4_1.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 4,
+    "output": 2,
+    "label": "Note: you may need to restart the kernel to use updated packages.",
+    "table": "evidence/pubg_S00_S06_4_2.csv",
+    "columns": [
+      "Unnamed: 0",
+      "project_id",
+      "scope",
+      "root",
+      "writer",
+      "python",
+      "duckdb",
+      "free_runtime_disk_GiB",
+      "available_host_RAM_GiB",
+      "software",
+      "note"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 4,
+    "output": 3,
+    "label": "Note: you may need to restart the kernel to use updated packages.",
+    "table": "evidence/pubg_S00_S06_4_3.csv",
+    "columns": [
+      "Unnamed: 0",
+      "key",
+      "value"
+    ],
+    "rows": 8
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 4,
+    "output": 4,
+    "label": "Note: you may need to restart the kernel to use updated packages.",
+    "table": "evidence/pubg_S00_S06_4_4.csv",
+    "columns": [
+      "Unnamed: 0",
+      "status",
+      "accepted",
+      "verified",
+      "unit",
+      "label",
+      "evidence",
+      "source_reference",
+      "assumption_approved",
+      "assumption_scope",
+      "limitation"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 4,
+    "output": 6,
+    "label": "Note: you may need to restart the kernel to use updated packages.",
+    "table": "evidence/pubg_S00_S06_4_6.csv",
+    "columns": [
+      "Unnamed: 0",
+      "key",
+      "value"
+    ],
+    "rows": 14
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 8,
+    "output": 3,
+    "label": "source_inventory",
+    "table": "evidence/pubg_S00_S06_8_3.csv",
+    "columns": [
+      "Unnamed: 0",
+      "group",
+      "file",
+      "rows",
+      "bytes",
+      "sha256"
+    ],
+    "rows": 10
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 8,
+    "output": 5,
+    "label": "parse_report",
+    "table": "evidence/pubg_S00_S06_8_5.csv",
+    "columns": [
+      "Unnamed: 0",
+      "group",
+      "file",
+      "column",
+      "original_missing",
+      "parse_error",
+      "non_integer",
+      "rows"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 8,
+    "output": 7,
+    "label": "schema_report",
+    "table": "evidence/pubg_S00_S06_8_7.csv",
+    "columns": [
+      "Unnamed: 0",
+      "group",
+      "file",
+      "source_column",
+      "canonical_column"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 8,
+    "output": 9,
+    "label": "ingest_storage",
+    "table": "evidence/pubg_S00_S06_8_9.csv",
+    "columns": [
+      "Unnamed: 0",
+      "group",
+      "rows",
+      "shards",
+      "temporary_bytes_removed",
+      "canonical_bytes",
+      "temporary_files_remaining"
+    ],
+    "rows": 2
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 8,
+    "output": 11,
+    "label": "source_rows_source",
+    "table": "evidence/pubg_S00_S06_8_11.csv",
+    "columns": [
+      "Unnamed: 0",
+      "group",
+      "file",
+      "rows",
+      "bytes",
+      "sha256"
+    ],
+    "rows": 10
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 8,
+    "output": 12,
+    "label": "source_rows_source",
+    "figure": "figures/pubg_S00_S06_8_12.png",
+    "sha256": "38787d5f350d777d6f1b8b5ca8c9e0c9dcb81001d61a03b8b41091d26876f60e"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 8,
+    "output": 14,
+    "label": "source_parse_source",
+    "table": "evidence/pubg_S00_S06_8_14.csv",
+    "columns": [
+      "Unnamed: 0",
+      "column",
+      "original_missing",
+      "parse_error",
+      "non_integer"
+    ],
+    "rows": 17
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 8,
+    "output": 15,
+    "label": "source_parse_source",
+    "figure": "figures/pubg_S00_S06_8_15.png",
+    "sha256": "6c3893b31e1540fb373b723051b71cebd5b171a7d5236c8c7dc73664588906ba"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 8,
+    "output": 17,
+    "label": "progress_S01",
+    "table": "evidence/pubg_S00_S06_8_17.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds",
+      "group",
+      "file",
+      "rows_read",
+      "batch_rows",
+      "rows",
+      "shards",
+      "temporary_bytes_removed",
+      "canonical_bytes",
+      "temporary_files_remaining"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 8,
+    "output": 18,
+    "label": "progress_S01",
+    "table": "evidence/pubg_S00_S06_8_18.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "artifacts",
+      "checkpoint"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 11,
+    "output": 15,
+    "label": "identity_conflicts",
+    "table": "evidence/pubg_S00_S06_11_15.csv",
+    "columns": [
+      "Unnamed: 0",
+      "conflict_keys",
+      "conflict_rows"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 11,
+    "output": 17,
+    "label": "quality_flags",
+    "table": "evidence/pubg_S00_S06_11_17.csv",
+    "columns": [
+      "Unnamed: 0",
+      "n_rows",
+      "missing_match",
+      "invalid_numeric"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 11,
+    "output": 19,
+    "label": "removal_ledger",
+    "table": "evidence/pubg_S00_S06_11_19.csv",
+    "columns": [
+      "Unnamed: 0",
+      "step",
+      "before",
+      "removed",
+      "after"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 11,
+    "output": 21,
+    "label": "roster_summary",
+    "table": "evidence/pubg_S00_S06_11_21.csv",
+    "columns": [
+      "Unnamed: 0",
+      "index",
+      "match_id",
+      "n_teams",
+      "roster_rows",
+      "missing_team_rows",
+      "max_placement",
+      "duration_proxy",
+      "match_time",
+      "dates",
+      "party_values",
+      "bad_dates",
+      "conflicting_teams"
+    ],
+    "rows": 11
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 11,
+    "output": 23,
+    "label": "split_summary",
+    "table": "evidence/pubg_S00_S06_11_23.csv",
+    "columns": [
+      "Unnamed: 0",
+      "split",
+      "matches",
+      "first",
+      "last"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 11,
+    "output": 25,
+    "label": "removal_steps_source",
+    "table": "evidence/pubg_S00_S06_11_25.csv",
+    "columns": [
+      "Unnamed: 0",
+      "step",
+      "before",
+      "removed",
+      "after"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 11,
+    "output": 26,
+    "label": "removal_steps_source",
+    "figure": "figures/pubg_S00_S06_11_26.png",
+    "sha256": "08fbf3127db92b4df09f4ce1e321bb357ab4fa643b7269d5f342835bd792c5ca"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 11,
+    "output": 28,
+    "label": "date_coverage_source",
+    "table": "evidence/pubg_S00_S06_11_28.csv",
+    "columns": [
+      "Unnamed: 0",
+      "day",
+      "matches"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 11,
+    "output": 29,
+    "label": "date_coverage_source",
+    "figure": "figures/pubg_S00_S06_11_29.png",
+    "sha256": "99d4a3ca11f8bf481df61dd6e0349f87ce41fc3d056d988c2c49755fec69412a"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 11,
+    "output": 31,
+    "label": "progress_S02",
+    "table": "evidence/pubg_S00_S06_11_31.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds"
+    ],
+    "rows": 5
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 11,
+    "output": 32,
+    "label": "progress_S02",
+    "table": "evidence/pubg_S00_S06_11_32.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "artifacts",
+      "checkpoint"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 15,
+    "output": 7,
+    "label": "feature_validation",
+    "table": "evidence/pubg_S00_S06_15_7.csv",
+    "columns": [
+      "Unnamed: 0",
+      "n",
+      "valid",
+      "min",
+      "max",
+      "feature"
+    ],
+    "rows": 13
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 15,
+    "output": 9,
+    "label": "feature_dictionary",
+    "table": "evidence/pubg_S00_S06_15_9.csv",
+    "columns": [
+      "Unnamed: 0",
+      "feature",
+      "formula",
+      "unit",
+      "missing",
+      "survival_primary",
+      "S1_predictor",
+      "P2_predictor",
+      "T0_predictor",
+      "target",
+      "survival_leakage_blocked",
+      "available_stage",
+      "time_unit_status",
+      "time_unit_evidence"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 15,
+    "output": 11,
+    "label": "feature_example",
+    "table": "evidence/pubg_S00_S06_15_11.csv",
+    "columns": [
+      "Unnamed: 0",
+      "player_kills",
+      "player_dmg",
+      "damage_per_kill",
+      "team_placement",
+      "n_teams",
+      "normalized_placement"
+    ],
+    "rows": 8
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 15,
+    "output": 13,
+    "label": "feature_coverage_source",
+    "table": "evidence/pubg_S00_S06_15_13.csv",
+    "columns": [
+      "Unnamed: 0",
+      "n",
+      "valid",
+      "min",
+      "max",
+      "feature",
+      "missing"
+    ],
+    "rows": 13
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 15,
+    "output": 14,
+    "label": "feature_coverage_source",
+    "figure": "figures/pubg_S00_S06_15_14.png",
+    "sha256": "ae274e36347b4451758efda4a34e5978fa62aafd1de522ceebaf80cdbfd9d262"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 15,
+    "output": 16,
+    "label": "progress_S03",
+    "table": "evidence/pubg_S00_S06_15_16.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 15,
+    "output": 17,
+    "label": "progress_S03",
+    "table": "evidence/pubg_S00_S06_15_17.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "artifacts",
+      "checkpoint"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 63,
+    "label": "event_unit_diagnostics",
+    "table": "evidence/pubg_S00_S06_19_63.csv",
+    "columns": [
+      "Unnamed: 0",
+      "events",
+      "invalid_time",
+      "minimum",
+      "maximum",
+      "above_proxy"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 65,
+    "label": "timing_partition_audit",
+    "table": "evidence/pubg_S00_S06_19_65.csv",
+    "columns": [
+      "Unnamed: 0",
+      "partition",
+      "input_events",
+      "unique_events",
+      "absolute_eligible",
+      "phase_eligible",
+      "player_rows_before",
+      "player_rows_after"
+    ],
+    "rows": 16
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 67,
+    "label": "timing_coverage",
+    "table": "evidence/pubg_S00_S06_19_67.csv",
+    "columns": [
+      "Unnamed: 0",
+      "team_size_mode",
+      "timing_status",
+      "n_rows"
+    ],
+    "rows": 12
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 69,
+    "label": "timing_discrepancy_summary",
+    "table": "evidence/pubg_S00_S06_19_69.csv",
+    "columns": [
+      "Unnamed: 0",
+      "timing_status",
+      "n",
+      "mean_abs_discrepancy"
+    ],
+    "rows": 4
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 71,
+    "label": "timing_phase_summary",
+    "table": "evidence/pubg_S00_S06_19_71.csv",
+    "columns": [
+      "Unnamed: 0",
+      "team_size_mode",
+      "early",
+      "mid",
+      "late",
+      "phase_rows"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 73,
+    "label": "timing_audit",
+    "table": "evidence/pubg_S00_S06_19_73.csv",
+    "columns": [
+      "Unnamed: 0",
+      "input_events",
+      "unique_events",
+      "absolute_eligible",
+      "phase_eligible",
+      "player_rows_before",
+      "player_rows_after",
+      "semantics",
+      "time_unit_status",
+      "time_unit_verified",
+      "time_unit_label",
+      "time_unit_limitation"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 75,
+    "label": "timing_coverage_source",
+    "table": "evidence/pubg_S00_S06_19_75.csv",
+    "columns": [
+      "Unnamed: 0",
+      "timing_status",
+      "n"
+    ],
+    "rows": 4
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 76,
+    "label": "timing_coverage_source",
+    "figure": "figures/pubg_S00_S06_19_76.png",
+    "sha256": "cbd7b50e6ec8211e98bf5abfffe97a5890426258e9f7bcac1de8fb83c9f59a4c"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 78,
+    "label": "timing_phases_source",
+    "table": "evidence/pubg_S00_S06_19_78.csv",
+    "columns": [
+      "Unnamed: 0",
+      "team_size_mode",
+      "early",
+      "mid",
+      "late"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 79,
+    "label": "timing_phases_source",
+    "figure": "figures/pubg_S00_S06_19_79.png",
+    "sha256": "ce23c93889cd6b11e88bbac0a78c38f8046b2a76c27e7bbd6046a2668bbe52de"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 81,
+    "label": "progress_S04",
+    "table": "evidence/pubg_S00_S06_19_81.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds",
+      "input",
+      "partitions",
+      "partition"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 19,
+    "output": 82,
+    "label": "progress_S04",
+    "table": "evidence/pubg_S00_S06_19_82.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "artifacts",
+      "checkpoint"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 29,
+    "label": "eda_statistics",
+    "table": "evidence/pubg_S00_S06_22_29.csv",
+    "columns": [
+      "Unnamed: 0",
+      "n",
+      "valid",
+      "mean",
+      "median",
+      "std",
+      "min",
+      "max",
+      "q25",
+      "q75",
+      "skew",
+      "zero",
+      "feature",
+      "missing",
+      "time_unit_status",
+      "unit"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 31,
+    "label": "mode_statistics",
+    "table": "evidence/pubg_S00_S06_22_31.csv",
+    "columns": [
+      "Unnamed: 0",
+      "team_size_mode",
+      "n",
+      "kills",
+      "damage",
+      "walk",
+      "survival",
+      "placement",
+      "time_unit_status",
+      "survival_unit"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 33,
+    "label": "hist_player_kills_source",
+    "table": "evidence/pubg_S00_S06_22_33.csv",
+    "columns": [
+      "Unnamed: 0",
+      "bin",
+      "n",
+      "left_edge",
+      "right_edge",
+      "source_unit"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 34,
+    "label": "hist_player_kills_source",
+    "figure": "figures/pubg_S00_S06_22_34.png",
+    "sha256": "e07dc0417ba86f16cfc194057031158c3d57b01122075914e801b323af8b282e"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 36,
+    "label": "hist_player_dmg_source",
+    "table": "evidence/pubg_S00_S06_22_36.csv",
+    "columns": [
+      "Unnamed: 0",
+      "bin",
+      "n",
+      "left_edge",
+      "right_edge",
+      "source_unit"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 37,
+    "label": "hist_player_dmg_source",
+    "figure": "figures/pubg_S00_S06_22_37.png",
+    "sha256": "bca0bc070fe44eb91bd157e641cf0f92aeeca0bc973a04df8468da294ffd028a"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 39,
+    "label": "hist_player_survive_time_source",
+    "table": "evidence/pubg_S00_S06_22_39.csv",
+    "columns": [
+      "Unnamed: 0",
+      "bin",
+      "n",
+      "left_edge",
+      "right_edge",
+      "source_unit"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 40,
+    "label": "hist_player_survive_time_source",
+    "figure": "figures/pubg_S00_S06_22_40.png",
+    "sha256": "e903e089809e702240459eb6665682a429f23560691c4a9f26cec167268afa4c"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 42,
+    "label": "hist_normalized_placement_source",
+    "table": "evidence/pubg_S00_S06_22_42.csv",
+    "columns": [
+      "Unnamed: 0",
+      "bin",
+      "n",
+      "left_edge",
+      "right_edge",
+      "source_unit"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 43,
+    "label": "hist_normalized_placement_source",
+    "figure": "figures/pubg_S00_S06_22_43.png",
+    "sha256": "2477c851718294f5cea50c200feba140b4c5ef241ee40f2ff7155f86cf6543ae"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 45,
+    "label": "hist_first_kill_time_source",
+    "table": "evidence/pubg_S00_S06_22_45.csv",
+    "columns": [
+      "Unnamed: 0",
+      "bin",
+      "n",
+      "left_edge",
+      "right_edge",
+      "source_unit"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 46,
+    "label": "hist_first_kill_time_source",
+    "figure": "figures/pubg_S00_S06_22_46.png",
+    "sha256": "377f7adbb612965bf23e59f3bb5fee30340940d04258c8740c0a5ae6010c8f35"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 48,
+    "label": "eda_missing_source",
+    "table": "evidence/pubg_S00_S06_22_48.csv",
+    "columns": [
+      "Unnamed: 0",
+      "n",
+      "valid",
+      "mean",
+      "median",
+      "std",
+      "min",
+      "max",
+      "q25",
+      "q75",
+      "skew",
+      "zero",
+      "feature",
+      "missing",
+      "time_unit_status",
+      "unit"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 49,
+    "label": "eda_missing_source",
+    "figure": "figures/pubg_S00_S06_22_49.png",
+    "sha256": "82da626e4a74222f98177c6d7e4912ed76f72d9e6205e9ae9726ed77f5b75b22"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 51,
+    "label": "mode_kills_source",
+    "table": "evidence/pubg_S00_S06_22_51.csv",
+    "columns": [
+      "Unnamed: 0",
+      "team_size_mode",
+      "n",
+      "kills",
+      "damage",
+      "walk",
+      "survival",
+      "placement",
+      "time_unit_status",
+      "survival_unit"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 52,
+    "label": "mode_kills_source",
+    "figure": "figures/pubg_S00_S06_22_52.png",
+    "sha256": "a9fafea5fac37931cb50dde252ed569a9a09b15e8227ecaa6283a1ab2cc8be2c"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 54,
+    "label": "progress_S05",
+    "table": "evidence/pubg_S00_S06_22_54.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds",
+      "feature",
+      "column_index",
+      "columns",
+      "valid"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 22,
+    "output": 55,
+    "label": "progress_S05",
+    "table": "evidence/pubg_S00_S06_22_55.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "artifacts",
+      "checkpoint"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 26,
+    "output": 344,
+    "label": "rq1_relationships",
+    "table": "evidence/pubg_S00_S06_26_344.csv",
+    "columns": [
+      "Unnamed: 0",
+      "n",
+      "pearson",
+      "spearman",
+      "mode",
+      "target",
+      "feature",
+      "analysis_scope",
+      "primary",
+      "status",
+      "time_unit_status",
+      "coefficient_unit"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 26,
+    "output": 346,
+    "label": "rq1_player_survive_time_source",
+    "table": "evidence/pubg_S00_S06_26_346.csv",
+    "columns": [
+      "Unnamed: 0",
+      "n",
+      "pearson",
+      "spearman",
+      "mode",
+      "target",
+      "feature",
+      "analysis_scope",
+      "primary",
+      "status",
+      "time_unit_status",
+      "coefficient_unit"
+    ],
+    "rows": 19
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 26,
+    "output": 347,
+    "label": "rq1_player_survive_time_source",
+    "figure": "figures/pubg_S00_S06_26_347.png",
+    "sha256": "a70c7c43b7d47678fd5154e8dfd4871d0c4cb248ac5637fa287931bd7e185500"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 26,
+    "output": 349,
+    "label": "rq1_normalized_placement_source",
+    "table": "evidence/pubg_S00_S06_26_349.csv",
+    "columns": [
+      "Unnamed: 0",
+      "n",
+      "pearson",
+      "spearman",
+      "mode",
+      "target",
+      "feature",
+      "analysis_scope",
+      "primary",
+      "status",
+      "time_unit_status",
+      "coefficient_unit"
+    ],
+    "rows": 19
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 26,
+    "output": 350,
+    "label": "rq1_normalized_placement_source",
+    "figure": "figures/pubg_S00_S06_26_350.png",
+    "sha256": "155063ff8d59e5a73edc5e5690c66f2774cce642c7f464ccd2459c414d10090f"
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 26,
+    "output": 352,
+    "label": "progress_S06",
+    "table": "evidence/pubg_S00_S06_26_352.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds",
+      "mode",
+      "target",
+      "feature"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 26,
+    "output": 353,
+    "label": "progress_S06",
+    "table": "evidence/pubg_S00_S06_26_353.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "artifacts",
+      "checkpoint"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S00_S06.ipynb",
+    "cell": 46,
+    "output": 0,
+    "label": "Chưa tới finalization; chỉ đọc diagnostics/stage đã chạy, chưa có final summary",
+    "table": "evidence/pubg_S00_S06_46_0.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "outputs",
+      "writer"
+    ],
+    "rows": 6
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 3,
+    "output": 22,
+    "label": "CPU resume: copying data/full/timing.parquet (1.21 GiB)",
+    "table": "evidence/pubg_S07_3_22.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 3,
+    "output": 23,
+    "label": "CPU resume: copying data/full/timing.parquet (1.21 GiB)",
+    "table": "evidence/pubg_S07_3_23.csv",
+    "columns": [
+      "Unnamed: 0",
+      "project_id",
+      "scope",
+      "root",
+      "writer",
+      "python",
+      "duckdb",
+      "free_runtime_disk_GiB",
+      "available_host_RAM_GiB",
+      "software",
+      "note"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 3,
+    "output": 24,
+    "label": "CPU resume: copying data/full/timing.parquet (1.21 GiB)",
+    "table": "evidence/pubg_S07_3_24.csv",
+    "columns": [
+      "Unnamed: 0",
+      "key",
+      "value"
+    ],
+    "rows": 8
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 3,
+    "output": 25,
+    "label": "CPU resume: copying data/full/timing.parquet (1.21 GiB)",
+    "table": "evidence/pubg_S07_3_25.csv",
+    "columns": [
+      "Unnamed: 0",
+      "status",
+      "accepted",
+      "verified",
+      "unit",
+      "label",
+      "evidence",
+      "source_reference",
+      "assumption_approved",
+      "assumption_scope",
+      "limitation"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 3,
+    "output": 27,
+    "label": "CPU resume: copying data/full/timing.parquet (1.21 GiB)",
+    "table": "evidence/pubg_S07_3_27.csv",
+    "columns": [
+      "Unnamed: 0",
+      "scope",
+      "status",
+      "gpu_ids",
+      "workers"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 3,
+    "output": 28,
+    "label": "CPU resume: copying data/full/timing.parquet (1.21 GiB)",
+    "table": "evidence/pubg_S07_3_28.csv",
+    "columns": [
+      "Unnamed: 0",
+      "key",
+      "value"
+    ],
+    "rows": 14
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 3,
+    "output": 29,
+    "label": "CPU resume: copying data/full/timing.parquet (1.21 GiB)",
+    "table": "evidence/pubg_S07_3_29.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "scope"
+    ],
+    "rows": 6
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 1,
+    "label": "S06: ngoài khoảng thực thi; không tính lại",
+    "table": "evidence/pubg_S07_29_1.csv",
+    "columns": [
+      "Unnamed: 0",
+      "step",
+      "rows",
+      "estimated_bytes",
+      "estimated_GiB",
+      "capacity_GiB",
+      "within_budget"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 70,
+    "label": "profile_retention",
+    "table": "evidence/pubg_S07_29_70.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "minimum_games",
+      "total_profiles",
+      "retained",
+      "coverage",
+      "median_games",
+      "mean_valid_phase_matches"
+    ],
+    "rows": 12
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 72,
+    "label": "profile_coverage",
+    "table": "evidence/pubg_S07_29_72.csv",
+    "columns": [
+      "Unnamed: 0",
+      "index",
+      "games_played",
+      "avg_kills",
+      "avg_kills_n",
+      "avg_damage",
+      "avg_damage_n",
+      "avg_walk",
+      "avg_walk_n",
+      "avg_ride",
+      "avg_ride_n",
+      "...",
+      "avg_late_kill_ratio",
+      "avg_late_kill_ratio_n",
+      "std_kills",
+      "std_kills_n",
+      "std_damage",
+      "std_damage_n",
+      "kill_active_matches",
+      "support_active_matches",
+      "early_combat_match_ratio",
+      "early_combat_match_ratio_n"
+    ],
+    "rows": 8
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 74,
+    "label": "profile_retention_source",
+    "table": "evidence/pubg_S07_29_74.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "minimum_games",
+      "total_profiles",
+      "retained",
+      "coverage",
+      "median_games",
+      "mean_valid_phase_matches",
+      "group"
+    ],
+    "rows": 12
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 75,
+    "label": "profile_retention_source",
+    "figure": "figures/pubg_S07_29_75.png",
+    "sha256": "5e7462c90b85045c18d54c800f96331e8e6a6f6a30877226036ff09e29c5b9bb"
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 77,
+    "label": "k_diagnostics",
+    "table": "evidence/pubg_S07_29_77.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "k",
+      "profiles",
+      "inertia",
+      "silhouette",
+      "davies_bouldin",
+      "seed_ari",
+      "min_cluster_share",
+      "diagnostic_n",
+      "seed"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 79,
+    "label": "k_diagnostics_source",
+    "table": "evidence/pubg_S07_29_79.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "k",
+      "profiles",
+      "inertia",
+      "silhouette",
+      "davies_bouldin",
+      "seed_ari",
+      "min_cluster_share",
+      "diagnostic_n",
+      "seed",
+      "group"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 80,
+    "label": "k_diagnostics_source",
+    "figure": "figures/pubg_S07_29_80.png",
+    "sha256": "3b996f25bfd1b3240c03a969b7027395e4dd0fcec9b07a246d44576a80a5d302"
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 82,
+    "label": "centers_Duo_source",
+    "table": "evidence/pubg_S07_29_82.csv",
+    "columns": [
+      "Unnamed: 0",
+      "cluster",
+      "avg_kills",
+      "avg_damage",
+      "avg_walk",
+      "avg_ride",
+      "avg_walk_ratio",
+      "avg_assists",
+      "avg_dbno",
+      "avg_assist_ratio",
+      "std_kills",
+      "std_damage",
+      "avg_early_kill_ratio",
+      "avg_mid_kill_ratio",
+      "avg_late_kill_ratio",
+      "early_combat_match_ratio"
+    ],
+    "rows": 4
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 83,
+    "label": "centers_Duo_source",
+    "figure": "figures/pubg_S07_29_83.png",
+    "sha256": "360032650e56fca0f577789a8edc3de8ed54793b8aa28b34ac0a438e51de4673"
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 85,
+    "label": "centers_Solo_source",
+    "table": "evidence/pubg_S07_29_85.csv",
+    "columns": [
+      "Unnamed: 0",
+      "cluster",
+      "avg_kills",
+      "avg_damage",
+      "avg_walk",
+      "avg_ride",
+      "avg_walk_ratio",
+      "avg_assists",
+      "avg_dbno",
+      "avg_assist_ratio",
+      "std_kills",
+      "std_damage",
+      "avg_early_kill_ratio",
+      "avg_mid_kill_ratio",
+      "avg_late_kill_ratio",
+      "early_combat_match_ratio"
+    ],
+    "rows": 2
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 86,
+    "label": "centers_Solo_source",
+    "figure": "figures/pubg_S07_29_86.png",
+    "sha256": "6d5dfca84cfa063f79a025c91f7691bbfa51a29626c33576ace805fd168f710d"
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 88,
+    "label": "centers_Squad_source",
+    "table": "evidence/pubg_S07_29_88.csv",
+    "columns": [
+      "Unnamed: 0",
+      "cluster",
+      "avg_kills",
+      "avg_damage",
+      "avg_walk",
+      "avg_ride",
+      "avg_walk_ratio",
+      "avg_assists",
+      "avg_dbno",
+      "avg_assist_ratio",
+      "std_kills",
+      "std_damage",
+      "avg_early_kill_ratio",
+      "avg_mid_kill_ratio",
+      "avg_late_kill_ratio",
+      "early_combat_match_ratio"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 89,
+    "label": "centers_Squad_source",
+    "figure": "figures/pubg_S07_29_89.png",
+    "sha256": "955d9a2d25368bcf5741fb1e8b1c3d7705e7416384de97c66a18e48bf65b581d"
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 91,
+    "label": "cluster_centers",
+    "table": "evidence/pubg_S07_29_91.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "cluster",
+      "avg_kills",
+      "avg_damage",
+      "avg_walk",
+      "avg_ride",
+      "avg_walk_ratio",
+      "avg_assists",
+      "avg_dbno",
+      "avg_assist_ratio",
+      "std_kills",
+      "std_damage",
+      "avg_early_kill_ratio",
+      "avg_mid_kill_ratio",
+      "avg_late_kill_ratio",
+      "early_combat_match_ratio"
+    ],
+    "rows": 9
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 93,
+    "label": "cluster_sizes",
+    "table": "evidence/pubg_S07_29_93.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "cluster",
+      "profiles",
+      "share"
+    ],
+    "rows": 9
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 95,
+    "label": "cluster_outcomes",
+    "table": "evidence/pubg_S07_29_95.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "cluster",
+      "avg_survival",
+      "avg_placement",
+      "time_unit_status",
+      "survival_unit",
+      "valid_survival_profiles",
+      "valid_placement_profiles",
+      "scope"
+    ],
+    "rows": 9
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 97,
+    "label": "cluster_sizes_source",
+    "table": "evidence/pubg_S07_29_97.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "cluster",
+      "profiles",
+      "share",
+      "group"
+    ],
+    "rows": 9
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 98,
+    "label": "cluster_sizes_source",
+    "figure": "figures/pubg_S07_29_98.png",
+    "sha256": "234316db6e72415b9b2e869efa9d79ff3573140ea3592958ff4e33a89a38f12b"
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 100,
+    "label": "cluster_outcomes_source",
+    "table": "evidence/pubg_S07_29_100.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "cluster",
+      "avg_survival",
+      "avg_placement",
+      "time_unit_status",
+      "survival_unit",
+      "valid_survival_profiles",
+      "valid_placement_profiles",
+      "scope",
+      "group"
+    ],
+    "rows": 9
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 101,
+    "label": "cluster_outcomes_source",
+    "figure": "figures/pubg_S07_29_101.png",
+    "sha256": "0030dc5cdc9b7e9deba83265df7d4bf75d5de1d0927ea9019a8337d36e5970d7"
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 103,
+    "label": "progress_S07",
+    "table": "evidence/pubg_S07_29_103.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds",
+      "partitions",
+      "partition",
+      "mode",
+      "profiles",
+      "k",
+      "job",
+      "gpu_id",
+      "pid",
+      "jobs",
+      "minimum_games",
+      "clusters"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 29,
+    "output": 104,
+    "label": "progress_S07",
+    "table": "evidence/pubg_S07_29_104.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "artifacts",
+      "checkpoint"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S07.ipynb",
+    "cell": 45,
+    "output": 0,
+    "label": "Chưa tới finalization; chỉ đọc diagnostics/stage đã chạy, chưa có final summary",
+    "table": "evidence/pubg_S07_45_0.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "outputs",
+      "writer"
+    ],
+    "rows": 7
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 3,
+    "output": 21,
+    "label": "S08 import: copying unchanged data/full/timing.parquet",
+    "table": "evidence/pubg_S08_3_21.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 3,
+    "output": 22,
+    "label": "S08 import: copying unchanged data/full/timing.parquet",
+    "table": "evidence/pubg_S08_3_22.csv",
+    "columns": [
+      "Unnamed: 0",
+      "project_id",
+      "scope",
+      "root",
+      "writer",
+      "python",
+      "duckdb",
+      "free_runtime_disk_GiB",
+      "available_host_RAM_GiB",
+      "software",
+      "note"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 3,
+    "output": 23,
+    "label": "S08 import: copying unchanged data/full/timing.parquet",
+    "table": "evidence/pubg_S08_3_23.csv",
+    "columns": [
+      "Unnamed: 0",
+      "key",
+      "value"
+    ],
+    "rows": 8
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 3,
+    "output": 24,
+    "label": "S08 import: copying unchanged data/full/timing.parquet",
+    "table": "evidence/pubg_S08_3_24.csv",
+    "columns": [
+      "Unnamed: 0",
+      "status",
+      "accepted",
+      "verified",
+      "unit",
+      "label",
+      "evidence",
+      "source_reference",
+      "assumption_approved",
+      "assumption_scope",
+      "limitation"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 3,
+    "output": 26,
+    "label": "S08 import: copying unchanged data/full/timing.parquet",
+    "table": "evidence/pubg_S08_3_26.csv",
+    "columns": [
+      "Unnamed: 0",
+      "scope",
+      "status",
+      "gpu_ids",
+      "workers"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 3,
+    "output": 27,
+    "label": "S08 import: copying unchanged data/full/timing.parquet",
+    "table": "evidence/pubg_S08_3_27.csv",
+    "columns": [
+      "Unnamed: 0",
+      "key",
+      "value"
+    ],
+    "rows": 14
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 3,
+    "output": 28,
+    "label": "S08 import: copying unchanged data/full/timing.parquet",
+    "table": "evidence/pubg_S08_3_28.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "scope"
+    ],
+    "rows": 7
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 6,
+    "label": "S07: ngoài khoảng thực thi; không tính lại",
+    "table": "evidence/pubg_S08_33_6.csv",
+    "columns": [
+      "Unnamed: 0",
+      "step",
+      "rows",
+      "estimated_bytes",
+      "estimated_GiB",
+      "capacity_GiB",
+      "within_budget",
+      "capacity_bytes",
+      "resource"
+    ],
+    "rows": 14
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 115,
+    "label": "validation_metrics",
+    "table": "evidence/pubg_S08_33_115.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "target",
+      "split",
+      "device",
+      "time_unit_status",
+      "target_unit",
+      "aggregation",
+      "n",
+      "mae",
+      "rmse",
+      "r2",
+      "r2_reason"
+    ],
+    "rows": 18
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 117,
+    "label": "model_cohorts",
+    "table": "evidence/pubg_S08_33_117.csv",
+    "columns": [
+      "Unnamed: 0",
+      "task",
+      "split",
+      "rows",
+      "matches",
+      "players",
+      "cohort_hash"
+    ],
+    "rows": 6
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 119,
+    "label": "coefficients",
+    "table": "evidence/pubg_S08_33_119.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "feature",
+      "coefficient",
+      "scale",
+      "time_unit_status",
+      "coefficient_unit"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 121,
+    "label": "coefficients_s1_linear_source",
+    "table": "evidence/pubg_S08_33_121.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "feature",
+      "coefficient",
+      "scale",
+      "time_unit_status",
+      "coefficient_unit"
+    ],
+    "rows": 18
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 122,
+    "label": "coefficients_s1_linear_source",
+    "figure": "figures/pubg_S08_33_122.png",
+    "sha256": "b553339da2e17047d7659278fe8eb0b0f0540cf310d6c438f7d8e20b5ec27926"
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 124,
+    "label": "coefficients_p2_linear_source",
+    "table": "evidence/pubg_S08_33_124.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "feature",
+      "coefficient",
+      "scale",
+      "time_unit_status",
+      "coefficient_unit"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 125,
+    "label": "coefficients_p2_linear_source",
+    "figure": "figures/pubg_S08_33_125.png",
+    "sha256": "885ad8cd4a0f20edb383912f9bec4cbcb9edbb98e431ace5a90e42807c5925ac"
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 127,
+    "label": "coefficients_t0_linear_source",
+    "table": "evidence/pubg_S08_33_127.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "feature",
+      "coefficient",
+      "scale",
+      "time_unit_status",
+      "coefficient_unit"
+    ],
+    "rows": 13
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 128,
+    "label": "coefficients_t0_linear_source",
+    "figure": "figures/pubg_S08_33_128.png",
+    "sha256": "c93ceff66b0e0394d994d165861dd2e8b2455d094b8bcada4ed53ae54d0f62e4"
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 130,
+    "label": "validation_mae_player_survive_time_source",
+    "table": "evidence/pubg_S08_33_130.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "target",
+      "split",
+      "device",
+      "time_unit_status",
+      "target_unit",
+      "aggregation",
+      "n",
+      "mae",
+      "rmse",
+      "r2",
+      "r2_reason"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 131,
+    "label": "validation_mae_player_survive_time_source",
+    "figure": "figures/pubg_S08_33_131.png",
+    "sha256": "eac7ef3128a0fce90942fd0fcafb6d4de8039942d60b7877d1d4a6c826d84b13"
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 133,
+    "label": "validation_mae_normalized_placement_source",
+    "table": "evidence/pubg_S08_33_133.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "target",
+      "split",
+      "device",
+      "time_unit_status",
+      "target_unit",
+      "aggregation",
+      "n",
+      "mae",
+      "rmse",
+      "r2",
+      "r2_reason"
+    ],
+    "rows": 4
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 134,
+    "label": "validation_mae_normalized_placement_source",
+    "figure": "figures/pubg_S08_33_134.png",
+    "sha256": "de4b8d012bc56468b91eab7f25388ea08592f9062069617a545f6e4b0fa85267"
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 136,
+    "label": "model_metrics",
+    "table": "evidence/pubg_S08_33_136.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "target",
+      "split",
+      "device",
+      "time_unit_status",
+      "target_unit",
+      "aggregation",
+      "n",
+      "mae",
+      "rmse",
+      "r2",
+      "r2_reason"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 138,
+    "label": "progress_S08",
+    "table": "evidence/pubg_S08_33_138.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds",
+      "task",
+      "split",
+      "experiment",
+      "train_rows",
+      "validation_rows",
+      "test_accessed",
+      "job",
+      "gpu_id",
+      "pid",
+      "jobs"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 33,
+    "output": 139,
+    "label": "progress_S08",
+    "table": "evidence/pubg_S08_33_139.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "artifacts",
+      "checkpoint"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S08.ipynb",
+    "cell": 45,
+    "output": 0,
+    "label": "Chưa tới finalization; chỉ đọc diagnostics/stage đã chạy, chưa có final summary",
+    "table": "evidence/pubg_S08_45_0.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "outputs",
+      "writer"
+    ],
+    "rows": 8
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 3,
+    "output": 16,
+    "label": "Resume: verifying saved files, checksums and Parquet; not recomputing stages",
+    "table": "evidence/pubg_S09_S10_S11_S12_3_16.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 3,
+    "output": 17,
+    "label": "Resume: verifying saved files, checksums and Parquet; not recomputing stages",
+    "table": "evidence/pubg_S09_S10_S11_S12_3_17.csv",
+    "columns": [
+      "Unnamed: 0",
+      "project_id",
+      "scope",
+      "root",
+      "writer",
+      "python",
+      "duckdb",
+      "free_runtime_disk_GiB",
+      "available_host_RAM_GiB",
+      "software",
+      "note"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 3,
+    "output": 18,
+    "label": "Resume: verifying saved files, checksums and Parquet; not recomputing stages",
+    "table": "evidence/pubg_S09_S10_S11_S12_3_18.csv",
+    "columns": [
+      "Unnamed: 0",
+      "key",
+      "value"
+    ],
+    "rows": 8
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 3,
+    "output": 19,
+    "label": "Resume: verifying saved files, checksums and Parquet; not recomputing stages",
+    "table": "evidence/pubg_S09_S10_S11_S12_3_19.csv",
+    "columns": [
+      "Unnamed: 0",
+      "status",
+      "accepted",
+      "verified",
+      "unit",
+      "label",
+      "evidence",
+      "source_reference",
+      "assumption_approved",
+      "assumption_scope",
+      "limitation"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 3,
+    "output": 21,
+    "label": "Resume: verifying saved files, checksums and Parquet; not recomputing stages",
+    "table": "evidence/pubg_S09_S10_S11_S12_3_21.csv",
+    "columns": [
+      "Unnamed: 0",
+      "key",
+      "value"
+    ],
+    "rows": 14
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 3,
+    "output": 22,
+    "label": "Resume: verifying saved files, checksums and Parquet; not recomputing stages",
+    "table": "evidence/pubg_S09_S10_S11_S12_3_22.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "scope"
+    ],
+    "rows": 8
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 16,
+    "label": "timing_comparison",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_16.csv",
+    "columns": [
+      "Unnamed: 0",
+      "metric",
+      "aggregation",
+      "reference",
+      "candidate",
+      "T0",
+      "T1",
+      "delta",
+      "n",
+      "time_unit_status"
+    ],
+    "rows": 9
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 18,
+    "label": "prediction_plot_s1",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_18.csv",
+    "columns": [
+      "Unnamed: 0",
+      "actual",
+      "predicted",
+      "residual"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 20,
+    "label": "predicted_observed_s1_source",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_20.csv",
+    "columns": [
+      "Unnamed: 0",
+      "actual",
+      "predicted",
+      "residual"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 21,
+    "label": "predicted_observed_s1_source",
+    "figure": "figures/pubg_S09_S10_S11_S12_37_21.png",
+    "sha256": "6a89f912638a6e7f7472d53951fb90610acd9e29840b4b868a9ec17c36f8fb42"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 23,
+    "label": "residual_s1_source",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_23.csv",
+    "columns": [
+      "Unnamed: 0",
+      "bin",
+      "n"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 24,
+    "label": "residual_s1_source",
+    "figure": "figures/pubg_S09_S10_S11_S12_37_24.png",
+    "sha256": "6bc56c1a8f0d6d1f19dfc087fc0627b90cbdeb98f60b39e98e751ec003d08c95"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 26,
+    "label": "prediction_plot_p2",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_26.csv",
+    "columns": [
+      "Unnamed: 0",
+      "actual",
+      "predicted",
+      "residual"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 28,
+    "label": "predicted_observed_p2_source",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_28.csv",
+    "columns": [
+      "Unnamed: 0",
+      "actual",
+      "predicted",
+      "residual"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 29,
+    "label": "predicted_observed_p2_source",
+    "figure": "figures/pubg_S09_S10_S11_S12_37_29.png",
+    "sha256": "617d4a976f5e97bb1b073e10d59221ec0aacf0d6ce12ec467a326bb7a42938b5"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 31,
+    "label": "residual_p2_source",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_31.csv",
+    "columns": [
+      "Unnamed: 0",
+      "bin",
+      "n"
+    ],
+    "rows": 20
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 32,
+    "label": "residual_p2_source",
+    "figure": "figures/pubg_S09_S10_S11_S12_37_32.png",
+    "sha256": "fce01c676c361191b906d25734b4d6c38b13acbb4ba917a0c18836e89ad9f7b0"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 34,
+    "label": "error_analysis",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_34.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "slice",
+      "group",
+      "matches",
+      "n",
+      "mae",
+      "rmse",
+      "r2",
+      "r2_reason",
+      "time_unit_status",
+      "target_unit"
+    ],
+    "rows": 12
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 36,
+    "label": "mode_error_s1_linear_source",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_36.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "slice",
+      "group",
+      "matches",
+      "n",
+      "mae",
+      "rmse",
+      "r2",
+      "r2_reason",
+      "time_unit_status",
+      "target_unit"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 37,
+    "label": "mode_error_s1_linear_source",
+    "figure": "figures/pubg_S09_S10_S11_S12_37_37.png",
+    "sha256": "92e9b88be8c222c8acb54cdf1c3ec4370d6bce4574dfa24201ea443d91b90c05"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 39,
+    "label": "mode_error_p2_linear_source",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_39.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "slice",
+      "group",
+      "matches",
+      "n",
+      "mae",
+      "rmse",
+      "r2",
+      "r2_reason",
+      "time_unit_status",
+      "target_unit"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 40,
+    "label": "mode_error_p2_linear_source",
+    "figure": "figures/pubg_S09_S10_S11_S12_37_40.png",
+    "sha256": "d26a32436e1492d7f22e98f1fdd382b3f5f731f2fa58c707955702c49e7791ea"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 42,
+    "label": "timing_delta_source",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_42.csv",
+    "columns": [
+      "Unnamed: 0",
+      "metric",
+      "aggregation",
+      "reference",
+      "candidate",
+      "T0",
+      "T1",
+      "delta",
+      "n",
+      "time_unit_status"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 43,
+    "label": "timing_delta_source",
+    "figure": "figures/pubg_S09_S10_S11_S12_37_43.png",
+    "sha256": "4e9eedecbcc8ccb73f59cd245e4156b16fa3aceb444228304141a2d976294a68"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 45,
+    "label": "progress_S09",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_45.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 37,
+    "output": 46,
+    "label": "progress_S09",
+    "table": "evidence/pubg_S09_S10_S11_S12_37_46.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "artifacts",
+      "checkpoint"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 40,
+    "output": 1,
+    "label": "progress_S10",
+    "table": "evidence/pubg_S09_S10_S11_S12_40_1.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "step",
+      "scope",
+      "elapsed_seconds"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 40,
+    "output": 2,
+    "label": "progress_S10",
+    "table": "evidence/pubg_S09_S10_S11_S12_40_2.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "artifacts",
+      "checkpoint"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 0,
+    "label": "progress_S10",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_0.csv",
+    "columns": [
+      "Unnamed: 0",
+      "release_id",
+      "scope",
+      "report_ready",
+      "spec_version"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 1,
+    "label": "progress_S10",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_1.csv",
+    "columns": [
+      "Unnamed: 0",
+      "status",
+      "accepted",
+      "verified",
+      "unit",
+      "label",
+      "evidence",
+      "source_reference",
+      "assumption_approved",
+      "assumption_scope",
+      "limitation"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 3,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_3.png",
+    "sha256": "360032650e56fca0f577789a8edc3de8ed54793b8aa28b34ac0a438e51de4673"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 4,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_4.png",
+    "sha256": "6d5dfca84cfa063f79a025c91f7691bbfa51a29626c33576ace805fd168f710d"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 5,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_5.png",
+    "sha256": "955d9a2d25368bcf5741fb1e8b1c3d7705e7416384de97c66a18e48bf65b581d"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 6,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_6.png",
+    "sha256": "0030dc5cdc9b7e9deba83265df7d4bf75d5de1d0927ea9019a8337d36e5970d7"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 7,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_7.png",
+    "sha256": "234316db6e72415b9b2e869efa9d79ff3573140ea3592958ff4e33a89a38f12b"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 8,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_8.png",
+    "sha256": "885ad8cd4a0f20edb383912f9bec4cbcb9edbb98e431ace5a90e42807c5925ac"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 9,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_9.png",
+    "sha256": "b553339da2e17047d7659278fe8eb0b0f0540cf310d6c438f7d8e20b5ec27926"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 10,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_10.png",
+    "sha256": "c93ceff66b0e0394d994d165861dd2e8b2455d094b8bcada4ed53ae54d0f62e4"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 11,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_11.png",
+    "sha256": "99d4a3ca11f8bf481df61dd6e0349f87ce41fc3d056d988c2c49755fec69412a"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 12,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_12.png",
+    "sha256": "82da626e4a74222f98177c6d7e4912ed76f72d9e6205e9ae9726ed77f5b75b22"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 13,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_13.png",
+    "sha256": "ae274e36347b4451758efda4a34e5978fa62aafd1de522ceebaf80cdbfd9d262"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 14,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_14.png",
+    "sha256": "377f7adbb612965bf23e59f3bb5fee30340940d04258c8740c0a5ae6010c8f35"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 15,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_15.png",
+    "sha256": "2477c851718294f5cea50c200feba140b4c5ef241ee40f2ff7155f86cf6543ae"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 16,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_16.png",
+    "sha256": "bca0bc070fe44eb91bd157e641cf0f92aeeca0bc973a04df8468da294ffd028a"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 17,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_17.png",
+    "sha256": "e07dc0417ba86f16cfc194057031158c3d57b01122075914e801b323af8b282e"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 18,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_18.png",
+    "sha256": "e903e089809e702240459eb6665682a429f23560691c4a9f26cec167268afa4c"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 19,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_19.png",
+    "sha256": "3b996f25bfd1b3240c03a969b7027395e4dd0fcec9b07a246d44576a80a5d302"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 20,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_20.png",
+    "sha256": "d26a32436e1492d7f22e98f1fdd382b3f5f731f2fa58c707955702c49e7791ea"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 21,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_21.png",
+    "sha256": "92e9b88be8c222c8acb54cdf1c3ec4370d6bce4574dfa24201ea443d91b90c05"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 22,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_22.png",
+    "sha256": "a9fafea5fac37931cb50dde252ed569a9a09b15e8227ecaa6283a1ab2cc8be2c"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 23,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_23.png",
+    "sha256": "617d4a976f5e97bb1b073e10d59221ec0aacf0d6ce12ec467a326bb7a42938b5"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 24,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_24.png",
+    "sha256": "6a89f912638a6e7f7472d53951fb90610acd9e29840b4b868a9ec17c36f8fb42"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 25,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_25.png",
+    "sha256": "5e7462c90b85045c18d54c800f96331e8e6a6f6a30877226036ff09e29c5b9bb"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 26,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_26.png",
+    "sha256": "08fbf3127db92b4df09f4ce1e321bb357ab4fa643b7269d5f342835bd792c5ca"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 27,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_27.png",
+    "sha256": "fce01c676c361191b906d25734b4d6c38b13acbb4ba917a0c18836e89ad9f7b0"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 28,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_28.png",
+    "sha256": "6bc56c1a8f0d6d1f19dfc087fc0627b90cbdeb98f60b39e98e751ec003d08c95"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 29,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_29.png",
+    "sha256": "155063ff8d59e5a73edc5e5690c66f2774cce642c7f464ccd2459c414d10090f"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 30,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_30.png",
+    "sha256": "a70c7c43b7d47678fd5154e8dfd4871d0c4cb248ac5637fa287931bd7e185500"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 31,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_31.png",
+    "sha256": "6c3893b31e1540fb373b723051b71cebd5b171a7d5236c8c7dc73664588906ba"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 32,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_32.png",
+    "sha256": "38787d5f350d777d6f1b8b5ca8c9e0c9dcb81001d61a03b8b41091d26876f60e"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 33,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_33.png",
+    "sha256": "cbd7b50e6ec8211e98bf5abfffe97a5890426258e9f7bcac1de8fb83c9f59a4c"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 34,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_34.png",
+    "sha256": "4e9eedecbcc8ccb73f59cd245e4156b16fa3aceb444228304141a2d976294a68"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 35,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_35.png",
+    "sha256": "ce23c93889cd6b11e88bbac0a78c38f8046b2a76c27e7bbd6046a2668bbe52de"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 36,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_36.png",
+    "sha256": "de4b8d012bc56468b91eab7f25388ea08592f9062069617a545f6e4b0fa85267"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 37,
+    "label": "progress_S10",
+    "figure": "figures/pubg_S09_S10_S11_S12_43_37.png",
+    "sha256": "eac7ef3128a0fce90942fd0fcafb6d4de8039942d60b7877d1d4a6c826d84b13"
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 39,
+    "label": "cluster_centers",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_39.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "cluster",
+      "avg_kills",
+      "avg_damage",
+      "avg_walk",
+      "avg_ride",
+      "avg_walk_ratio",
+      "avg_assists",
+      "avg_dbno",
+      "avg_assist_ratio",
+      "std_kills",
+      "std_damage",
+      "avg_early_kill_ratio",
+      "avg_mid_kill_ratio",
+      "avg_late_kill_ratio",
+      "early_combat_match_ratio"
+    ],
+    "rows": 9
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 41,
+    "label": "cluster_outcomes",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_41.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "cluster",
+      "avg_survival",
+      "avg_placement",
+      "time_unit_status",
+      "survival_unit",
+      "valid_survival_profiles",
+      "valid_placement_profiles",
+      "scope"
+    ],
+    "rows": 9
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 43,
+    "label": "cluster_sizes",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_43.csv",
+    "columns": [
+      "Unnamed: 0",
+      "mode",
+      "cluster",
+      "profiles",
+      "share"
+    ],
+    "rows": 9
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 45,
+    "label": "coefficients",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_45.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "feature",
+      "coefficient",
+      "scale",
+      "time_unit_status",
+      "coefficient_unit"
+    ],
+    "rows": 25
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 47,
+    "label": "eda_statistics",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_47.csv",
+    "columns": [
+      "Unnamed: 0",
+      "n",
+      "valid",
+      "mean",
+      "median",
+      "std",
+      "min",
+      "max",
+      "q25",
+      "q75",
+      "skew",
+      "zero",
+      "feature",
+      "missing",
+      "time_unit_status",
+      "unit"
+    ],
+    "rows": 21
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 49,
+    "label": "error_analysis",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_49.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "slice",
+      "group",
+      "matches",
+      "n",
+      "mae",
+      "rmse",
+      "r2",
+      "r2_reason",
+      "time_unit_status",
+      "target_unit"
+    ],
+    "rows": 12
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 51,
+    "label": "feature_dictionary",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_51.csv",
+    "columns": [
+      "Unnamed: 0",
+      "feature",
+      "formula",
+      "unit",
+      "missing",
+      "survival_primary",
+      "S1_predictor",
+      "P2_predictor",
+      "T0_predictor",
+      "target",
+      "survival_leakage_blocked",
+      "available_stage",
+      "time_unit_status",
+      "time_unit_evidence"
+    ],
+    "rows": 25
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 53,
+    "label": "model_metrics",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_53.csv",
+    "columns": [
+      "Unnamed: 0",
+      "experiment",
+      "target",
+      "split",
+      "device",
+      "time_unit_status",
+      "target_unit",
+      "aggregation",
+      "n",
+      "mae",
+      "rmse",
+      "r2",
+      "r2_reason"
+    ],
+    "rows": 25
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 55,
+    "label": "removal_ledger",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_55.csv",
+    "columns": [
+      "Unnamed: 0",
+      "step",
+      "before",
+      "removed",
+      "after"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 57,
+    "label": "rq1_relationships",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_57.csv",
+    "columns": [
+      "Unnamed: 0",
+      "n",
+      "pearson",
+      "spearman",
+      "mode",
+      "target",
+      "feature",
+      "analysis_scope",
+      "primary",
+      "status",
+      "time_unit_status",
+      "coefficient_unit"
+    ],
+    "rows": 25
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 59,
+    "label": "source_inventory",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_59.csv",
+    "columns": [
+      "Unnamed: 0",
+      "group",
+      "file",
+      "rows",
+      "bytes",
+      "sha256"
+    ],
+    "rows": 10
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 61,
+    "label": "split_summary",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_61.csv",
+    "columns": [
+      "Unnamed: 0",
+      "split",
+      "matches",
+      "first",
+      "last"
+    ],
+    "rows": 3
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 63,
+    "label": "timing_audit",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_63.csv",
+    "columns": [
+      "Unnamed: 0",
+      "input_events",
+      "unique_events",
+      "absolute_eligible",
+      "phase_eligible",
+      "player_rows_before",
+      "player_rows_after",
+      "semantics",
+      "time_unit_status",
+      "time_unit_verified",
+      "time_unit_label",
+      "time_unit_limitation"
+    ],
+    "rows": 1
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 65,
+    "label": "timing_comparison",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_65.csv",
+    "columns": [
+      "Unnamed: 0",
+      "metric",
+      "aggregation",
+      "reference",
+      "candidate",
+      "T0",
+      "T1",
+      "delta",
+      "n",
+      "time_unit_status"
+    ],
+    "rows": 9
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 43,
+    "output": 67,
+    "label": "timing_coverage",
+    "table": "evidence/pubg_S09_S10_S11_S12_43_67.csv",
+    "columns": [
+      "Unnamed: 0",
+      "team_size_mode",
+      "timing_status",
+      "n_rows"
+    ],
+    "rows": 12
+  },
+  {
+    "notebook": "pubg_S09_S10_S11_S12.ipynb",
+    "cell": 45,
+    "output": 0,
+    "label": "timing_coverage",
+    "table": "evidence/pubg_S09_S10_S11_S12_45_0.csv",
+    "columns": [
+      "Unnamed: 0",
+      "stage",
+      "status",
+      "reason",
+      "outputs",
+      "writer"
+    ],
+    "rows": 10
+  }
+]
