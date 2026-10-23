@@ -1,19 +1,24 @@
-# Nguồn bảng và hình
+# Nguồn báo cáo hoàn thiện
 
-Chỉ số cell/output bắt đầu từ 0. CSV là dữ liệu hiển thị, có thể bị giới hạn số dòng.
+Bảng lấy từ CSV đầy đủ, SHA256 khớp handoff. Hình cũ vẫn giữ ánh xạ notebook tại evidence/index.json.
 
-- inventory: {'notebook': 'pubg_S09_S10_S11_S12.ipynb', 'cell': 43, 'output': 59, 'label': 'source_inventory', 'table': 'evidence/pubg_S09_S10_S11_S12_43_59.csv', 'columns': ['Unnamed: 0', 'group', 'file', 'rows', 'bytes', 'sha256'], 'rows': 10}
-- eda: {'notebook': 'pubg_S09_S10_S11_S12.ipynb', 'cell': 43, 'output': 47, 'label': 'eda_statistics', 'table': 'evidence/pubg_S09_S10_S11_S12_43_47.csv', 'columns': ['Unnamed: 0', 'n', 'valid', 'mean', 'median', 'std', 'min', 'max', 'q25', 'q75', 'skew', 'zero', 'feature', 'missing', 'time_unit_status', 'unit'], 'rows': 21}
-- correlation: {'notebook': 'pubg_S09_S10_S11_S12.ipynb', 'cell': 43, 'output': 57, 'label': 'rq1_relationships', 'table': 'evidence/pubg_S09_S10_S11_S12_43_57.csv', 'columns': ['Unnamed: 0', 'n', 'pearson', 'spearman', 'mode', 'target', 'feature', 'analysis_scope', 'primary', 'status', 'time_unit_status', 'coefficient_unit'], 'rows': 25}
-- clusters: {'notebook': 'pubg_S09_S10_S11_S12.ipynb', 'cell': 43, 'output': 43, 'label': 'cluster_sizes', 'table': 'evidence/pubg_S09_S10_S11_S12_43_43.csv', 'columns': ['Unnamed: 0', 'mode', 'cluster', 'profiles', 'share'], 'rows': 9}
-- validation: {'notebook': 'pubg_S09_S10_S11_S12.ipynb', 'cell': 43, 'output': 53, 'label': 'model_metrics', 'table': 'evidence/pubg_S09_S10_S11_S12_43_53.csv', 'columns': ['Unnamed: 0', 'experiment', 'target', 'split', 'device', 'time_unit_status', 'target_unit', 'aggregation', 'n', 'mae', 'rmse', 'r2', 'r2_reason'], 'rows': 25}
-- timing: {'notebook': 'pubg_S09_S10_S11_S12.ipynb', 'cell': 43, 'output': 65, 'label': 'timing_comparison', 'table': 'evidence/pubg_S09_S10_S11_S12_43_65.csv', 'columns': ['Unnamed: 0', 'metric', 'aggregation', 'reference', 'candidate', 'T0', 'T1', 'delta', 'n', 'time_unit_status'], 'rows': 9}
-- errors: {'notebook': 'pubg_S09_S10_S11_S12.ipynb', 'cell': 43, 'output': 49, 'label': 'error_analysis', 'table': 'evidence/pubg_S09_S10_S11_S12_43_49.csv', 'columns': ['Unnamed: 0', 'experiment', 'slice', 'group', 'matches', 'n', 'mae', 'rmse', 'r2', 'r2_reason', 'time_unit_status', 'target_unit'], 'rows': 12}
-- eda_selected: {'notebook': 'pubg_S00_S06.ipynb', 'cell': 22, 'output': 40, 'label': 'hist_player_survive_time_source', 'figure': 'figures/pubg_S00_S06_22_40.png', 'sha256': 'e903e089809e702240459eb6665682a429f23560691c4a9f26cec167268afa4c'}
-- eda_selected: {'notebook': 'pubg_S00_S06.ipynb', 'cell': 22, 'output': 49, 'label': 'eda_missing_source', 'figure': 'figures/pubg_S00_S06_22_49.png', 'sha256': '82da626e4a74222f98177c6d7e4912ed76f72d9e6205e9ae9726ed77f5b75b22'}
-- correlation_selected: {'notebook': 'pubg_S00_S06.ipynb', 'cell': 26, 'output': 350, 'label': 'rq1_normalized_placement_source', 'figure': 'figures/pubg_S00_S06_26_350.png', 'sha256': '155063ff8d59e5a73edc5e5690c66f2774cce642c7f464ccd2459c414d10090f'}
-- clusters_selected: {'notebook': 'pubg_S07.ipynb', 'cell': 29, 'output': 98, 'label': 'cluster_sizes_source', 'figure': 'figures/pubg_S07_29_98.png', 'sha256': '234316db6e72415b9b2e869efa9d79ff3573140ea3592958ff4e33a89a38f12b'}
-- clusters_selected: {'notebook': 'pubg_S07.ipynb', 'cell': 29, 'output': 86, 'label': 'centers_Solo_source', 'figure': 'figures/pubg_S07_29_86.png', 'sha256': '6d5dfca84cfa063f79a025c91f7691bbfa51a29626c33576ace805fd168f710d'}
-- timing_selected: {'notebook': 'pubg_S09_S10_S11_S12.ipynb', 'cell': 37, 'output': 43, 'label': 'timing_delta_source', 'figure': 'figures/pubg_S09_S10_S11_S12_37_43.png', 'sha256': '4e9eedecbcc8ccb73f59cd245e4156b16fa3aceb444228304141a2d976294a68'}
-- errors_selected: {'notebook': 'pubg_S09_S10_S11_S12.ipynb', 'cell': 37, 'output': 29, 'label': 'predicted_observed_p2_source', 'figure': 'figures/pubg_S09_S10_S11_S12_37_29.png', 'sha256': '617d4a976f5e97bb1b073e10d59221ec0aacf0d6ce12ec467a326bb7a42938b5'}
-- errors_selected: {'notebook': 'pubg_S09_S10_S11_S12.ipynb', 'cell': 37, 'output': 21, 'label': 'predicted_observed_s1_source', 'figure': 'figures/pubg_S09_S10_S11_S12_37_21.png', 'sha256': '6a89f912638a6e7f7472d53951fb90610acd9e29840b4b868a9ec17c36f8fb42'}
+- {"table": "inventory", "source": "evidence/full_results/source_inventory.csv", "selected_rows": 10, "columns": ["group", "file", "rows"]}
+- {"table": "eda", "source": "evidence/full_results/eda_statistics.csv", "selected_rows": 7, "columns": ["feature", "mean", "median", "max", "missing"]}
+- {"table": "correlation", "source": "evidence/full_results/rq1_relationships.csv", "selected_rows": 9, "columns": ["feature", "n", "pearson", "spearman"]}
+- {"table": "correlation_modes", "source": "evidence/full_results/rq1_relationships.csv", "selected_rows": 4, "columns": ["mode", "n", "pearson", "spearman"]}
+- {"table": "clusters", "source": "evidence/full_results/cluster_sizes.csv", "selected_rows": 9, "columns": ["mode", "cluster", "profiles", "share"]}
+- {"table": "validation", "source": "evidence/full_results/model_metrics.csv", "selected_rows": 7, "columns": ["experiment", "n", "mae", "rmse", "r2"]}
+- {"table": "test_survival", "source": "evidence/full_results/model_metrics.csv", "selected_rows": 3, "columns": ["experiment", "n", "mae", "rmse", "r2"]}
+- {"table": "test_placement", "source": "evidence/full_results/model_metrics.csv", "selected_rows": 4, "columns": ["experiment", "n", "mae", "rmse", "r2"]}
+- {"table": "timing", "source": "evidence/full_results/timing_comparison.csv", "selected_rows": 9, "columns": ["aggregation", "metric", "T0", "T1", "delta", "n"]}
+- {"table": "errors", "source": "evidence/full_results/error_analysis.csv", "selected_rows": 6, "columns": ["experiment", "group", "n", "mae", "rmse", "r2"]}
+- {"table": "error_regions", "source": "evidence/full_results/error_analysis.csv", "selected_rows": 3, "columns": ["group", "n", "mae", "rmse", "r2"]}
+- {"table": "cohorts", "source": "evidence/full_results/model_cohorts.csv", "selected_rows": 6, "columns": ["task", "split", "rows", "matches"]}
+- {"table": "retention", "source": "evidence/full_results/profile_retention.csv", "selected_rows": 3, "columns": ["mode", "total_profiles", "retained", "coverage", "median_games"]}
+- {"table": "k_selected", "source": "evidence/full_results/k_diagnostics.csv", "selected_rows": 3, "columns": ["mode", "k", "profiles", "silhouette", "seed_ari", "min_cluster_share"]}
+- {"table": "centers", "source": "evidence/full_results/cluster_centers.csv", "selected_rows": 9, "columns": ["mode", "cluster", "avg_kills", "avg_damage", "avg_walk", "avg_assists"]}
+- {"table": "coefficients", "source": "evidence/full_results/coefficients.csv", "selected_rows": 7, "columns": ["feature", "coefficient"]}
+- {"table": "feature_recipe", "source": "evidence/full_results/feature_dictionary.csv", "selected_rows": 19, "columns": ["feature", "S1_predictor", "P2_predictor", "T0_predictor"]}
+- {"table": "coverage", "source": "evidence/full_results/coverage_summary.csv", "selected_rows": 4, "columns": ["timing_status", "n_rows", "percent"], "derived_from": "timing_coverage.csv: sum n_rows by status; percent of total"}
+- {"figure": "placement_validation_test.png", "source": "evidence/full_results/model_metrics.csv"}
+- {"figure": "k_stability.png", "source": "evidence/full_results/k_diagnostics.csv"}

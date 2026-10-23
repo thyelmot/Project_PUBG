@@ -1,0 +1,12 @@
+{
+  "diagnostic_hash": "34a301382c64108890dfaae3eadcf37cb65053e7a46aa34c21dcb0991259eca8",
+  "minimum_games": 10,
+  "clusters": {
+    "Duo": 4,
+    "Solo": 2,
+    "Squad": 3
+  },
+  "reason": "Auto policy approved 2026-10-17: maximum finite development silhouette; exact ties smaller K; explicit per-mode overrides take precedence. Stability/cluster sizes reported, not optimized using outcomes.",
+  "decision_mode": "auto",
+  "outcomes_used": false
+}

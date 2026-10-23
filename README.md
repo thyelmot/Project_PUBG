@@ -114,6 +114,7 @@ PUBG_Coursework/
   src/                           Mã nguồn các bước phân tích
   notebooks/                     Notebook thực thi Kaggle và Colab
   output/                        Bốn notebook chứa kết quả đã chạy
+  results/                       Snapshot đầy đủ từ results.zip (chỉ lưu local)
   report/
     main.tex                     Nội dung báo cáo LaTeX
     figures/                     Hình sử dụng và bằng chứng trích
@@ -122,10 +123,13 @@ PUBG_Coursework/
     SOURCE_MAP.md                Ánh xạ bảng/hình về notebook nguồn
   tests/                         Kiểm thử và dữ liệu fixture
   tools/                         Công cụ tạo notebook
+  docs/                          Đặc tả, kế hoạch và lịch sử thiết kế
   requirements.txt               Phụ thuộc phần mềm
 ```
 
 `output/` là nơi lưu notebook kết quả của nhóm. Khi thực thi trên Kaggle, thư mục `outputs/<scope>/` do pipeline tạo chứa bảng, hình, mô hình, dự đoán và checkpoint; hai thư mục có vai trò khác nhau. Một số bảng hiển thị trong notebook được giới hạn số dòng xem trước.
+
+Gói Output đã tải được đặt tại `results/PUBG_Coursework_v511_S09_S10/`, giữ nguyên cây `data/`, `outputs/`, mã nguồn và cấu hình của lần chạy. Xem [hướng dẫn kết quả đầy đủ](RESULTS.md) và biên nhận `results/IMPORT_VERIFICATION.json` để kiểm tra lần nhập. Thư mục này lớn và được loại khỏi Git; nó không tự xuất hiện khi clone từ GitHub.
 
 ## Xem báo cáo và tái lập
 
@@ -137,9 +141,10 @@ PUBG_Coursework/
 
 Tài liệu kỹ thuật:
 
-- [Đặc tả nghiên cứu](PUBG_RESEARCH_SPEC.md): câu hỏi, đặc trưng, mục tiêu, chia tập và nguyên tắc đánh giá.
-- [Kế hoạch triển khai](PUBG_IMPLEMENTATION_PLAN.md): quy trình và kiểm thử các bước.
-- [Nhật ký thay đổi](CHANGELOG_FIXES.md): các đợt sửa lỗi và bằng chứng kiểm tra.
+- [Đặc tả nghiên cứu](docs/PUBG_RESEARCH_SPEC.md): câu hỏi, đặc trưng, mục tiêu, chia tập và nguyên tắc đánh giá.
+- [Kế hoạch triển khai](docs/PUBG_IMPLEMENTATION_PLAN.md): quy trình và kiểm thử các bước.
+- [Lịch sử thiết kế](docs/CHANGELOG_FIXES.md): các đợt sửa trước khi clone và tổ chức lại tài liệu.
+- [Nhật ký thay đổi hiện hành](CHANGELOG_FIXES.md): các đợt nhập kết quả, dọn dẹp và hoàn thiện báo cáo sau khi clone.
 
 <details>
 <summary>Phụ lục: cấu hình kỹ thuật đã dùng cho lượt tiếp tục S08</summary>

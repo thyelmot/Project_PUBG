@@ -1,0 +1,630 @@
+{
+  "csv_files_read": 81,
+  "csv_inventory": [
+    {
+      "file": "centers_Duo_source.csv",
+      "rows": 4,
+      "sha256": "cbc45010a7f30daa578c365873f2b4e3cd260aabe04254c7dcdf106a90cf6b27"
+    },
+    {
+      "file": "centers_Solo_source.csv",
+      "rows": 2,
+      "sha256": "d2c24a78f41d1706ed182e66f5adc72ca95269b46ccc46a4eeb3fcda4cec6996"
+    },
+    {
+      "file": "centers_Squad_source.csv",
+      "rows": 3,
+      "sha256": "546bf1ef56063feecf660d2e38ff30ffdc2a9b39aad687f1f1a28833607efa0f"
+    },
+    {
+      "file": "cluster_assignments.csv",
+      "rows": 1668136,
+      "sha256": "9ad8fe8f7a45f378f7c6174d089c4d01cf9b4247839b43d66b7e9fcc72c91152"
+    },
+    {
+      "file": "cluster_centers.csv",
+      "rows": 9,
+      "sha256": "77dc2c584e794d2655a29f6a63ff5eae0162a4c08c3937442f75cf4933b14e4c"
+    },
+    {
+      "file": "cluster_outcomes.csv",
+      "rows": 9,
+      "sha256": "1eb5f02707e2e7d835be25636cfe0c03274eddbc5534cb83baee44ca58338993"
+    },
+    {
+      "file": "cluster_outcomes_source.csv",
+      "rows": 9,
+      "sha256": "904cadb9a9ad87482ca69ea4fe9da4f08e6b3d5919c4e150d88a9295ab565edb"
+    },
+    {
+      "file": "cluster_sizes.csv",
+      "rows": 9,
+      "sha256": "5a1ca51e1d39a714e54e4fcf3c2abfa41b7482bd28cbdf5fa951549fc90c852d"
+    },
+    {
+      "file": "cluster_sizes_source.csv",
+      "rows": 9,
+      "sha256": "88243bd7ab708646738b7e66572f48b5cec349295a3554986c44bcd99352d450"
+    },
+    {
+      "file": "coefficients.csv",
+      "rows": 61,
+      "sha256": "28ee9a4da4c3bc273b05ad3af3aa192704d4ab3427e6f22b4476f23bf1ed9a85"
+    },
+    {
+      "file": "coefficients_p2_linear_source.csv",
+      "rows": 30,
+      "sha256": "cc7c63d331a629222b071dbdc4f328fa72fed01701a993ab4e980c174810bfd5"
+    },
+    {
+      "file": "coefficients_s1_linear_source.csv",
+      "rows": 18,
+      "sha256": "e83c35aa31d5b9a4166e4715f387bcba67dfb39be668d69353a6b8e8d04bae0a"
+    },
+    {
+      "file": "coefficients_t0_linear_source.csv",
+      "rows": 13,
+      "sha256": "4c90796e140c2b1886772ebca494b1359c7cae8db2ea9dc0ad1ad8ce79e562cb"
+    },
+    {
+      "file": "date_coverage_source.csv",
+      "rows": 83,
+      "sha256": "60c78e476ed2228000c7051363e646bdb9d66933c5d665eba7fe20ab13b00bba"
+    },
+    {
+      "file": "eda_missing_source.csv",
+      "rows": 21,
+      "sha256": "b0ca4be9b6e97226560e7ab88e6c80e566d5c66a5b503cd9d5455d07b3c20920"
+    },
+    {
+      "file": "eda_statistics.csv",
+      "rows": 21,
+      "sha256": "b0ca4be9b6e97226560e7ab88e6c80e566d5c66a5b503cd9d5455d07b3c20920"
+    },
+    {
+      "file": "error_analysis.csv",
+      "rows": 12,
+      "sha256": "8c352bc64668184080fc286db0fcd8218c91929c6835292fbce7b31c2d6ff584"
+    },
+    {
+      "file": "event_unit_diagnostics.csv",
+      "rows": 1,
+      "sha256": "1c41882694a7af5cdbb740dfd48bde590aa8acaed0940e95389d6fd5804e5202"
+    },
+    {
+      "file": "feature_coverage_source.csv",
+      "rows": 13,
+      "sha256": "76717ddeed655bb7a343b229f0f81a1093fc882851a1bdc727999e68de940204"
+    },
+    {
+      "file": "feature_dictionary.csv",
+      "rows": 26,
+      "sha256": "3a852ae8ec0b5c275e0b034178ed6be014c5889d6d1f627d65ea922ade693bdd"
+    },
+    {
+      "file": "feature_example.csv",
+      "rows": 8,
+      "sha256": "ea52709ce084b050cb2aa17dac430a4e40594c19ef47e708f6b61c00c30ed31f"
+    },
+    {
+      "file": "feature_validation.csv",
+      "rows": 13,
+      "sha256": "7f4d7f0c07a06bf52319e0600da0cf34b292847c56d8c4a64d071171df8ab630"
+    },
+    {
+      "file": "hist_first_kill_time_source.csv",
+      "rows": 30,
+      "sha256": "4deb83d6d5861ca23162a110533fb0268485a32f7dc6290eda05594e98f970ff"
+    },
+    {
+      "file": "hist_normalized_placement_source.csv",
+      "rows": 30,
+      "sha256": "8fec8baba716dd5ca0d6de67ef2a92a21e100ff9e597e243df7a551fee863fd2"
+    },
+    {
+      "file": "hist_player_dmg_source.csv",
+      "rows": 30,
+      "sha256": "8268b51d0aa5c57f5dc7f41629a38de3ec85f8edda362e7ac6061efed2629e83"
+    },
+    {
+      "file": "hist_player_kills_source.csv",
+      "rows": 30,
+      "sha256": "7c180b96f07c6bb8a6932cb0ff849a07795e64ed89c940a55d4b53fc32a9a2af"
+    },
+    {
+      "file": "hist_player_survive_time_source.csv",
+      "rows": 30,
+      "sha256": "f08476979c62d51ed72ccdc2c481de8bffd0043ea9bdbd70cd1314172611a22a"
+    },
+    {
+      "file": "identity_conflicts.csv",
+      "rows": 1,
+      "sha256": "f8f8079da657901f9410f59337b38a26e80bfb2512c8a33b06e63021b79f30fb"
+    },
+    {
+      "file": "ingest_storage.csv",
+      "rows": 2,
+      "sha256": "cafb9f3852209bfe3b8668ba0a899def6e17b5c48c912452a8ee9248d2a673a8"
+    },
+    {
+      "file": "k_diagnostics.csv",
+      "rows": 21,
+      "sha256": "5afc332ec2a8b44f17440ecdea88b8a3af3bbed9a315d569f396bab1fa8b3ff1"
+    },
+    {
+      "file": "k_diagnostics_source.csv",
+      "rows": 21,
+      "sha256": "667354bc9377d4b31e402b7fcc911997a3214127953f5015d85b46f711c1fd4a"
+    },
+    {
+      "file": "mode_error_p2_linear_source.csv",
+      "rows": 3,
+      "sha256": "75daebb9532a5a1aaf12217c4faae04ef4a68bedadc57f2112d6ff1f1c099d9a"
+    },
+    {
+      "file": "mode_error_s1_linear_source.csv",
+      "rows": 3,
+      "sha256": "750778af2f06147845ee72a930306e9fa1d80ddfefef7bf3db4777d04a827665"
+    },
+    {
+      "file": "mode_kills_source.csv",
+      "rows": 3,
+      "sha256": "657cbde7ab42215692e8262c390f56e446f2e35c1cd278bee0947f21b61361e8"
+    },
+    {
+      "file": "mode_statistics.csv",
+      "rows": 3,
+      "sha256": "657cbde7ab42215692e8262c390f56e446f2e35c1cd278bee0947f21b61361e8"
+    },
+    {
+      "file": "model_cohorts.csv",
+      "rows": 6,
+      "sha256": "418d18c3a0c718aaad18af15d91fe265945bbeeb6658ee132c36ee7f52d29b40"
+    },
+    {
+      "file": "model_metrics.csv",
+      "rows": 36,
+      "sha256": "43ee1128e2135ec1e6b5792bac02d6385fc118f6ccda992fd8d6b4c8b940ff74"
+    },
+    {
+      "file": "parse_report.csv",
+      "rows": 90,
+      "sha256": "0390370e776de902278af8a818700e078bf2f5c8af174b9bfcd9b66747c0f216"
+    },
+    {
+      "file": "predicted_observed_p2_source.csv",
+      "rows": 1500,
+      "sha256": "f9de44c6f321290cf4bd70b625264aa7c39bb4e8416c6d8189f34ac57eb6e2f6"
+    },
+    {
+      "file": "predicted_observed_s1_source.csv",
+      "rows": 1500,
+      "sha256": "808f6be21f68e4843cb0605f00750a4f0b1eca925e92bfc63c0900f63ef087d6"
+    },
+    {
+      "file": "prediction_plot_p2.csv",
+      "rows": 1500,
+      "sha256": "f9de44c6f321290cf4bd70b625264aa7c39bb4e8416c6d8189f34ac57eb6e2f6"
+    },
+    {
+      "file": "prediction_plot_s1.csv",
+      "rows": 1500,
+      "sha256": "808f6be21f68e4843cb0605f00750a4f0b1eca925e92bfc63c0900f63ef087d6"
+    },
+    {
+      "file": "profile_coverage.csv",
+      "rows": 8,
+      "sha256": "88957d5acee77d38b9b40ac1c251bd1af8618ccdaa4b7efaf5c67254ed880a62"
+    },
+    {
+      "file": "profile_retention.csv",
+      "rows": 12,
+      "sha256": "a8c85100afc4f2a9e534e55b27dfd9e6c33d6c64c62b2e5c63f5008913de2983"
+    },
+    {
+      "file": "profile_retention_source.csv",
+      "rows": 12,
+      "sha256": "423a22fee78ee53ff51006a11f06339c5868ea66be4b1425c070d434c68e32b8"
+    },
+    {
+      "file": "progress_S01.csv",
+      "rows": 200,
+      "sha256": "e64b7588d4b4f3e6697974130dc1b4269900b81b3512618f7c81be48c6c10370"
+    },
+    {
+      "file": "progress_S02.csv",
+      "rows": 5,
+      "sha256": "0b3edfa9f602fbf337d57633b0f158af77a7d75f4f55f691165797befade401a"
+    },
+    {
+      "file": "progress_S03.csv",
+      "rows": 3,
+      "sha256": "c07ac704125052053f465c729bf5313638e8bee7e05ed00fafa7e55b571ce864"
+    },
+    {
+      "file": "progress_S04.csv",
+      "rows": 22,
+      "sha256": "6903cd2383f8d5ad109738eb3ba7c3cdd5c73be4e2244c135a350ebbf147e275"
+    },
+    {
+      "file": "progress_S05.csv",
+      "rows": 25,
+      "sha256": "997af1a1442a2a877714c8ef48a3883672253c3e438afeb398ad058cf121d288"
+    },
+    {
+      "file": "progress_S06.csv",
+      "rows": 155,
+      "sha256": "9d052f46824acdc34eec7cd84584b4b424326137b9b83646108874d940cf9de8"
+    },
+    {
+      "file": "progress_S07.csv",
+      "rows": 156,
+      "sha256": "2d5c09f10a1b83294facb542f7aabfe6fbf36a132a02c2e5cb25bdd2ec99f68f"
+    },
+    {
+      "file": "progress_S08.csv",
+      "rows": 75,
+      "sha256": "fe6f574d1131fc8cdc64154c1fac227aeaea3e11cfbcff87c2eba13b538dd1b9"
+    },
+    {
+      "file": "progress_S09.csv",
+      "rows": 3,
+      "sha256": "f034c7ee34d9190a4878cc74eb7fbd04e23c6fea99fc7f9538acd0e6ebab684f"
+    },
+    {
+      "file": "progress_S10.csv",
+      "rows": 3,
+      "sha256": "879a207781a35372cd2cde8626a077a1b4c9098e09547b34c257d05c5de9e414"
+    },
+    {
+      "file": "quality_flags.csv",
+      "rows": 1,
+      "sha256": "1118f2e915c77e3bae6694395b07abfa3ecf8ebba6332e9e0eddd634c13a303e"
+    },
+    {
+      "file": "removal_ledger.csv",
+      "rows": 3,
+      "sha256": "85d6e89c56086a92abde8f2c5c1208afb839f553b8410053d570cbf47acf0624"
+    },
+    {
+      "file": "removal_steps_source.csv",
+      "rows": 3,
+      "sha256": "85d6e89c56086a92abde8f2c5c1208afb839f553b8410053d570cbf47acf0624"
+    },
+    {
+      "file": "residual_p2_source.csv",
+      "rows": 20,
+      "sha256": "fc18774a5d1d5c3589c34295db6515255a9acbfb103f351a68586dd33058dd08"
+    },
+    {
+      "file": "residual_s1_source.csv",
+      "rows": 20,
+      "sha256": "0b9d73f169114f61f012c0d0a889fa9019c074e8245f6da8fdd704fabcd5729e"
+    },
+    {
+      "file": "roster_summary.csv",
+      "rows": 11,
+      "sha256": "7aae31a391ce2f3bcfc9e50e717c9ad77baaf781751112e6a36e7d685cf8f4f0"
+    },
+    {
+      "file": "rq1_normalized_placement_source.csv",
+      "rows": 19,
+      "sha256": "740bc047acb1587f81cf54c73a6dbc7a859d98bb8f12bd1fee6f2dd6ed80a709"
+    },
+    {
+      "file": "rq1_player_survive_time_source.csv",
+      "rows": 19,
+      "sha256": "772bb569c8e155c0a3f256babc794633b9e7cb904f4a39f23ae5b274bd075573"
+    },
+    {
+      "file": "rq1_relationships.csv",
+      "rows": 152,
+      "sha256": "d159d658a594b7376f815549b3e8fad51ef24392e96684865443681d757e573e"
+    },
+    {
+      "file": "schema_report.csv",
+      "rows": 135,
+      "sha256": "ca4cc04e91ac415cd1e42703f7771f12d50de5d0a945d1a2182907fe0bba8e16"
+    },
+    {
+      "file": "source_inventory.csv",
+      "rows": 10,
+      "sha256": "f6f2b35210eaedfb268e0492ff0e22d27be5bc1955871e8f5097502947cfe6dd"
+    },
+    {
+      "file": "source_parse_source.csv",
+      "rows": 17,
+      "sha256": "a832aa346231356aaee8ec1a7e1412040bfbf1916606e7be61571137eb6fe85a"
+    },
+    {
+      "file": "source_rows_source.csv",
+      "rows": 10,
+      "sha256": "f6f2b35210eaedfb268e0492ff0e22d27be5bc1955871e8f5097502947cfe6dd"
+    },
+    {
+      "file": "split_summary.csv",
+      "rows": 3,
+      "sha256": "e03bd046b4ef68282f18c1df60a5cd598fd1e8dff371ec3a47f1d5d7f420cec0"
+    },
+    {
+      "file": "timing_audit.csv",
+      "rows": 1,
+      "sha256": "f7de4f2e30578d9841f8f3f53b6c378a41bf0ff47902872cbe704dd3b45cbd8d"
+    },
+    {
+      "file": "timing_comparison.csv",
+      "rows": 9,
+      "sha256": "3a6f1160663fb25cc238e40f8a7c8f0ae44fc6a1d7a3a07a6a72d96ba88b5d9f"
+    },
+    {
+      "file": "timing_coverage.csv",
+      "rows": 12,
+      "sha256": "d7dd266d6f5d66ffdfe7724458fc353af0ca9d4c0bf87168aed016994d4f3fb8"
+    },
+    {
+      "file": "timing_coverage_source.csv",
+      "rows": 4,
+      "sha256": "95b619cb352d5ba0c9fea6b577a9b507707a7f90e33d16c126c1dc3242ffc338"
+    },
+    {
+      "file": "timing_delta_source.csv",
+      "rows": 3,
+      "sha256": "2843238adc7d1190042e0f56cb3b469737b3d74a08c593375f1fa61b4ac4bde5"
+    },
+    {
+      "file": "timing_discrepancy_summary.csv",
+      "rows": 4,
+      "sha256": "fa363b76525050a4df18d112f5ade1451e1cf13292e5969d0ef612b23d955f99"
+    },
+    {
+      "file": "timing_partition_audit.csv",
+      "rows": 16,
+      "sha256": "9b71022f3569c944e750e4963ca80212e3cf64c3fabe037a57e21ea819264ee7"
+    },
+    {
+      "file": "timing_phase_summary.csv",
+      "rows": 3,
+      "sha256": "ca68bb5c6efbb9fcccfb649c8922a0df86ee21a8854ac1ebb3b28cba7b898ad6"
+    },
+    {
+      "file": "timing_phases_source.csv",
+      "rows": 3,
+      "sha256": "0fcdae4562d0c25e7f4af265f7830e87358fe8819fcc7327d685ef8c1e474f69"
+    },
+    {
+      "file": "validation_mae_normalized_placement_source.csv",
+      "rows": 4,
+      "sha256": "b880e2dccf8dcc0118d338dfc661f8bab54e902472251c3dcad9b2b7aaadaf37"
+    },
+    {
+      "file": "validation_mae_player_survive_time_source.csv",
+      "rows": 3,
+      "sha256": "4ba44aca6123148dee1efac13a03a11f8bd07525fcedb6e0a642e9cfbd6316d3"
+    },
+    {
+      "file": "validation_metrics.csv",
+      "rows": 18,
+      "sha256": "fca0d7cf7cb317b298008a77934a08b1a8b2dd6510ad0f13bf1c71aee9ac09fe"
+    }
+  ],
+  "assets": [
+    {
+      "table": "inventory",
+      "source": "evidence/full_results/source_inventory.csv",
+      "selected_rows": 10,
+      "columns": [
+        "group",
+        "file",
+        "rows"
+      ]
+    },
+    {
+      "table": "eda",
+      "source": "evidence/full_results/eda_statistics.csv",
+      "selected_rows": 7,
+      "columns": [
+        "feature",
+        "mean",
+        "median",
+        "max",
+        "missing"
+      ]
+    },
+    {
+      "table": "correlation",
+      "source": "evidence/full_results/rq1_relationships.csv",
+      "selected_rows": 9,
+      "columns": [
+        "feature",
+        "n",
+        "pearson",
+        "spearman"
+      ]
+    },
+    {
+      "table": "correlation_modes",
+      "source": "evidence/full_results/rq1_relationships.csv",
+      "selected_rows": 4,
+      "columns": [
+        "mode",
+        "n",
+        "pearson",
+        "spearman"
+      ]
+    },
+    {
+      "table": "clusters",
+      "source": "evidence/full_results/cluster_sizes.csv",
+      "selected_rows": 9,
+      "columns": [
+        "mode",
+        "cluster",
+        "profiles",
+        "share"
+      ]
+    },
+    {
+      "table": "validation",
+      "source": "evidence/full_results/model_metrics.csv",
+      "selected_rows": 7,
+      "columns": [
+        "experiment",
+        "n",
+        "mae",
+        "rmse",
+        "r2"
+      ]
+    },
+    {
+      "table": "test_survival",
+      "source": "evidence/full_results/model_metrics.csv",
+      "selected_rows": 3,
+      "columns": [
+        "experiment",
+        "n",
+        "mae",
+        "rmse",
+        "r2"
+      ]
+    },
+    {
+      "table": "test_placement",
+      "source": "evidence/full_results/model_metrics.csv",
+      "selected_rows": 4,
+      "columns": [
+        "experiment",
+        "n",
+        "mae",
+        "rmse",
+        "r2"
+      ]
+    },
+    {
+      "table": "timing",
+      "source": "evidence/full_results/timing_comparison.csv",
+      "selected_rows": 9,
+      "columns": [
+        "aggregation",
+        "metric",
+        "T0",
+        "T1",
+        "delta",
+        "n"
+      ]
+    },
+    {
+      "table": "errors",
+      "source": "evidence/full_results/error_analysis.csv",
+      "selected_rows": 6,
+      "columns": [
+        "experiment",
+        "group",
+        "n",
+        "mae",
+        "rmse",
+        "r2"
+      ]
+    },
+    {
+      "table": "error_regions",
+      "source": "evidence/full_results/error_analysis.csv",
+      "selected_rows": 3,
+      "columns": [
+        "group",
+        "n",
+        "mae",
+        "rmse",
+        "r2"
+      ]
+    },
+    {
+      "table": "cohorts",
+      "source": "evidence/full_results/model_cohorts.csv",
+      "selected_rows": 6,
+      "columns": [
+        "task",
+        "split",
+        "rows",
+        "matches"
+      ]
+    },
+    {
+      "table": "retention",
+      "source": "evidence/full_results/profile_retention.csv",
+      "selected_rows": 3,
+      "columns": [
+        "mode",
+        "total_profiles",
+        "retained",
+        "coverage",
+        "median_games"
+      ]
+    },
+    {
+      "table": "k_selected",
+      "source": "evidence/full_results/k_diagnostics.csv",
+      "selected_rows": 3,
+      "columns": [
+        "mode",
+        "k",
+        "profiles",
+        "silhouette",
+        "seed_ari",
+        "min_cluster_share"
+      ]
+    },
+    {
+      "table": "centers",
+      "source": "evidence/full_results/cluster_centers.csv",
+      "selected_rows": 9,
+      "columns": [
+        "mode",
+        "cluster",
+        "avg_kills",
+        "avg_damage",
+        "avg_walk",
+        "avg_assists"
+      ]
+    },
+    {
+      "table": "coefficients",
+      "source": "evidence/full_results/coefficients.csv",
+      "selected_rows": 7,
+      "columns": [
+        "feature",
+        "coefficient"
+      ]
+    },
+    {
+      "table": "feature_recipe",
+      "source": "evidence/full_results/feature_dictionary.csv",
+      "selected_rows": 19,
+      "columns": [
+        "feature",
+        "S1_predictor",
+        "P2_predictor",
+        "T0_predictor"
+      ]
+    },
+    {
+      "table": "coverage",
+      "source": "evidence/full_results/coverage_summary.csv",
+      "selected_rows": 4,
+      "columns": [
+        "timing_status",
+        "n_rows",
+        "percent"
+      ],
+      "derived_from": "timing_coverage.csv: sum n_rows by status; percent of total"
+    },
+    {
+      "figure": "placement_validation_test.png",
+      "source": "evidence/full_results/model_metrics.csv"
+    },
+    {
+      "figure": "k_stability.png",
+      "source": "evidence/full_results/k_diagnostics.csv"
+    }
+  ],
+  "snapshot": "results\\PUBG_Coursework_v511_S09_S10"
+}

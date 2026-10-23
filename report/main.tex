@@ -15,7 +15,7 @@
 \setlength{\parskip}{5pt}
 \linespread{1.25}
 \emergencystretch=3em
-\newcommand{\source}[1]{{\small\textit{Nguồn: #1.}}}
+\newcommand{\source}[1]{\par\noindent{\small\textit{Nguồn: #1.}}\par\vspace{3pt}}
 \newcommand{\fitwidth}[1]{\sbox0{#1}\ifdim\wd0>\linewidth\resizebox{\linewidth}{!}{\usebox0}\else\usebox0\fi}
 \newcommand{\resultfigure}[3]{\begin{figure}[H]\centering\includegraphics[width=\linewidth,height=.60\textheight,keepaspectratio]{#1}\caption{#2}\end{figure}\noindent\textbf{Nhận xét:} #3\par}
 \begin{document}
@@ -52,6 +52,11 @@
 \textit{Mã nguồn dự án:} \url{https://github.com/thyelmot/Project_PUBG}\\[1cm]
 Hà Nội, tháng 10 năm 2026
 \end{titlepage}
+\section*{TÓM TẮT}
+Đề tài phân tích 67.369.231 bản ghi người chơi--trận đấu và 65.370.475 sự kiện đầu vào từ bộ dữ liệu PUBG phiên bản 3. Nhóm kết hợp thống kê và tương quan, phân cụm KMeans riêng theo chế độ, cùng hồi quy tuyến tính trên hai biến mục tiêu. Dữ liệu được chia theo nhóm trận với tỷ lệ xấp xỉ 70/15/15; quá trình tính toán giữ toàn bộ cohort hợp lệ của từng bài toán.
+
+Trên 10.085.842 dòng test của bài toán thứ hạng, mô hình có timing đạt MAE 0,173516, RMSE 0,217318 và $R^2=0,481642$. So với cùng mô hình không có timing, MAE giảm khoảng 7,11\%. Kết quả phân cụm có 2 cụm Solo, 4 cụm Duo và 3 cụm Squad, nhưng các cụm Duo/Squad mất cân đối và độ ổn định theo seed cần được xem xét. Mô hình thời gian sống có sai số rất lớn và chưa đạt yêu cầu sử dụng. Báo cáo phân tích rõ các giới hạn về ngoại lệ, đơn vị thời gian giả định, thông tin hậu trận và việc chưa có khoảng tin cậy. Số liệu được đối chiếu trực tiếp với CSV và manifest đầy đủ của lần chạy đã lưu.
+\clearpage
 \pagenumbering{roman}\tableofcontents\clearpage
 \pagenumbering{arabic}
 \section{GIỚI THIỆU BÀI TOÁN}
@@ -93,14 +98,22 @@ Trong đó $r$ là thứ hạng đội và $N_{\mathrm{teams}}$ là số đội 
 Sổ đối soát ghi nhận 67.369.231 dòng trước và sau ba bước kiểm tra: trùng lặp chính xác, xung đột định danh và thiếu mã trận hoặc giá trị số không hợp lệ. Số dòng bị loại ở các bước này bằng 0. Kết quả đó chỉ xác nhận các quy tắc đã kiểm không loại dòng; nó không có nghĩa dữ liệu hoàn toàn không có ngoại lệ hoặc không có vấn đề về ngữ nghĩa.
 
 Sau khử trùng sự kiện, số bản ghi còn 65.370.264, giảm 211 dòng. Có 59.883.734 sự kiện đủ điều kiện timing tuyệt đối và 59.560.628 đủ điều kiện timing theo pha. Sau ghép, số dòng người chơi vẫn là 67.369.231. Phép đối soát này giúp phát hiện ghép nhiều--nhiều ngoài ý muốn.
+
+Bảng \texttt{feature\_validation.csv} cho biết 67.239.102 dòng có placement hợp lệ, ít hơn tổng số dòng 130.129 dòng, tương đương khoảng 0,193\%. Đây là thiếu hợp lệ theo mục tiêu, không phải số dòng bị xóa khỏi toàn bộ dự án. Một dòng vẫn có thể tham gia bài toán survival dù không đủ điều kiện cho placement. Trên toàn bộ dữ liệu, các tỷ số cũng có số lượng hợp lệ riêng: damage\_per\_kill có 28.249.181 giá trị và assist\_ratio có 32.411.373 giá trị.
 \subsection{Khám phá phân phối và giá trị thiếu}
 \input{tables/eda.tex}
 Trung vị số lần hạ gục bằng 0, trong khi trung bình xấp xỉ 0,887. Trung vị quãng đường đi xe bằng 0 cho thấy không thể mặc định mọi người chơi đều sử dụng phương tiện. Các tỷ số cần được diễn giải theo mẫu số: sát thương trên mỗi lần hạ gục không xác định khi số lần hạ gục bằng 0. Gán tất cả những trường hợp này thành 0 sẽ làm thay đổi ý nghĩa biến.
 
 Đặc biệt, thời gian sống có trung vị 653,354 nhưng trung bình 50.803,765 và giá trị lớn nhất khoảng $6,365\times10^{10}$ trong bảng EDA. Khoảng cách rất lớn giữa trung bình và trung vị là bằng chứng cần điều tra giá trị cực đoan. Bảng này chưa đủ để kết luận nguyên nhân là đơn vị, lỗi nguồn hay lỗi xử lý. Nhóm giữ kết quả hiện có và công bố giới hạn thay vì tự loại ngoại lệ sau khi xem hiệu năng.
+
+Phạm vi EDA ở đây là train+validation, gồm 57.262.855 dòng, không phải toàn bộ 67.369.231 dòng đầu vào. Trung vị survival tương đương khoảng 10,89 phút nếu giả định giây đúng, trong khi trung bình tương đương hơn 14 giờ. Sự tương phản này giúp nhận biết vấn đề thang phân phối; không dùng trung bình đó để mô tả thời lượng điển hình của một trận. Metadata \texttt{eda\_scope.json} xác nhận không dùng test, không loại ngoại lệ và không áp dụng biến đổi log trong lần chạy.
 \input{figures/eda_selected.tex}
 \subsection{Chia tập và chống rò rỉ dữ liệu}
 Tất cả dòng thuộc cùng một trận được đưa vào cùng một tập. Số trận trong train, validation và test lần lượt là 510.979, 109.495 và 109.495; tổng cộng 729.969 trận. Tỷ lệ xấp xỉ 70/15/15. Khoảng thời gian của ba tập chồng lấn trong bảng kết quả, vì vậy không diễn giải phép đánh giá này như dự báo các trận tương lai theo thời gian.
+
+Manifest \texttt{split.json} ghi Grade C: chia ngẫu nhiên có seed theo nhóm trận, do chưa thiết lập được ngữ nghĩa chronology đủ tin cậy; số giao nhau giữa các tập theo match bằng 0. Chia theo trận hạn chế việc các đồng đội hoặc đối thủ của cùng trận xuất hiện ở cả train và test. Cách chia này chưa bảo đảm một người chơi chỉ xuất hiện ở một tập, nên khả năng khái quát sang người chơi hoàn toàn mới vẫn là câu hỏi mở.
+\input{tables/cohorts.tex}
+Hash cohort của T0 và P2 trùng nhau trên cả train và validation, theo \nolinkurl{model_cohorts.csv}. Số dòng test là 10.106.376 cho survival và 10.085.842 cho placement, theo \nolinkurl{model_metrics.csv}. Các số lượng được báo theo từng bài toán, không ép bằng nhau bằng cách bỏ thêm dữ liệu.
 
 Các tham số điền thiếu, chuẩn hóa và hồi quy được học từ tập huấn luyện. Tập validation phục vụ kiểm tra và quyết định trước khi mở test. Quan hệ phục vụ phát triển được tính trên train và validation. Các đặc trưng chứa trực tiếp thời gian sống hoặc có mẫu số phụ thuộc mục tiêu không được dùng để dự đoán thời gian sống. Việc đã quan sát test trong lịch sử dự án là giới hạn cần lưu ý khi mở thêm thí nghiệm.
 \subsection{Xây dựng Combat Timing}
@@ -109,6 +122,14 @@ Thời gian trận được xấp xỉ bằng giá trị thời gian sống lớ
 Cần phân biệt người chơi được xác nhận không có lần hạ gục với người có số kill trong aggregate nhưng thiếu sự kiện tương ứng. Trường hợp thứ hai phản ánh độ bao phủ dữ liệu, không thể thay bằng không giao tranh. Những sự kiện có timing tuyệt đối hợp lệ nhưng pha không hợp lệ được giữ trạng thái riêng. Các tỷ lệ pha chỉ sử dụng mẫu số pha hợp lệ.
 
 Timing theo pha phụ thuộc gián tiếp vào thời gian sống qua mẫu số xấp xỉ. Vì vậy, nhóm loại nhóm biến này khỏi hồi quy survival nhưng công bố sự phụ thuộc khi sử dụng trong placement. Event được ghi nhận theo killer, loại tự hạ gục và kiểm match/time; thiết kế chưa bảo đảm tất cả sự kiện đều là hạ gục đối phương khác đội.
+\input{tables/coverage.tex}
+Trong 67.369.231 dòng, có 38.766.708 trường hợp confirmed\_no\_kill, 28.107.688 phase\_observed, 473.147 event\_missing và 21.688 absolute\_only. Bốn nhóm cộng đúng tổng đầu vào. Gần 57,54\% dòng được xác nhận không có kill, nên thiếu thời điểm giao tranh ở những dòng này có ý nghĩa cấu trúc. Khoảng 0,70\% dòng thiếu event tương ứng cần được phân biệt với việc không giao tranh. Trạng thái phase\_observed là trạng thái trên dòng người chơi, còn absolute\_eligible/phase\_eligible trong audit đếm sự kiện; không so trực tiếp hai đơn vị này.
+
+\subsection{Đặc trưng và quyền sử dụng theo mục tiêu}
+\input{tables/feature_recipe.tex}
+Ký hiệu True trong bảng cho biết đặc trưng được phép dùng ở nhánh tương ứng, trước bước bổ sung chỉ báo thiếu. Ba nhánh cùng có 10 đặc trưng hành vi cơ sở; S1 bổ sung timing tuyệt đối và has\_kill, P2 bổ sung cả timing theo pha, còn T0 bỏ toàn nhóm timing. Mục tiêu, thời lượng xấp xỉ và các biến như kills\_per\_minute không được đưa vào allowlist chính của các nhánh này.
+
+Ví dụ, $damage\_per\_kill=damage/kills$ chỉ có nghĩa khi $kills>0$, còn $walk\_ratio=walk/(walk+ride)$ cần tổng khoảng cách dương. Các điều kiện này giải thích tại sao cùng một cohort nhưng số quan sát hợp lệ theo từng đặc trưng khác nhau. Bộ tiền xử lý học cách điền thiếu và thang chuẩn hóa từ train, đồng thời giữ chỉ báo thiếu để biểu diễn thông tin về tình trạng quan sát.
 \clearpage
 \section{CÁC PHƯƠNG PHÁP KHAI PHÁ DỮ LIỆU}
 \subsection{Tương quan Pearson và Spearman}
@@ -122,15 +143,20 @@ KMeans tìm các tâm cụm để tối thiểu hóa tổng khoảng cách bình
 \[
 \min_{C_1,\ldots,C_K}\sum_{k=1}^{K}\sum_{\boldsymbol{x}_i\in C_k}\|\boldsymbol{x}_i-\boldsymbol{\mu}_k\|_2^2.
 \]
+Mục tiêu này giải thích vì sao chuẩn hóa đặc trưng và kiểm ngoại lệ có vai trò quan trọng khi diễn giải khoảng cách; tài liệu KMeans chính thức cũng mô tả phương pháp theo tổng bình phương trong cụm \cite{skcluster}.
 Nhóm xây dựng hồ sơ từ trung bình và độ lệch chuẩn của kills, damage cùng các đặc trưng di chuyển, hỗ trợ và timing. Số trận được dùng để lọc độ tin cậy, không làm đầu vào chính. Ngưỡng tối thiểu 10 trận là quy ước thiết kế; chưa được chứng minh tối ưu.
 
 Mỗi chế độ Solo, Duo và Squad có mô hình riêng. Các biến được điền thiếu và chuẩn hóa trước khi tính khoảng cách. K được xét trong khoảng 2 đến 8, chọn theo silhouette development hữu hạn lớn nhất; trường hợp hòa chính xác ưu tiên K nhỏ hơn. Silhouette dùng mẫu chẩn đoán 2.000 hồ sơ với seed 42, trong khi quá trình fit dùng toàn bộ hồ sơ đủ điều kiện. Davies--Bouldin, tỷ trọng cụm nhỏ nhất và ARI qua seed được báo để đánh giá chất lượng bổ sung.
 
 Silhouette cao chưa đủ chứng minh các cụm có ý nghĩa. Một nhóm rất nhỏ gồm điểm cực đoan có thể tách xa phần còn lại và làm chỉ số có vẻ tốt. Vì vậy, số lượng thành viên, tâm cụm và độ ổn định phải được đọc đồng thời. Tên mô tả cụm được đặt từ hành vi; kết quả sống sót và thứ hạng chỉ được đối chiếu sau khi khóa phân cụm.
+
+Silhouette đánh giá tương quan giữa khoảng cách trong cụm và khoảng cách đến cụm lân cận, $s=(b-a)/\max(a,b)$. ARI đo mức nhất quán của hai phân hoạch sau hiệu chỉnh sự trùng khớp ngẫu nhiên; giá trị gần 1 thể hiện độ nhất quán cao hơn. Hai chỉ số trả lời hai câu hỏi khác nhau, do đó một cấu hình đạt silhouette cao vẫn có thể nhạy với seed \cite{skcluster}.
 \subsection{Mô hình cơ sở và hồi quy tuyến tính}
 Mô hình mean dự đoán bằng trung bình mục tiêu trên train; mô hình median dự đoán bằng trung vị train. Hai mốc cơ sở giúp trả lời liệu việc đưa đặc trưng vào mô hình có tạo ra giá trị thực tế. Với mục tiêu có ngoại lệ, median thường phản ánh vị trí điển hình tốt hơn mean nhưng kết quả phải được kiểm bằng dữ liệu cụ thể.
 
 Hồi quy tuyến tính có dạng $\hat y_i=\beta_0+\boldsymbol{x}_i^T\boldsymbol{\beta}$ và tối thiểu hóa tổng bình phương phần dư. Đầu vào được chuẩn hóa bằng thống kê train. Do quy mô lớn, hệ thống dùng QR theo khối và SVD trên ma trận nhỏ để giải bài toán bình phương tối thiểu toàn cục. Mỗi khối tối đa 50.000 dòng; đây không phải huấn luyện các mô hình riêng rồi lấy trung bình hệ số.
+
+Về mặt phương pháp, các đặc trưng phụ thuộc tuyến tính có thể làm hệ số khó diễn giải riêng lẻ. Đây là vấn đề đa cộng tuyến của hồi quy bình phương tối thiểu \cite{sklinear}. Trong bộ đặc trưng này, total\_distance bằng tổng walk và ride, vì vậy cần thận trọng khi diễn giải riêng từng hệ số của ba cột.
 
 Thiết kế có bảy lần fit logic: S1 mean, median, linear cho survival; P2 mean, median, linear cho placement; T0 linear cho placement không có timing. T1 dùng lại P2 linear. Hai nhánh T0/T1 được so sánh trên cùng row IDs, mục tiêu và split. Không sử dụng thuật toán học sâu trong bài chính.
 \subsection{Thước đo đánh giá}
@@ -140,31 +166,55 @@ Thiết kế có bảy lần fit logic: S1 mean, median, linear cho survival; P2
 R^2=1-\frac{\sum_i(y_i-\hat y_i)^2}{\sum_i(y_i-\bar y)^2}.
 \]
 MAE dễ đọc theo đơn vị mục tiêu; RMSE nhạy hơn với lỗi lớn. $R^2$ có thể âm và không phải accuracy. Với placement, ngoài micro theo dòng người chơi, nhóm tính match-aware với trọng số nghịch đảo số dòng của trận và team-aware theo đội. Không lấy trung bình RMSE hay $R^2$ của từng khối để thay cho kết quả toàn tập.
+
+Mốc $R^2=0$ tương ứng với dự đoán bằng trung bình của chính tập đang đánh giá; baseline mean của dự án lại sử dụng trung bình train. Hai đại lượng không nhất thiết trùng nhau khi phân phối mục tiêu giữa các tập khác nhau. Vì vậy, baseline mean có thể có $R^2$ rất âm mà không mâu thuẫn với định nghĩa chỉ số \cite{skmetrics}.
 \clearpage
 \section{THỬ NGHIỆM VÀ KẾT QUẢ}
 \subsection{Thiết lập và nguồn bằng chứng}
 Kết quả được tổng hợp từ bốn notebook đã chạy: S00--S06, S07, S08 và S09--S12. Môi trường thể hiện Python 3.13.15, DuckDB 1.5.6, với các bước mô hình sử dụng GPU T4 theo cấu hình. SQL, thống kê và đánh giá chạy trên CPU. Bộ nhớ GPU không thay thế RAM của các thao tác SQL.
 
-Bản báo cáo sử dụng các bảng và hình đã nhúng trong notebook. Một số bảng chỉ hiển thị 20 hoặc 25 dòng đầu, nên các nhận xét chỉ dùng hàng thực sự có trong nguồn. Các CSV trích kèm báo cáo cũng là bảng hiển thị, không được gọi là bản CSV đầy đủ của pipeline. Trạng thái completed của S01--S10 xác nhận quy trình thực thi hoàn tất; chất lượng mô hình vẫn phải được đánh giá bằng số liệu.
+Bản hoàn thiện đọc trực tiếp 81 tệp CSV trong snapshot S09--S10, đối chiếu SHA256 với handoff trước khi chọn số liệu đưa vào báo cáo. Bộ nhập trước đó đã xác nhận 466 entry trong handoff, checkpoint S01--S10 và inventory của một release. Báo cáo đính kèm các CSV nguồn cần cho bảng trình bày cùng chỉ mục truy vết. Một bảng trình bày có thể chọn bớt cột hoặc nhóm để dễ đọc, nhưng không còn phụ thuộc giới hạn 20/25 dòng của notebook. Trạng thái completed xác nhận quy trình hoàn tất; hiệu năng vẫn phải được đánh giá độc lập bằng số liệu.
+
+Các phiên bản phần mềm ghi trong kết quả gồm NumPy 2.1.3, pandas 2.3.3, PyArrow 23.0.1, scikit-learn 1.6.1 và cuML 26.02.000. Tài liệu trực tuyến được dẫn để giải thích phương pháp, không được dùng thay metadata phần mềm thực nghiệm. Cổng chọn mô hình ghi train-only, test chưa được truy cập tại thời điểm phê duyệt và không refit trên train+validation; lịch sử test exposure trước đó được ghi là unknown.
 \subsection{RQ1: Quan hệ giữa hành vi và kết quả}
 \input{tables/correlation.tex}
 Trên 57.262.855 quan sát hợp lệ ở các cặp biến gốc với survival, Spearman của quãng đường đi bộ đạt 0,909129, trong khi Pearson chỉ 0,001197. Với số kill, hai giá trị lần lượt là 0,400674 và -0,000438. Sự khác biệt lớn này phù hợp với cảnh báo về phân phối thời gian sống có giá trị cực đoan, nhưng riêng tương quan chưa xác định được nguyên nhân.
 
 Đối với placement, Pearson của sát thương là 0,395892 và Spearman là 0,403764 trên 57.153.260 dòng. Đây là liên hệ quan sát có mức độ vừa, không đủ để khẳng định tăng sát thương sẽ làm tăng thứ hạng. Người sống lâu có nhiều thời gian tích lũy di chuyển và giao tranh; chiều tác động có thể đan xen.
+\input{tables/correlation_modes.tex}
+Đi bộ có Spearman dương với placement trong cả ba chế độ, nhưng mức độ khác nhau: Solo khoảng 0,925, Duo 0,856 và Squad 0,751. Hướng liên hệ nhất quán không có nghĩa cùng một mức tăng khoảng cách dẫn tới cùng một mức tăng thứ hạng. Đối với timing, early\_kill\_ratio có Spearman -0,649110 còn late\_kill\_ratio có 0,629308 trong Overall; đây là mô tả trên các dòng có timing hợp lệ và còn chịu ảnh hưởng của thời lượng trận xấp xỉ.
+
+Một chi tiết cần lưu ý là player\_dbno ở Solo có tương quan không xác định, được nguồn ghi status=undefined. Trường hợp này phải giữ NA, không diễn giải thành tương quan bằng 0. Việc báo N hợp lệ của từng cặp cũng tránh so sánh trực tiếp hệ số tính trên 23,8 triệu dòng timing với hệ số tính trên hơn 57 triệu dòng biến gốc mà bỏ qua khác biệt độ bao phủ.
 \input{figures/correlation_selected.tex}
 \subsection{RQ2: Phân nhóm hành vi}
+\input{tables/retention.tex}
+Ngưỡng ít nhất 10 trận giữ lại 446.791 hồ sơ Duo, 269.635 Solo và 665.206 Squad ở development, tương ứng khoảng 11,19\%, 8,98\% và 13,08\% số hồ sơ cùng chế độ. Do vậy, kết luận phân cụm chủ yếu mô tả những hồ sơ có đủ lịch sử, không đại diện đồng đều cho người chỉ xuất hiện một vài trận. Khi chuyển sang full descriptive sau khóa lựa chọn, tổng số hồ sơ được gán cụm là 540.292 Duo, 327.422 Solo và 800.422 Squad. Hai bộ số lượng thuộc hai phạm vi khác nhau.
+\input{tables/k_selected.tex}
+\resultfigure{figures/k_stability.png}{Silhouette và độ ổn định theo K trên development}{Đường có giá trị thiếu được giữ khoảng trống. Quy tắc chọn K xét silhouette hữu hạn; ARI được báo để diễn giải độ ổn định. Nguồn: k\_diagnostics.csv đầy đủ.}
 \input{tables/clusters.tex}
 Kết quả cuối cùng có 4 cụm Duo, 2 cụm Solo và 3 cụm Squad. Solo phân chia tương đối rõ về mức độ giao tranh: cụm 0 có trung bình 1,627 kill và 190,983 sát thương mỗi trận; cụm 1 lần lượt là 0,617 và 83,189. Có thể mô tả hai nhóm là giao tranh cao hơn và giao tranh thấp hơn trong chính chế độ Solo, tránh quy chúng thành hai kiểu người chơi tuyệt đối.
 
 Duo và Squad có phân bố rất lệch. Cụm Duo 0 chiếm khoảng 99,268\%, còn cụm Duo 1 chỉ có 4 hồ sơ. Cụm Squad 2 chiếm khoảng 99,169\%, trong khi cụm Squad 1 có 13 hồ sơ. Cụm Duo 2 có trung bình quãng đường đi bộ khoảng 36.375,383 theo đơn vị nguồn, cao hơn rõ rệt nhóm chính. Những kết quả này gợi ý cần xem xét sự chi phối của ngoại lệ và cấu trúc giá trị thiếu trước khi gắn nhãn phong cách chơi.
 
 Trong chẩn đoán development, cấu hình Duo với K=4 có silhouette 0,765926 nhưng ARI qua seed chỉ 0,027045. Đây là ví dụ trực tiếp cho thấy độ tách biệt trên mẫu và độ ổn định nhãn không đồng nghĩa. Không nên công bố bộ cụm này như một hệ phân loại hành vi bền vững khi chưa có phân tích bổ sung.
+\input{tables/centers.tex}
+Với K đã chọn, Solo có ARI khoảng 0,599 và Squad khoảng 0,698, đều cao hơn Duo nhưng chưa đạt nhất quán hoàn toàn. Một số cấu hình K khác ổn định hơn nhưng không được chọn do quy tắc nghiên cứu đã đăng ký ưu tiên silhouette hữu hạn cao nhất. Báo cáo giữ lựa chọn đã chạy, đồng thời công bố hạn chế thay vì đổi K sau khi xem outcome.
+
+Tên mô tả phù hợp cho cụm Solo 0 là giao tranh tích cực hơn tương đối, còn Solo 1 là giao tranh thấp hơn tương đối. Cụm Duo 2 có mức di chuyển bất thường cần kiểm tra; các cụm Duo 1/Squad 1 có nhiều trung bình hành vi bằng 0 và quy mô rất nhỏ nên chưa đủ căn cứ gắn ý nghĩa chiến thuật. Số liệu mean survival trong cluster\_outcomes cũng có giá trị rất lớn, nên không dùng bảng đó để kết luận nhóm nào sống lâu hơn theo nghĩa thực tiễn khi vấn đề nguồn chưa được giải thích.
 \input{figures/clusters_selected.tex}
 \subsection{RQ3: Kết quả hồi quy trên validation}
 \input{tables/validation.tex}
 Với placement, hồi quy P2 đạt MAE 0,173490 và $R^2=0,481143$ trên validation, tốt hơn mốc mean có MAE 0,262794 và $R^2$ xấp xỉ 0. T0 chưa có timing đạt MAE 0,186753. Như vậy, các đặc trưng hành vi cung cấp thông tin giải thích thứ hạng trong thiết kế hồi cứu này.
 
 Ngược lại, S1 linear có MAE 187.006,670 và $R^2$ khoảng $-3,716\times10^5$ trên validation. Baseline median có MAE 499,487, thấp hơn rất nhiều. Baseline mean cũng kém với MAE 60.734,082. Sự thất bại đồng thời của mean và hồi quy là một dấu hiệu cần kiểm tra phân phối train, thang đo và tính nhất quán của chuỗi xử lý; không thể quy toàn bộ vấn đề cho thuật toán tuyến tính khi chưa đối soát sâu hơn.
+\subsection{Kết quả đầy đủ trên tập test}
+\input{tables/test_survival.tex}
+Trên 10.106.376 dòng test survival, median đạt MAE 499,509606 và RMSE 591,196793, trong khi hồi quy có MAE 186.899,052476 và RMSE 356.911,707793. Hồi quy chưa vượt được baseline trung vị; việc thêm nhiều đặc trưng không tự bảo đảm chất lượng. Theo bins\_s1.json, ngưỡng lớn nhất của mục tiêu train là 63.648.215.000, xác nhận ít nhất một giá trị train có quy mô rất khác các giá trị điển hình. Đây là bằng chứng của phân phối bất thường, chưa xác định được lỗi bắt nguồn từ dữ liệu hay chuỗi xử lý.
+
+Manifest selection xác nhận cả bảy thí nghiệm được giữ theo đăng ký trước sau kiểm finite prediction, reload và cohort; không đặt ngưỡng hiệu năng để loại một mô hình. Vì vậy, việc S1 được ghi completed và có dự đoán test không phải bằng chứng S1 đạt chất lượng triển khai.
+\input{tables/test_placement.tex}
+Với placement, median có MAE 0,262774 còn P2 đạt 0,173516, giảm khoảng 33,97\%. So với mean, mức giảm MAE cũng xấp xỉ 33,98\%. Chênh lệch giữa MAE validation của P2 (0,173490) và test (0,173516) chỉ khoảng 0,000026, cho thấy hiệu năng nhất quán giữa hai tập trong cùng phép chia theo trận. Đây chưa phải kiểm định khái quát sang thời kỳ khác hoặc người chơi mới.
+\resultfigure{figures/placement_validation_test.png}{So sánh baseline, T0 và P2 giữa validation và test}{Hai panel dùng các chỉ số riêng biệt trên cùng mục tiêu placement. Các cột validation và test gần nhau; P2 có sai số thấp nhất trong bốn nhánh placement đã chạy. Nguồn: model\_metrics.csv đầy đủ.}
 \subsection{Đóng góp của Combat Timing trên test}
 \input{tables/timing.tex}
 Trên cùng 10.085.842 dòng test, T1=P2 giảm MAE từ 0,186802 xuống 0,173516, tương đương khoảng 7,11\% so với T0. RMSE giảm từ 0,231220 xuống 0,217318, khoảng 6,01\%. $R^2$ tăng từ 0,413202 lên 0,481642, tức tăng 0,068440 điểm. Match-aware và team-aware cùng cho hướng cải thiện.
@@ -173,8 +223,16 @@ Các con số trên mô tả chênh lệch thực nghiệm của đúng cohort �
 \input{figures/timing_selected.tex}
 \subsection{Phân tích sai số}
 \input{tables/errors.tex}
+Với placement, Squad có MAE 0,185307, cao hơn Duo (0,165859) và Solo (0,158561); mức chênh Squad so với Solo khoảng 16,9\%. So sánh này mô tả sự không đồng đều giữa các chế độ, chưa chứng minh khác biệt thống kê. Số quan sát và số trận cũng khác nhau, trong đó Squad chiếm gần một nửa dòng test placement.
+\input{tables/error_regions.tex}
+Ba miền mục tiêu được xác định từ phân vị train, với mốc khoảng 0,307692 và 0,675325. Nhóm thứ hạng giữa có MAE 0,109781, thấp hơn nhóm dưới (0,199023) và nhóm trên (0,213388). Mô hình vì vậy dự đoán khó hơn ở hai đầu thang thứ hạng. Các giá trị $R^2$ âm theo miền không mâu thuẫn với $R^2$ dương toàn tập: mỗi miền có trung bình và phương sai mục tiêu riêng, thường nhỏ hơn phạm vi toàn tập. Không cộng số trận của ba miền vì một trận có thể đóng góp người chơi vào nhiều miền.
 \input{figures/errors_selected.tex}
 Đường dự đoán bằng thực tế là mốc trực quan để xem mức độ lệch. Hình scatter chỉ lấy mẫu để trình bày; các metric được tính trên toàn bộ cohort hợp lệ. Vì vậy, không suy ra số lượng ngoại lệ toàn tập chỉ từ mật độ điểm trên hình.
+\subsection{Hệ số mô hình và khả năng diễn giải}
+\input{tables/coefficients.tex}
+Hệ số của avg\_kill\_time trong P2 là 0,163657, còn first\_kill\_time là -0,056363 trên thang đầu vào đã chuẩn hóa. Hai dấu khác nhau cho thấy hệ số riêng phần khi các biến khác cùng có trong mô hình có thể khác tương quan hai biến đơn lẻ. Hệ số âm của late\_kill\_ratio cũng không phủ định Spearman dương quan sát được trước đó.
+
+Các quan hệ phụ thuộc như total\_distance=walk+ride, các tỷ lệ pha có tổng bằng 1 trên dòng hợp lệ và các chỉ báo thiếu liên quan khiến nhiều cột không độc lập. Do đó, bảng hệ số chỉ mô tả nghiệm của recipe đã chạy, không phải bảng xếp hạng tầm quan trọng ổn định hay tác động nhân quả. Muốn đánh giá đóng góp riêng từng biến cần thí nghiệm bổ sung được thiết kế trước; phép T0/T1 hiện chỉ đánh giá cả nhóm timing.
 \clearpage
 \section{THẢO LUẬN KẾT QUẢ}
 \subsection{Vai trò của chất lượng dữ liệu}
@@ -190,7 +248,7 @@ Placement cho kết quả nhất quán hơn survival trong bằng chứng hiện
 
 Đối với survival, baseline median là mốc thực nghiệm quan trọng vì cho sai số nhỏ hơn rõ rệt trong bảng hiển thị. Báo cáo chưa lựa chọn một mô hình survival để triển khai. Cần ưu tiên kiểm tra nguồn và kiểm định số học trước khi đề xuất thuật toán phức tạp hơn. Việc thêm mô hình mạnh hơn có thể che triệu chứng mà chưa giải quyết nguyên nhân.
 \subsection{Hạn chế và hướng phát triển}
-Các giới hạn chính gồm đơn vị thời gian chưa được xác minh độc lập; ngoại lệ survival rất lớn; sự phụ thuộc giữa các người chơi cùng trận và cùng đội; tên người chơi có thể không ổn định; timing phụ thuộc proxy hậu trận; độ bao phủ event khác aggregate; và chưa có khoảng tin cậy cho so sánh T0/T1. Một số bảng xuất trong notebook bị giới hạn số dòng hiển thị nên bộ báo cáo hiện tại chưa thay thế kho artifact đầy đủ.
+Các giới hạn chính gồm đơn vị thời gian chưa được xác minh độc lập; ngoại lệ survival rất lớn; sự phụ thuộc giữa các người chơi cùng trận và cùng đội; tên người chơi có thể không ổn định; timing phụ thuộc proxy hậu trận; độ bao phủ event khác aggregate; và chưa có khoảng tin cậy cho so sánh T0/T1. Bản hoàn thiện đã có CSV và snapshot đầy đủ để truy vết, nhưng chưa kiểm tra lại raw nguồn hoặc thực hiện thí nghiệm xác định nguyên nhân các bất thường.
 
 Hướng phát triển phù hợp là đối soát dữ liệu theo shard và theo split, kiểm tra tác động của quy tắc chất lượng được đăng ký trước, đánh giá lại độ ổn định cụm và thực hiện bootstrap theo trận. Nếu mở rộng sang mô hình phi tuyến, cần giữ cùng cohort và thiết kế đánh giá để so sánh công bằng. Mọi thay đổi phải có phiên bản kết quả riêng; không dùng test hiện có để chỉnh rồi báo lại như kiểm định độc lập.
 \clearpage
@@ -206,7 +264,9 @@ Dữ liệu được lưu dưới dạng Parquet và xử lý bằng SQL trên �
 \subsection{Bàn giao và truy vết}
 Mỗi phiên tiếp tục khôi phục từ kết quả đã lưu, kiểm checksum và thông tin môi trường rồi chạy phần tiếp theo. Bộ notebook người dùng cung cấp phản ánh chuỗi S00--S06, S07, S08 và S09--S12. Báo cáo kèm một bảng ánh xạ nguồn để xác định mỗi bảng, hình đã trích từ notebook và output nào.
 
-Phần ứng dụng trong đề tài là notebook phân tích và trình đọc kết quả. Không có bằng chứng triển khai một website hay hệ thống dự đoán thời gian thực, vì vậy báo cáo không mô tả những chức năng đó như sản phẩm đã hoàn thành. Khi bảo vệ, nhóm có thể dùng các bảng và hình đã lưu để trình bày mà không phải chạy lại dữ liệu lớn.
+Snapshot đầy đủ nằm tại results/PUBG\_Coursework\_v511\_S09\_S10; con trỏ final\_results.json dẫn tới release có mã \texttt{ff9f409dc0bc4720904d58545d25d1b4}. Bản cập nhật báo cáo sử dụng CSV đầy đủ và giữ nguyên code/config/model/prediction/checkpoint của snapshot. Công cụ dựng bảng chỉ đọc kết quả, không huấn luyện lại. Điều này giúp phân biệt việc hoàn thiện trình bày với một đợt thí nghiệm mới.
+
+Sản phẩm thực hành của nhóm là notebook phân tích và trình đọc báo cáo. Khi bảo vệ, mở release đã lưu để đối chiếu bảng/hình, không cần chạy lại dữ liệu lớn. Phiên bản hiện tại chưa triển khai website hoặc dịch vụ dự đoán trực tuyến.
 \clearpage
 \section{KẾT LUẬN}
 Đề tài đã xây dựng quy trình khai phá dữ liệu PUBG từ kiểm nguồn, tạo đặc trưng và khám phá quan hệ đến phân cụm, hồi quy và phân tích sai số. Bằng chứng thực thi có 67.369.231 dòng aggregate và 65.370.475 dòng event đầu vào, với phạm vi toàn bộ dữ liệu hợp lệ theo từng bài toán.
@@ -214,15 +274,23 @@ Phần ứng dụng trong đề tài là notebook phân tích và trình đọc 
 Đối với RQ1, các hệ số cho thấy liên hệ giữa hành vi và kết quả nhưng đồng thời bộc lộ tác động của phân phối lệch. Đối với RQ2, Solo có hai nhóm khác biệt về mức độ giao tranh; Duo và Squad cần thận trọng vì phân bố cụm mất cân đối và độ ổn định chưa đồng đều. Đối với RQ3, mô hình placement có giá trị giải thích và timing giúp giảm sai số trên cohort test đã chạy; mô hình survival chưa đạt chất lượng sử dụng.
 
 Qua quá trình thực hiện, nhóm nhận thấy đóng góp của khai phá dữ liệu không chỉ nằm ở việc chạy thành công thuật toán. Khả năng nhận biết giới hạn, kiểm tra tính hợp lý của dữ liệu và trình bày trung thực kết quả là điều kiện để các mẫu tìm được có ý nghĩa. Báo cáo vì vậy giữ cả kết quả tích cực và các bất thường cần tiếp tục điều tra.
-\begin{thebibliography}{9}
+\clearpage\begin{thebibliography}{9}
 \bibitem{data} Nhóm dự án. Thông tin nguồn PUBG Match Deaths and Statistics, Version 3, ghi trong cấu hình và source inventory của notebook thực nghiệm. Kaggle: \url{https://www.kaggle.com/datasets/skihikingkevin/pubg-match-deaths}.
 \bibitem{spec} Nhóm 3. \textit{PUBG Research Spec}, thiết kế 5.11 và các cập nhật thực thi đến ngày 22/10/2026. Tài liệu nội bộ dự án.
 \bibitem{plan} Nhóm 3. \textit{PUBG Implementation Plan}. Tài liệu triển khai và kiểm thử nội bộ dự án.
 \bibitem{results} Nhóm 3. Bộ kết quả thực nghiệm: \texttt{pubg\_S00\_S06.ipynb}, \texttt{pubg\_S07.ipynb}, \texttt{pubg\_S08.ipynb}, \texttt{pubg\_S09\_S10\_S11\_S12.ipynb}. Bản người dùng cung cấp ngày 23/10/2026.
+\bibitem{fullresults} Nhóm 3. Snapshot kết quả \texttt{PUBG\_Coursework\_v511\_S09\_S10}, gói results.zip, handoff S01--S10 và release ff9f409dc0bc4720904d58545d25d1b4. Đối chiếu local ngày 23/10/2026.
+\bibitem{skcluster} Scikit-learn. \textit{Clustering: K-means and clustering evaluation}. \url{https://scikit-learn.org/stable/modules/clustering.html}. Truy cập ngày 23/10/2026.
+\bibitem{sklinear} Scikit-learn. \textit{Linear Models: Ordinary Least Squares}. \url{https://scikit-learn.org/stable/modules/linear_model.html}. Truy cập ngày 23/10/2026.
+\bibitem{skmetrics} Scikit-learn. \textit{Metrics and scoring: Regression metrics}. \url{https://scikit-learn.org/stable/modules/model_evaluation.html}. Truy cập ngày 23/10/2026.
 \end{thebibliography}
 \clearpage\appendix
 \section{NGUỒN BẰNG CHỨNG VÀ PHẠM VI BẢNG TRÍCH}
-Các bảng trong báo cáo được định dạng lại từ HTML nhúng trong notebook; hình được trích nguyên PNG. Mã trích xuất không thực thi cell nghiên cứu. Thư mục \texttt{evidence} chứa bảng xem trước và chỉ mục ánh xạ; các con số bị rút gọn trong nguồn không được khôi phục bằng suy đoán. Tệp \texttt{SOURCE\_MAP.md} liệt kê nguồn tương ứng để đối chiếu.
+Các bảng của bản hoàn thiện được tạo từ CSV đầy đủ, giữ bản nguồn tại \nolinkurl{evidence/full_results}. Công cụ build\_full\_results.py đọc 81 CSV, kiểm SHA256 với handoff và ghi số dòng của từng bảng vào verification.json. Bảng lớn cluster\_assignments chỉ được đọc kiểm kê, không đóng kèm tên người chơi vào gói báo cáo. Các manifest về split, scope, chọn cụm, chọn mô hình, bins và uncertainty cũng được lưu để đối chiếu. coverage\_summary là bảng dẫn xuất bằng tổng số dòng theo trạng thái, được ghi nguồn rõ trong chỉ mục.
+
+Các hình cũ được trích nguyên PNG từ notebook và còn ánh xạ tại evidence/index.json; hai hình mới được vẽ trực tiếp từ model\_metrics.csv và k\_diagnostics.csv. Tệp SOURCE\_MAP.md liệt kê bảng/hình cập nhật. Các bảng xem trước lịch sử vẫn được giữ để đối chiếu, không dùng thay nguồn đầy đủ trong bản báo cáo này.
+
+Phạm vi kiểm tra của đợt báo cáo là số liệu đã lưu, checksum, manifest và sự nhất quán khi trình bày. Không thực thi notebook nguồn, không nạp joblib, không sửa nhãn hoặc dữ liệu và không tính lại dự đoán. Các bất thường survival và hạn chế ổn định cụm vì vậy vẫn được trình bày như kết quả quan sát cần điều tra, thay vì tự thay đổi pipeline để làm đẹp báo cáo.
 
 Danh sách thành viên, email và bố cục bìa dựa trên báo cáo môn Học máy do người dùng cung cấp. Giảng viên hướng dẫn môn Khai phá dữ liệu là ThS. Phạm Kim Thành theo thông tin người dùng xác nhận.
 \end{document}

@@ -1,0 +1,7 @@
+{
+  "status": "not_requested",
+  "replicates": 0,
+  "reason": "Không tuyên bố significance nếu chưa tính CI",
+  "delta": "candidate-reference",
+  "level": "match"
+}

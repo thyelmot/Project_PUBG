@@ -1,0 +1,8 @@
+{
+  "scope": "train+validation",
+  "test_used": false,
+  "outlier_removal": "none",
+  "transform_reason": "Auto policy approved 2026-10-17: unchanged features, no log and no outlier removal; no outcome-driven transformation selection",
+  "log_columns": [],
+  "decision_mode": "auto"
+}

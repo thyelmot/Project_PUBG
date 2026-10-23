@@ -1,0 +1,12 @@
+{
+  "grade": "C",
+  "reason": "Auto: chronology semantics/consistency or >=3 blocks not established; seeded match-group split, no future-prediction claim",
+  "decision_mode": "auto",
+  "chronology_evidence": null,
+  "ratios": [
+    0.7,
+    0.15,
+    0.15
+  ],
+  "match_intersections": 0
+}

@@ -9,3 +9,5 @@ outputs/
 *.joblib
 .env
 handoff_*.json
+results/
+.pubg-results-import-*/

@@ -1,15 +1,16 @@
 \begin{table}[H]\centering\small
-\caption{Các cặp tương quan chọn từ bảng development}
-\fitwidth{\begin{tabular}{lllll}
+\caption{Quan hệ với placement, train+validation, Overall}
+\fitwidth{\begin{tabular}{llll}
 \toprule
-Đặc trưng & Mục tiêu & N & Pearson & Spearman\\\midrule
-player\_kills & player\_survive\_time & 5.72629e+07 & -0.000438 & 0.400674\\
-player\_dmg & player\_survive\_time & 5.72629e+07 & -0.000523 & 0.439757\\
-player\_dist\_walk & player\_survive\_time & 5.72629e+07 & 0.001197 & 0.909129\\
-first\_kill\_time & player\_survive\_time & 2.39088e+07 & -0.000291 & 0.598188\\
-player\_kills & normalized\_placement & 5.71533e+07 & 0.372175 & 0.374387\\
-player\_dmg & normalized\_placement & 5.71533e+07 & 0.395892 & 0.403764\\
-player\_dist\_walk & normalized\_placement & 5.71533e+07 & 0.224755 & 0.817044\\
-\bottomrule\end{tabular}}
-\end{table}
-\source{rq1\_relationships, bảng hiển thị trong notebook đã chạy}
+Đặc trưng & N & Pearson & Spearman\\\midrule
+player\_kills & 5.71533e+07 & 0.372175 & 0.374387\\
+player\_dmg & 5.71533e+07 & 0.395892 & 0.403764\\
+player\_dist\_walk & 5.71533e+07 & 0.224755 & 0.817044\\
+player\_dist\_ride & 5.71533e+07 & 0.508084 & 0.623494\\
+total\_distance & 5.71533e+07 & 0.382926 & 0.805862\\
+walk\_ratio & 5.58615e+07 & -0.50189 & -0.55535\\
+avg\_kill\_time & 2.38651e+07 & 0.707694 & 0.737909\\
+early\_kill\_ratio & 2.38467e+07 & -0.635282 & -0.64911\\
+late\_kill\_ratio & 2.38467e+07 & 0.539896 & 0.629308\\
+\bottomrule\end{tabular}}\end{table}
+\source{\texttt{rq1\_relationships.csv}, số liệu đầy đủ đã lưu}
