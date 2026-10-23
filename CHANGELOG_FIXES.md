@@ -578,6 +578,14 @@
 
 - Đính chính cách xuất bản: tự động kiểm tra chặn lệnh git rm -r của snapshot cũ trước khi chạy. Chuyển sang phương án không xóa: thêm toàn bộ dự án tại PUBG_Coursework/ trong main, cập nhật README gốc dẫn tới dự án hiện hành; giữ nguyên các file cũ còn lại. Không thực hiện cách khác để xóa chúng.
 
+## 23/10/2026 - Thay toàn bộ cấu trúc main bằng dự án hiện hành
+
+- Yêu cầu mới, tường minh của người dùng: toàn bộ file/folder trong dự án hiện hành thay thế hết dự án cũ trên main, thay vì đặt thêm thư mục con.
+- Đối chiếu: SPEC/PLAN và AGENTS hiện hành; chỉ thay bố trí snapshot GitHub, không sửa nội dung nghiên cứu hoặc xóa cây dự án cũ trên máy.
+- Phạm vi: đưa nội dung PUBG_Coursework ra gốc repository, loại các đường dẫn của snapshot cũ trong bản clone xuất bản, giữ lịch sử Git và tạo nhánh lưu main trước thay thế. Không force-push.
+- Kiểm dự kiến: đối chiếu đủ danh sách file và nội dung với dự án nguồn, đọc JSON notebook/ZIP, kiểm main remote khớp commit sau push.
+- Giới hạn: đây là xuất bản snapshot; không chạy lại mô hình và không chứng minh mới về CUDA/full-data. Kết quả push được báo ở phản hồi bàn giao.
+
 
 
 

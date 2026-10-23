@@ -1,3084 +1,435 @@
-# PUBG_RESEARCH_SPEC.md
-## Đặc tả nghiên cứu và triển khai chính thức — PUBG Data Mining
+# Đặc tả bài cuối kỳ khai phá dữ liệu PUBG
 
-**Phiên bản:** 3.0  
-**Ngày:** 24/09/2026  
-**Trạng thái:** Thiết kế đã hoàn thiện trước triển khai (`code-first, execute-later`)  
-**Môi trường mục tiêu:** Google Colab / cloud notebook  
-**Nguồn dữ liệu:** Kaggle — *PUBG Match Deaths and Statistics* (`skihikingkevin/pubg-match-deaths`)  
-**Tài liệu này là nguồn sự thật chính (single source of truth) cho việc triển khai.**
+Phiên bản thiết kế: 5.11-normalized-storage. Cập nhật: 20/10/2026.
+Trạng thái 16/10/2026: có evidence pipeline synthetic CUDA và saved-output read-back Version 3 do người dùng cung cấp; chưa có kết quả PUBG chính thức. Người dùng đã cho phép chuyển sang dữ liệu lớn, gắn Dataset thật và gửi kiểm header đầu mỗi nhóm (5 aggregate/5 deaths, tổng khoảng18.89GiB; working trống19.5GiB). Đây không phải inventory/hash/schema toàn nguồn hoặc xác nhận đủ tài nguyên. Đã sửa vận hành S01 giảm bản sao Parquet:31/31tests CPU local và đối chiếu90bảng/dataset/predictions trước/sau đạt; chưa chạy nguồn lớn trong lượt sửa. Version Input thực, đơn vị/chronology và quyết định nghiên cứu thật vẫn cần xác minh. Cấu hình/quyết định fixture không áp dụng cho nghiên cứu thật. Dọn cây cũ vẫn bị chặn.
+Cập nhật 17/10/2026: người dùng cung cấp ảnh S01 full completed, 67.369.231 dòng aggregate và 65.370.475 dòng event trên 10 shard. Đây là bằng chứng ingest, chưa phải kết quả RQ1/RQ2/RQ3. Bản lưu official Version1 không có file hiển thị và kiểm working sau đó cho False; không có bản sao theo phản hồi người dùng. Chưa xác định được nguyên nhân lỗi lưu, không gọi đã có output bền vững. Code auto 5.2 đạt37/37tests CPU local trong165.956giây, không chứng minh GPU/full-data trên Kaggle.
 
-Kế hoạch hiện hành duy nhất: [PUBG_IMPLEMENTATION_PLAN.md](PUBG_IMPLEMENTATION_PLAN.md). Đọc [quy tắc thực hiện và tích theo bằng chứng](PUBG_IMPLEMENTATION_PLAN.md#tracking-rules), sau đó thực hiện [giai đoạn 0](PUBG_IMPLEMENTATION_PLAN.md#phase-0) đến [giai đoạn 16](PUBG_IMPLEMENTATION_PLAN.md#phase-16). Việc hợp nhất chỉ tổ chức lại triển khai; không thay đổi RQ, feature, target, split, metric hoặc protocol. Lịch sử nằm trong CHANGELOG_FIXES.md; bảng truy vết ở cuối kế hoạch.
+Kế hoạch thực hiện duy nhất: [PUBG_IMPLEMENTATION_PLAN.md](PUBG_IMPLEMENTATION_PLAN.md).
 
-> Nếu tài liệu này mâu thuẫn với các kế hoạch cũ như `kh.md`, `IMPLEMENT_GUIDE.md`, ghi chú notebook cũ hoặc prompt cũ, **tài liệu này được ưu tiên**. Không được tự động trộn thiết kế cũ vào thiết kế mới.
+## I. Mục tiêu và ranh giới
 
----
+Đề tài: Phân tích hành vi người chơi PUBG, phân nhóm hành vi và hồi quy thời gian sống sót/thứ hạng từ dữ liệu sau trận.
 
-# 0. Mục đích của tài liệu
+Mục tiêu là bài cuối kỳ có câu hỏi rõ, xử lý dữ liệu đúng, phương pháp bám môn học, kết quả truy vết được và nhóm giải thích được khi bảo vệ. Mục tiêu 10 điểm là định hướng chất lượng, không phải điểm được bảo đảm. Chưa có rubric (bảng tiêu chí chấm) của giảng viên; không tự tạo trọng số rồi gọi đó là thang điểm chính thức.
 
-Tài liệu này mô tả toàn bộ thiết kế nghiên cứu, kiến trúc dữ liệu, quy tắc chống rò rỉ dữ liệu, chiến lược feature engineering (kỹ thuật tạo đặc trưng), EDA (phân tích dữ liệu khám phá), clustering (phân cụm), prediction (dự đoán), evaluation (đánh giá), Colab execution (thực thi trên Colab), checkpoint/versioning (điểm lưu/phiên bản), reproducibility (khả năng tái lập), cấu trúc notebook và yêu cầu README.
+Phiên bản này thực hiện yêu cầu xây mới bài cuối kỳ sau khi đối chiếu bảy slide C1-C7, xóa sản phẩm dự án cũ theo phạm vi đã kiểm kê và chỉ kế thừa phương pháp/hướng nghiên cứu. Notebook duy nhất là notebooks/PUBG_COURSEWORK.ipynb. Giữ ba RQ, hai target, Combat Timing và tính trung thực khoa học. Giảm số nhánh thí nghiệm bắt buộc, không giảm yêu cầu kiểm tra dữ liệu, chống rò rỉ hoặc khả năng đọc notebook.
 
-Mục tiêu của file là để một coding agent như Codex/Claude có thể:
+Thay đổi phạm vi so với v3.0:
 
-1. hiểu chính xác bài toán nghiên cứu;
-2. không tự thay đổi mục tiêu hoặc thêm bớt RQ;
-3. triển khai toàn bộ code trước khi chạy full workflow;
-4. không gây target leakage (rò rỉ biến mục tiêu);
-5. xử lý được toàn bộ dữ liệu hợp lệ;
-6. chạy tuần tự trên Google Colab;
-7. có checkpoint/resume;
-8. tạo đầy đủ artifact để người dùng tự viết báo cáo cuối.
+| Nội dung | Phạm vi mới |
+| --- | --- |
+| RQ1, tiền xử lý, EDA, Combat Timing | Bắt buộc |
+| RQ2 KMeans per_mode, chọn K, độ ổn định qua seed, mô tả cụm và outcome sau khóa | Bắt buộc |
+| C2 phân cấp, C3 thêm games_played, C4 chạy phân cụm lại nhiều ngưỡng, DBSCAN | Mở rộng, không điều kiện qua bài chính |
+| RQ3 S1, P2, hai baseline hằng số, Linear Regression | Bắt buộc |
+| T0/T1 cho placement, cùng cohort/model/split | Bắt buộc, điểm nhấn thực nghiệm |
+| P1 và so P1/P2, lịch sử S2/P3, ablation mọi nhóm, nhiều mô hình boosting | Mở rộng |
+| Random Forest hồi quy | Mở rộng ưu tiên nếu đủ tài nguyên và thời gian |
+| Sai số theo mode/miền target, hệ số tuyến tính, tái lập và báo cáo | Bắt buộc |
+| Khoảng tin cậy bootstrap | Ưu tiên T0/T1; được ghi giới hạn thiếu CI, không tuyên bố ý nghĩa thống kê khi chưa tính |
+| Toàn bộ dữ liệu hợp lệ | Giữ nguyên. Chưa phê duyệt lấy mẫu nghiên cứu chính |
 
----
+Người dùng đã yêu cầu xóa và làm mới code/config/notebook/tài liệu cùng dữ liệu/kết quả cũ thuộc dự án. Chỉ kế thừa phương pháp, không giữ implementation/checkpoint/manifest/models/predictions hoặc số liệu audit cũ như kết quả mới. Giai đoạn 0 phải kiểm kê exact paths trong Project_PUBG, không xóa workspace cha, tài liệu môn học, .git hoặc theo link sang thư mục ngoài. Drive và raw/ZIP ngoài root phải được xác định target thực riêng. Phần code đã triển khai, nhưng chưa thực hiện xóa. Thí nghiệm mở rộng chưa chạy không được đánh completed.
 
-# 1. Kết quả rà soát toàn bộ thiết kế
+## II. Liên hệ nội dung môn học
 
-Sau khi đối chiếu toàn bộ luồng thảo luận và kế hoạch cũ, thiết kế mới được giữ nguyên về hướng nghiên cứu chính nhưng cần làm rõ/correct một số điểm để tránh lỗi khi triển khai.
+Các slide nằm ở thư mục cha repository. C1-C7 dưới đây là CHƯƠNG học, khác với mã thí nghiệm phân cụm C1-C5.
 
-## 1.1. Các điểm đã đúng và được giữ nguyên
+| Chương và file | Áp dụng | Đầu ra chứng minh |
+| --- | --- | --- |
+| C1: C1_GioiThieu.pdf, 44 trang | Quy trình KDD: hiểu bài toán, chọn dữ liệu, tiền xử lý, khai phá, đánh giá, trình bày | Luồng nghiên cứu và câu hỏi RQ trong báo cáo |
+| C2: C2_ThongKevaTienXuly.pdf, 49 trang | Chất lượng dữ liệu, thống kê, missing, ngoại lệ, chuẩn hóa | S01-S06: bảng đối soát, phân bố, tương quan, giải thích xử lý |
+| C3: C3_LuatKetHop.pdf, 33 trang | Chưa thuộc bài chính; Apriori/FP-Growth chỉ khi có câu hỏi giao dịch riêng | Nếu mở: định nghĩa giao dịch, support/confidence, diễn giải và giới hạn |
+| C4: C4_classification_sample_ensemble.pdf, 88 trang | Phân chia/đánh giá dữ liệu; Random Forest hồi quy là mở rộng ưu tiên | So với Linear Regression trên cùng thiết kế |
+| C5: C5_Bayesian Decision Theory and Classification.pdf, 26 trang | Không ép Naive Bayes vào target liên tục | Nếu mở phân loại phải định nghĩa target/phép đánh giá riêng |
+| C6: C6_Regression.pdf, 65 trang | Hồi quy tuyến tính, residual, đa cộng tuyến và đánh giá | S1/P2, baseline, MAE/RMSE/R², hệ số và sai số |
+| C7: C7_Clustering.pdf, 78 trang | KMeans, chuẩn hóa, chọn K, diễn giải cụm; phân cấp tùy chọn | K diagnostics, centers, sizes, stability theo mode |
 
-- Dùng **toàn bộ dữ liệu hợp lệ**, không dùng sample làm kết quả nghiên cứu chính.
-- Có thể dùng sample nhỏ chỉ cho:
-  - smoke test;
-  - debugging;
-  - visualization (trực quan hóa);
-  - diagnostic computation (tính toán chẩn đoán) nếu full computation quá đắt và được ghi rõ.
-- Có ba RQ chính:
-  - RQ1 — yếu tố hành vi liên hệ với survival/placement;
-  - RQ2 — player types (kiểu người chơi);
-  - RQ3 — prediction.
-- Combat Timing (thời điểm giao tranh) là extension chính từ event/death data.
-- RQ2 clustering ở **aggregated player profile level**.
-- RQ3 có current-match retrospective modeling và historical prediction.
-- Historical feature phải dùng quá khứ, không được chứa current match.
-- Split chính ưu tiên chronology nếu chronology đáng tin.
-- Notebook chỉ là orchestration layer (lớp điều phối); logic chính nằm trong `src/`.
-- Cloud-first, ưu tiên Google Colab.
-- Checkpoint/versioning/logging/config/reproducibility là phần bắt buộc.
-- Báo cáo cuối do người dùng tự tổng hợp; project cung cấp notebook tổng hợp kết quả.
-
-## 1.2. Các điểm cần sửa hoặc bổ sung
+Không cần áp dụng tất cả chương nếu không phù hợp câu hỏi. Logistic Regression là phân loại, không thay Linear Regression cho hai target hiện tại. Không chép metric hoặc ngưỡng từ slide/paper làm mức kết quả bắt buộc.
 
-### A. Phải kiểm tra đủ các shard/file dữ liệu, không giả định chỉ có hai file
-Dataset có hai **nhóm** dữ liệu chính (`agg_match_stats` và `kill_match_stats`) nhưng có thể gồm nhiều shard CSV.
+## III. Câu hỏi, đơn vị và target
 
-Pipeline phải:
-- inventory (kiểm kê) mọi file;
-- xử lý mọi shard;
-- ghi checksum, kích thước, số dòng;
-- không giả định chỉ tồn tại một `agg_match_stats.csv` và một `kill_match_stats.csv`.
+| Câu hỏi | Đơn vị | Phương pháp chính | Ranh giới diễn giải |
+| --- | --- | --- | --- |
+| RQ1: Hành vi nào liên hệ với sống sót/thứ hạng? | Player-match | Pearson, Spearman, so sánh theo mode | Quan hệ quan sát, không nhân quả |
+| RQ2: Có các nhóm hành vi nào? | Player-mode profile | KMeans riêng Solo/Duo/Squad | Tên cụm dựa hành vi; outcome chỉ giải thích sau khóa |
+| RQ3: Hành vi sau trận cung cấp thông tin hồi quy survival/placement thế nào? | Player-match | Baseline và Linear Regression; T0/T1 | Hồi cứu, không phải dự báo trước trận |
 
-### B. Bổ sung cột thời gian vào schema contract
-Historical modeling phụ thuộc chronology. Vì vậy các cột như `date`/timestamp nếu tồn tại phải được coi là cột quan trọng ngay từ giai đoạn schema inspection.
+Nguồn: PUBG Match Deaths and Statistics, Kaggle slug `skihikingkevin/pubg-match-deaths`. Hai nhóm aggregate và death/event có nhiều shard; phải inventory toàn bộ nguồn thật, không hard-code số shard. Lưu URL/version/license/đơn vị khi xác minh được; unknown khi chưa biết, không dùng mtime giả ngày tải.
 
-Không được viết historical pipeline trước rồi mới phát hiện dataset không có thứ tự thời gian đủ chi tiết.
+Target survival: `player_survive_time`, hữu hạn, không âm, đơn vị công bố theo evidence. Không gọi đây là mô hình survival analysis có censoring.
 
-### C. Phân biệt team-size mode và perspective/match mode
-Không dùng một biến `game_mode` mơ hồ cho mọi ý nghĩa.
-
-Nên chuẩn hóa:
-- `team_size_mode`: Solo / Duo / Squad, ưu tiên suy ra từ `party_size` hoặc field tương đương đã xác minh.
-- `perspective_mode`: TPP/FPP hoặc `match_mode` nếu dataset có.
-- Các mode khác chỉ giữ nếu schema thật xác nhận.
-
-### D. Target-derived feature không chỉ bị cấm trong prediction mà còn phải bị hạn chế trong RQ1
-Ví dụ:
-
-`kills_per_minute = kills / survival_time`
-
-Nếu dùng biến này để phân tích quan hệ với `survival_time`, mối quan hệ bị tạo ra một phần bởi chính công thức.
-
-Do đó:
-- target-derived feature bị **cấm trong predictive model của target đó**;
-- đồng thời **không được dùng làm bằng chứng chính cho RQ1 với chính target xuất hiện trong công thức**;
-- có thể giữ làm diagnostic hoặc phân tích với target khác.
-
-### E. Chronology phải được phân cấp, không chỉ pass/fail
-Cần `chronology_grade`:
-
-- **Grade A:** có exact timestamp/order đủ tin cậy → được dùng `sort → expanding → shift(1)`.
-- **Grade B:** chỉ có date/day, không biết thứ tự nội ngày → historical feature của trận ngày D chỉ dùng dữ liệu có ngày `< D`; **không dùng trận cùng ngày**.
-- **Grade C:** không có chronology đáng tin → S2/P3 không được gọi là future prediction; mặc định disable historical prediction chính thức.
-
-Đây là điểm chống leakage quan trọng.
-
-### F. Placement là team outcome nhưng dữ liệu modeling có thể ở player-match level
-`team_placement` giống nhau giữa đồng đội.
-
-Nếu RQ3 placement sử dụng một dòng/player-match:
-- estimand phải ghi rõ là **player-level observation of team placement**;
-- mọi row trong cùng `match_id` phải nằm cùng split;
-- evaluation phải có thêm match/team-aware aggregation hoặc uncertainty;
-- không được giả định các player-row độc lập hoàn toàn.
-
-### G. RQ2 có nguy cơ bị game-mode confounding
-Một player chơi nhiều Solo và một player chơi nhiều Squad có thể khác profile chỉ vì mode.
-
-Quy tắc:
-- chạy mode EDA trước;
-- nếu khác biệt mode đáng kể, clustering chính phải:
-  - chạy theo từng `team_size_mode`, hoặc
-  - xây profile theo `(player_name, team_size_mode)`.
-- chỉ dùng overall player profile nếu EDA cho thấy cách gộp hợp lý.
-- không chọn cách xử lý mode dựa trên outcome sau clustering.
-
-### H. Hierarchical Clustering không được bắt buộc chạy full nếu dữ liệu quá lớn
-Hierarchical Clustering thường có chi phí bộ nhớ/thời gian lớn.
-
-Vì vậy:
-- K-Means là main method;
-- Hierarchical là supporting validation;
-- nếu full hierarchical không khả thi, dùng reproducible diagnostic subset hoặc cluster centroids;
-- phải ghi rõ đây là diagnostic/supporting, không giả vờ là full-data clustering.
-
-### I. Cần full-data scalable fallback cho modeling
-Random Forest/XGBoost có thể tốn tài nguyên.
-
-Project phải có ít nhất:
-- constant baseline;
-- scalable linear baseline;
-- nonlinear candidate khi khả thi.
-
-Không được:
-- train model trên sample rồi gắn nhãn là full-data result;
-- im lặng loại full-data experiment do RAM;
-- gán `0` cho experiment failed.
-
-### J. Structural missing phải có semantics
-Ví dụ:
-- không kill → `first_kill_time` missing theo định nghĩa;
-- không kill → `damage_per_kill` missing;
-- kills+assists=0 → `assist_ratio` missing.
-
-Không được tự động fill 0 nếu 0 mang ý nghĩa khác.
-
-### K. Combat Timing aggregation phải chính xác qua chunk
-Đối với `avg_kill_time`:
-- lưu `sum_kill_time`;
-- lưu `kill_count`;
-- cuối cùng `avg = sum / count`.
-
-Không average các chunk means.
-
-`first_kill_time` dùng global minimum.
-
-### L. Nên có uncertainty cho các comparison chính
-Do player rows cùng match phụ thuộc nhau, các delta chính nên có match-level paired bootstrap CI nếu tài nguyên cho phép.
-
-Ưu tiên:
-- P1 vs P2;
-- T0 vs T1;
-- ablation group comparisons;
-- model chính vs baseline.
-
-### M. Cần schema contract + alias mapping
-Vì code được viết trước khi execution:
-- không hard-code giả định schema một cách im lặng;
-- có `configs/schema.yaml`;
-- khai báo required/optional columns;
-- hỗ trợ alias có kiểm soát;
-- fail fast nếu schema không đáp ứng contract.
-
-### N. Cần notebook khóa kết quả trước notebook summary
-Bổ sung:
-
-`11_finalize_results.ipynb`
-
-Notebook này:
-- kiểm tra run hợp lệ;
-- khóa final run;
-- tạo `final_results_manifest.json`;
-- tạo report tables;
-- tạo figure manifest.
-
-Sau đó:
-
-`12_final_results_summary.ipynb`
-
-chỉ đọc artifact đã khóa.
-
-### O. Những extension cũ không còn thuộc core scope
-Các ý sau **không phải core requirement** trừ khi người dùng mở rộng sau:
-- Association Rule Mining;
-- spatial kill/death map mining sâu;
-- Elo/Glicko/TrueSkill;
-- NDCG ranking;
-- deep learning;
-- classification Top-N;
-- causal inference.
-
-Combat Timing là event extension chính đã chốt.
-
----
-
-# 2. Research Problem (Vấn đề nghiên cứu)
-
-**Phân tích hành vi người chơi và các yếu tố ảnh hưởng/liên hệ đến khả năng sống sót và thứ hạng trong PUBG bằng phân tích dữ liệu và Machine Learning (học máy).**
-
-Lưu ý ngôn ngữ khoa học:
-
-- Dữ liệu phần lớn là thống kê sau trận.
-- Các phân tích current-match là retrospective (hồi cứu).
-- Không được dùng từ “gây ra”, “làm tăng”, “chiến thuật này giúp” nếu chỉ có association (mối liên hệ).
-- Khi không có causal design (thiết kế nhân quả), kết luận phải ở mức:
-  - “liên hệ với”;
-  - “đồng biến/nghịch biến”;
-  - “cung cấp thông tin dự đoán”;
-  - “được quan sát trong dataset”.
-
----
-
-# 3. Research Questions (RQ)
-
-## RQ1 — Behavioral Relationships
-
-**Những đặc trưng hành vi, bao gồm các đặc trưng thời gian từ event/death data (dữ liệu sự kiện hạ gục/bị hạ), có mối liên hệ mạnh nhất với survival time (thời gian sống sót) và placement (thứ hạng cuối trận)?**
-
-Mục tiêu:
-- Discover (khám phá);
-- xác định các nhóm hành vi đáng chú ý;
-- phân tích Overall và theo mode khi cần.
-
-Không được:
-- biến correlation thành causality;
-- dùng target-derived feature như bằng chứng chính với chính target đó.
-
-## RQ2 — Player Types
-
-**Có thể phân nhóm người chơi thành các kiểu hành vi khác nhau dựa trên các đặc trưng gameplay (thống kê hành vi trong trận) hay không, và các nhóm này khác nhau thế nào về khả năng sống sót và thứ hạng?**
-
-Mục tiêu:
-- Understand (hiểu các kiểu hành vi);
-- clustering không dùng survival/placement làm input;
-- outcome chỉ được dùng **sau clustering** để profiling/interpretation.
-
-## RQ3 — Prediction
-
-**Có thể sử dụng các đặc trưng hành vi để dự đoán survival time (thời gian sống sót) và placement (thứ hạng) của người chơi hay không?**
-
-Bao gồm:
-- current-match retrospective prediction;
-- historical future-match prediction nếu chronology đủ tin cậy.
-
----
-
-# 4. Dataset và nguồn dữ liệu
-
-## 4.1. Dataset
-
-Kaggle:
-`skihikingkevin/pubg-match-deaths`
-
-Tên:
-**PUBG Match Deaths and Statistics**
-
-## 4.2. Hai nhóm dữ liệu
-
-### `agg_match_stats`
-Một dòng dự kiến đại diện một player trong một match.
-
-Candidate columns cần kiểm tra thực tế:
-
-- `date` hoặc timestamp tương đương;
-- `match_id`;
-- `player_name`;
-- `team_id`;
-- `party_size`;
-- `game_size`;
-- `match_mode` nếu có;
-- `player_kills`;
-- `player_dmg`;
-- `player_assists`;
-- `player_dbno`;
-- `player_dist_walk`;
-- `player_dist_ride`;
-- `player_survive_time`;
-- `team_placement`.
-
-### `kill_match_stats`
-Event-level data.
-
-Cần inspect schema để xác định ít nhất:
-- `match_id`;
-- event time (`time`/`event_time`);
-- `killer_name`;
-- `victim_name`;
-- killer/victim placement nếu có;
-- map;
-- killer/victim coordinates nếu có;
-- kill cause/weapon nếu có.
-
-Combat Timing core chỉ yêu cầu:
-- `match_id`;
-- event time;
-- `killer_name`.
-
-Các cột event khác là optional/future work.
-
-## 4.3. Inventory bắt buộc
-
-Pipeline phải tự phát hiện và ghi:
-
-- tất cả aggregate shards;
-- tất cả kill/death shards;
-- file name;
-- byte size;
-- row count;
-- column names;
-- schema/dtype;
-- checksum;
-- source URL;
-- download date;
-- dataset version nếu xác định được.
-
-Output:
-`artifacts/manifests/source_inventory.json`
-
-## 4.4. Quy tắc source
-
-Raw input có thể đến từ:
-- public Google Drive URL;
-- direct HTTP URL;
-- Kaggle-export/public mirror nếu được phép.
-
-Không yêu cầu ChatGPT/Colab phải có quyền đọc Drive cá nhân chỉ để lấy raw data.
-
-`configs/data.yaml` phải hỗ trợ:
-- `archive_url`;
-- hoặc danh sách `agg_urls` / `kill_urls`;
-- checksum nếu có;
-- file pattern.
-
----
-
-# 5. “Dùng toàn bộ dữ liệu” nghĩa là gì?
-
-Official analysis dùng **toàn bộ dữ liệu hợp lệ sau preprocessing**.
-
-Không có official research sampling để giảm cohort vì RAM.
-
-Được phép:
-- development sample;
-- smoke-test sample;
-- visualization sample;
-- diagnostic sample cho thuật toán có chi phí không phù hợp full data, ví dụ hierarchical/silhouette.
-
-Mọi sample diagnostic phải ghi:
-- lý do;
-- n;
-- seed;
-- sampling rule;
-- không được dùng thay official full-data statistics/model nếu output được gọi là full-data.
-
-Full-data không có nghĩa:
-- giữ dữ liệu lỗi;
-- giữ duplicate;
-- giữ missing target không sử dụng được;
-- dùng mọi cột làm feature;
-- bỏ train/test separation.
-
----
-
-# 6. Units of Analysis (Đơn vị phân tích)
-
-## RQ1
-**Player-match level**
-
-Một row:
-`(match_id, player_name)`
-
-## RQ2
-**Aggregated player profile level**
-
-Main conceptual unit:
-`player_name`
-
-Tuy nhiên sau mode EDA có thể chuyển thành:
-`(player_name, team_size_mode)`
-
-nếu mode confounding rõ.
-
-## RQ3 — Current match
-**Player-match level**
-
-Target placement là team-level outcome được quan sát trên player row.
-
-## RQ3 — Historical
-**Player-history-to-current-match level**
-
-Một row:
-historical behavior của player trước match hiện tại → outcome của current match.
-
-## Event data
-Event-level chỉ là intermediate source để tạo Combat Timing.
-
----
-
-# 7. Target Definition
-
-## 7.1. Survival target
-
-`player_survive_time`
-
-Unit phải được verify từ data/documentation trước modeling.
-
-Validation:
-- finite;
-- `>= 0`;
-- hợp lý so với estimated match duration.
-
-## 7.2. Placement target
-
-Raw:
-`team_placement`
-
-Không ưu tiên dùng raw placement trực tiếp vì số team mỗi match khác nhau.
-
-### Number of teams
+Target placement: quan sát kết quả đội trên dòng người chơi. Với roster hợp lệ:
 
 \[
-N_{teams} = \text{nunique}(team\_id)
+y_{placement}=1-\frac{team\_placement-1}{N_{teams}-1}.
 \]
 
-trong `match_id`, sau validation.
+`N_teams` là số team ID đã kiểm chứng trong match trước lọc cohort theo target. Yêu cầu `N_teams>1`, rank thuộc miền hợp lệ và cùng đội không mâu thuẫn. Không clip rank hoặc sửa mẫu số để che roster thiếu. Một target lỗi chỉ loại khỏi task cần target đó.
 
-### Normalized placement
+Team-size mode theo mapping khai báo 1/Solo, 2/Duo, 4/Squad, được kiểm tính phù hợp trên mẫu ZIP (mục XIII), không gọi là đã xác minh toàn nguồn; giá trị khác giữ Custom/Other hoặc unknown theo contract, không tự gộp mọi giá trị >=3 thành Squad. Perspective TPP/FPP là biến khác. RQ2 giữ `per_mode`.
+
+Tên người chơi không phải bằng chứng account ID bất biến. Không ghép tên thiếu thành một player UNKNOWN; lưu lineage cho các dòng còn đủ điều kiện ở RQ khác.
+
+## IV. Dữ liệu, làm sạch và phạm vi
+
+- Raw bất biến; inventory hash/schema/rows từng shard, alias có kiểm soát, đếm record bằng parser.
+- Tách missing gốc, parse error, structural missing (thiếu đúng theo định nghĩa), identity conflict và nguồn không sẵn có.
+- Deduplicate xuyên shard bằng khóa/nguồn đã xác minh; không dùng thứ tự file chọn đại row mâu thuẫn.
+- Event khác victim nhưng cùng killer/time không tự là duplicate.
+- Flags có thể chồng lặp; removal ledger tuần tự phải đối soát rows_before = rows_removed + rows_after. Không cộng flags thành tổng số loại.
+- Metadata roster, số đội, mode và duration proxy tính trước task-specific exclusions.
+- Join phải kiểm khóa, many-to-one và bảo toàn số dòng. Parquet phải giải mã/đọc lại được, không chỉ footer/checksum.
+- Ngoại lệ chưa giải thích giữ flag và công bố; không xóa/cắt ngọn chỉ để biểu đồ hoặc metric đẹp.
+- Mỗi cohort ghi rule, exclusions, rows/matches/teams/players, mode/split và hash.
+
+Phân biệt ba phạm vi: fixture kiểm logic; development train/validation để chọn thiết kế; full eligible data là toàn dữ liệu hợp lệ trong cohort đã khai báo. Vẽ mẫu không biến mô hình thành mô hình mẫu.
+
+Chưa cho phép lấy mẫu làm kết quả chính. Nếu tài nguyên không đủ, trình phương án lấy mẫu theo match, giữ roster và event tương ứng, nguồn, seed, phạm vi suy rộng và tác động đến profile/history; chỉ triển khai sau yêu cầu riêng của người dùng. Không tự đặt số mẫu hoặc đổi nhãn thành full-data.
+
+## V. Đặc trưng và Combat Timing
+
+Registry lưu tên, nguồn, công thức, đơn vị, mẫu số, missing, dependencies, quyền sử dụng theo target/RQ, trạng thái và phiên bản. Một công thức có một nguồn thực thi canonical trong src.
+
+| Nhóm | Thành phần | Quy tắc |
+| --- | --- | --- |
+| Combat | kills, damage, damage_per_kill | kills=0 thì ratio missing, không epsilon |
+| Movement | walk, ride, total_distance, walk_ratio | tổng distance=0 thì ratio missing; tránh cặp ratio bù nhau |
+| Support | assists, DBNO, assist_ratio | kills+assists=0 thì ratio missing |
+| Timing tuyệt đối | event count, has_kill, first/avg kill time | Tách không kill và thiếu event; lineage không phụ thuộc target để dùng S1 |
+| Timing pha | early/mid/late counts và ratios | Phụ thuộc duration proxy hậu trận; không dùng S1 hoặc RQ1-survival primary |
+| Target-derived diagnostic | kills/minute, damage/minute, velocities | Không dùng dự đoán survival hoặc làm bằng chứng chính tương quan với survival |
+
+`estimated_match_duration = max(player_survive_time)` trong match là proxy, không phải duration chính thức. Relative event time là event time / proxy; Early [0,1/3), Mid [1/3,2/3), Late [2/3,1]. Không clip event vượt proxy; timing tuyệt đối hợp lệ không tự bị loại chỉ vì phase không hợp lệ.
+
+Kế thừa quy ước phương pháp đã lựa chọn cho timing, ghi đủ tại đây để dự án mới không phụ thuộc reports/decision files cũ:
+- Event ghi nhận cho killer có tên, không self, match/time hợp lệ; có thể chứa same-team/unknown-team. Không gọi enemy-only.
+- Giữ ngưỡng duration 60 giây như quy ước công bố, không gọi tối ưu.
+- Giây là đơn vị dự kiến từ thiết kế trước; dữ liệu mới phải kiểm nguồn/consistency trước khi verified. Không bê trạng thái verified hoặc số audit cũ sang manifest mới.
+- Giữ các giá trị bất thường nguồn và giới hạn chưa giải thích.
+- Các quy ước này không chứng minh ingest/merge/features mới đã chạy. Stage S04 phải tạo evidence/checkpoint mới.
+
+Qua batch phải cộng sum/count rồi chia, min toàn cục; không trung bình các chunk means. Phase ratios dùng đúng phase-valid denominator. Aggregate kills và event count không bắt buộc bằng nhau; xuất coverage/discrepancy và phân biệt:
+- Xác nhận không kill: count 0, first/avg/phase ratios missing.
+- Có aggregate kills nhưng thiếu event: missing do coverage, không coi là no-kill.
+- Có event nhưng phase không hợp lệ: absolute/phase có trạng thái riêng.
+
+RQ2 dùng thiết kế phương pháp Design 3: mean/std kills và damage; mean walk/ride/walk_ratio; mean assists/DBNO/assist_ratio; mean early/mid/late ratios và early_combat_match_ratio. Lưu valid counts; std singleton chưa xác định, không gán 0. Mean phase ratio là trung bình trên các trận kill-active có timing hợp lệ, không tự đổi thành ratio pooled kills. `games_played` để lọc độ tin cậy, không input chính. Outcomes tách khỏi input.
+
+## VI. Split, chống rò rỉ và RQ1/RQ2
+
+Giữ tỷ lệ train/validation/test 0.70/0.15/0.15 đã chốt; mọi dòng cùng match ở cùng split. Với chronology đáng tin ưu tiên thời gian; Grade B giữ nguyên block ngày, Grade A không bịa thứ tự tie. Grade C dùng group split theo match và không gọi future prediction. Tỷ lệ đạt được có thể lệch do nguyên block; phải báo actual counts.
+
+Khóa split trước EDA quan hệ phục vụ lựa chọn mô hình. DQ toàn nguồn được phép theo quy tắc chất lượng đã định; không dùng test để chọn K, ngưỡng, feature hoặc model. Nếu test từng được xem, công bố giới hạn; không resplit chỉ để xóa việc đã xem.
+
+RQ1:
+- Pearson và Spearman với N hợp lệ từng cặp và từng mode; constant/thiếu dữ liệu là NA có lý do.
+- Spearman cần ranks/ties toàn scope; không lấy trung bình correlation theo batch.
+- Báo dấu, độ lớn và tính nhất quán theo mode; p nhỏ không đồng nghĩa quan hệ mạnh.
+- Timing pha với survival là diagnostic có coupling. Người sống lâu có thêm cơ hội tích lũy hành vi.
+- Phân tích lựa chọn dùng development. Full-descriptive chỉ sau khóa thiết kế, không quay lại tune.
+
+RQ2:
+- Auto 5.2 dùng mặc định 10 trận theo quy ước được người dùng duyệt ngày 17/10/2026, cho ghi đè trước chạy; vẫn xuất retention/valid counts. Không gọi ngưỡng này là tối ưu. Manual giữ quy trình chốt từ diagnostics.
+- Imputation/StandardScaler trên development phù hợp; lưu feature order và fitted objects.
+- Auto 5.2 chọn K trong 2-8 có silhouette development hữu hạn cao nhất, hòa chính xác chọn K nhỏ hơn; ghi đè từng mode được ưu tiên và phải thuộc diagnostics. Elbow, kích thước cụm, ARI qua seed và Davies-Bouldin vẫn báo để diễn giải, không thêm ngưỡng lọc ngầm. Manual giữ lựa chọn có reason/hash.
+- Silhouette/plot diagnostic được lấy mẫu có n/seed/rule, không thay fit toàn eligible profiles.
+- Cluster ID chỉ trong mode. Đổi outcome không được làm thay lựa chọn K/assignment khi hành vi cố định.
+- Full descriptive fit sau khóa có nhãn mô tả, không gọi heldout generalization.
+- Nếu timing proxy chi phối, công bố coupling và giới hạn; kiểm tra bỏ timing là mở rộng có lý do, không tối ưu theo outcome.
+
+## VII. Ma trận thí nghiệm bài chính
+
+Tên dưới đây là nhãn nghiên cứu cho project mới. Dùng experiment metadata tối thiểu cho models/predictions/comparisons; không sao hệ thống registry cũ hoặc hard-code run ID.
+
+| Thành phần | Bắt buộc | Target/đầu vào |
+| --- | --- | --- |
+| RQ1 | Có | Quan hệ hợp lệ theo target/mode |
+| C1 main + C5 post-hoc | Có | KMeans per_mode + outcome mô tả sau khóa |
+| S1 mean, median, linear | Có | Survival; behavior an toàn, timing tuyệt đối chỉ khi lineage hợp lệ |
+| P2 mean, median, linear | Có | Placement; behavior + timing, không cột survival trực tiếp |
+| T0 linear | Có | Placement; bỏ toàn timing và descendants/indicators tương ứng |
+| T1 linear | Có | Dùng lại P2 linear khi đúng cùng cohort/recipe/signature |
+| Sai số, hệ số tuyến tính, bảng T0/T1 | Có | Saved predictions và fitted model đã chọn |
+| CI T0/T1 | Ưu tiên có điều kiện | Paired bootstrap theo match; thiếu thì khai báo |
+| P1, S2/P3, C2-C4, full group ablation, nonlinear | Không, trừ khi đăng ký mở rộng | Có scope/status/reason riêng |
+
+Tối thiểu có bảy fit logic: ba S1, ba P2 và một T0; không huấn luyện lại T1 chỉ để đổi tên. Hai baseline dùng thống kê train, không test. Linear Regression là mô hình chính bám C6; không âm thầm thay OLS bằng SGD.
+
+T0/T1 cùng row IDs, target, split, estimator, seed và chính sách preprocessing; mỗi nhánh fit transformer trên train và đúng cột của nhánh. Khóa common cohort trước fit, không intersect predictions để che dòng mất. Survival trực tiếp không được thêm vào chỉ một nhánh. P2 vẫn có coupling gián tiếp từ timing proxy, không được gọi loại hết thông tin survival.
+
+Random Forest hồi quy là mở rộng ưu tiên bám C4. Nếu quá nặng có thể đề xuất cây hồi quy giới hạn độ sâu, nhưng phải có recipe/tên riêng; không coi đó là cùng thuật toán. HGB/XGBoost/SGD không thuộc core config mới; chỉ thêm nếu mở rộng có lý do.
+
+Giữ yêu cầu dùng GPU cho KMeans/Linear Regression khi backend hỗ trợ và đã xác minh. Constants, SQL/EDA/metrics là CPU. RF/HGB/SGD theo backend thực hỗ trợ; không ép CUDA hoặc fallback ngầm. Mọi đổi thiết bị/estimator chính phải khai báo và kiểm tương thích trước chạy.
+
+## VIII. Đánh giá và diễn giải
 
 \[
-normalized\_placement
-=
-1 -
-\frac{team\_placement - 1}
-{N_{teams} - 1}
+MAE=\frac{1}{n}\sum_i|y_i-\hat y_i|,\qquad
+RMSE=\sqrt{\frac{1}{n}\sum_i(y_i-\hat y_i)^2},\qquad
+R^2=1-\frac{\sum_i(y_i-\hat y_i)^2}{\sum_i(y_i-\bar y)^2}.
 \]
 
-Ý nghĩa:
-- 1 = hạng nhất;
-- 0 = hạng cuối.
+Báo MAE/RMSE theo đơn vị target, R² không phải accuracy và có thể âm. Target hằng số hoặc n<2: R² undefined có reason. Không clip predictions ngầm.
 
-### Validation
-- `N_teams > 1`;
-- `team_placement ∈ [1, N_teams]`;
-- `normalized_placement ∈ [0,1]`.
+Primary metric là micro player-match; bổ sung match-aware và team-aware cho placement để tránh diễn giải các đồng đội như quan sát độc lập. Không lấy trung bình RMSE/R² từng batch thành metric toàn bộ. Team target phải nhất quán trước aggregate.
 
-`N_teams = 1`:
-- không dùng công thức bình thường;
-- flag riêng;
-- quyết định include/exclude sau Data Quality EDA.
+Chọn feature/params trên train/validation; main recipe fit train-only, test predict-only sau G4. Không tự refit train+validation. Đăng ký error bins theo development, báo N/coverage/NA cho slice nhỏ. Giải thích hệ số tuyến tính kèm scale/đa cộng tuyến; không gọi hệ số là tác động nhân quả.
 
----
+Delta = candidate - reference: MAE/RMSE âm là tốt hơn; R² dương tốt hơn. CI nếu làm: resample cùng match IDs có hoàn lại và multiplicity, dùng cùng resample cho hai nhánh; seed/replicates đăng ký trước. CI chứa 0 không phải bằng chứng không có hiệu ứng; thiếu CI không vẽ khoảng hoặc khẳng định chắc chắn. Không bắt CI cho mọi bảng/hình.
 
-# 8. Game Mode Definition
+## IX. Mở rộng có điều kiện
 
-Không dùng tên `game_mode` nếu chưa rõ nghĩa.
+Chỉ mở khi bài chính đủ và có yêu cầu, không biến extension thành việc bắt buộc ngầm.
 
-## 8.1. `team_size_mode`
-Ưu tiên:
-- `party_size = 1` → Solo;
-- `party_size = 2` → Duo;
-- `party_size >= 3` → Squad;
+- P1/P2: chỉ khác survival trực tiếp, cùng cohort hợp lệ, công bố descendants còn lại.
+- S2/P3 trong phần con history tùy chọn của notebook duy nhất: kiểm timestamp/availability, Grade A strictly earlier whole block, Grade B chỉ ngày trước, Grade C blocked. Depth dựa quá khứ, không dùng số trận tương lai; current/future outcome không đổi current history. Không lấy full RQ2 profiles làm history. Protocol/history threshold cần evidence riêng.
+- C2 phân cấp: sample hoặc centers nếu cần, công bố supporting scope. C3/C4 so đúng scaler/common profile keys.
+- Ablation nhóm: xóa toàn dependency descendants và indicators, giữ recipe/cohort.
+- Luật kết hợp, phân loại, DBSCAN: phải có câu hỏi, biểu diễn, metric, ngân sách và giới hạn riêng; không thêm chỉ để đủ bảy chương.
 
-chỉ sau khi schema/data distribution xác nhận quy tắc này hợp lý.
+History không phải prerequisite của core current-match. Dự án mới không tạo NB08 hoặc các dependencies notebook cũ. Nếu mở history, thực hiện trong phần con cùng notebook, đăng ký scope/decision/evidence riêng.
 
-Nếu dataset có mode label đáng tin hơn, ưu tiên label nguồn.
+## X. Kiến trúc mới, lưu trữ và notebook duy nhất
 
-## 8.2. `perspective_mode`
-Nếu `match_mode` chứa TPP/FPP hoặc tương đương:
-- giữ riêng;
-- không gộp với team-size mode.
+Vận hành chính là Kaggle Notebook, raw gắn bằng Add Input từ nguồn/version đã pin; Input chỉ đọc. Code mới từ Input/repository được chuẩn bị vào working có marker, không copy raw hoặc project cũ.
 
-## 8.3. Mode EDA quyết định analysis strategy
+Cập nhật vận hành18/10/2026 theo yêu cầu sửa file upload chính thức: cell parameters gán trực tiếp full/ALLOW_DATA_PROCESSING=True/ALLOW_FULL_DATA=True, S01-S10, CODE_INPUT và raw mount đã được người dùng chọn, SOURCE_VERSION=3 cùng assumed_seconds theo mụcXIII. Không dùng globals để kế thừa False/pending cũ. Đây là cấu hình phiên được phê duyệt cho nguồn cụ thể, không cấp quyền chung cho nguồn khác, không thay nghiên cứu hoặc bỏ guard. Khối development/False dưới là mặc định an toàn của bản nền trước khi được cho phép chạy thật, không còn là nội dung cell parameters của bản upload này.
 
-Sau EDA:
-- joint analysis;
-- stratified analysis;
-- hoặc mode context feature.
-
-Không quyết định trước khi xem dữ liệu.
-
----
-
-# 9. Core Data Architecture
-
-Ba processed datasets chính:
-
-## 9.1. `player_match_features`
-Single source of truth ở player-match level.
-
-Bao gồm:
-- identity keys;
-- date/time;
-- match metadata;
-- behavior raw;
-- derived features;
-- Combat Timing;
-- outcomes;
-- validation flags.
-
-## 9.2. `player_profile_features`
-Dùng cho RQ2.
-
-Một row:
-- player hoặc player-mode profile.
-
-## 9.3. `historical_player_match_features`
-Dùng cho S2/P3.
-
-Một row:
-- historical state trước current match;
-- current target;
-- chronology metadata.
-
----
-
-# 10. Data Preprocessing Architecture
-
-Logical modules:
-
-```text
-download
-→ inventory
-→ schema_validation
-→ cleaning
-→ match_metadata
-→ behavioral_features
-→ combat_timing
-→ merge
-→ validation
-→ processed parquet
+```python
+PUBG_STORAGE_MODE = "local"
+PUBG_PROJECT_ROOT = "/kaggle/working/PUBG_Coursework"
+PUBG_REQUIRE_EXISTING_PROJECT = True
+PUBG_BATCH_ROWS = 50000
+EXECUTION_MODE = "development"
+ALLOW_DATA_PROCESSING = False
+ALLOW_FULL_DATA = False
 ```
 
-Không chỉnh sửa raw source trực tiếp.
-
-## 10.1. Cleaning rules
-
-Kiểm tra:
-- duplicate;
-- missing keys;
-- invalid numeric;
-- negative count/distance/time;
-- placement invalid;
-- impossible ratio;
-- join explosion;
-- schema mismatch.
-
-## 10.2. Removal log
-
-Mỗi removal step phải ghi:
-
-- step;
-- rule;
-- rows_before;
-- rows_removed;
-- rows_after;
-- reason;
-- example count;
-- version.
-
-File:
-`artifacts/logs/removal_log.csv`
-
-Không cần lưu mọi row bị loại nếu quá lớn, nhưng cần:
-- aggregate counts;
-- optional quarantine sample;
-- nếu khả thi lưu partition các invalid rows với reason code.
-
-## 10.3. Missing categories
-
-### Structural missing
-Missing đúng theo định nghĩa hành vi.
-
-Ví dụ:
-- không kill → `first_kill_time` missing.
-
-### Data-error missing
-Missing do:
-- key lỗi;
-- parse lỗi;
-- source thiếu bất thường.
-
-Hai loại không được xử lý giống nhau.
-
----
-
-# 11. Feature Architecture
-
-Mọi feature phải nằm trong **Feature Registry**.
-
-Metadata tối thiểu:
-
-- `name`;
-- `group`;
-- `source`;
-- `level`;
-- `formula`;
-- `dtype`;
-- `missing_semantics`;
-- `allowed_rq`;
-- `allowed_targets`;
-- `forbidden_targets`;
-- `leakage_reason`;
-- `status`;
-- `requires_current_outcome`;
-- `requires_survival`;
-- `requires_placement`;
-- `version`.
+Bật ALLOW_DATA_PROCESSING chỉ khi đã xác nhận nguồn được phép; development không tự giới hạn số dòng của nguồn. Full-data cần ALLOW_FULL_DATA và yêu cầu riêng của người dùng. SOURCE_DIRECTORY là path thật, SOURCE_VERSION là số version đã pin; license/mode/chronology/timing vẫn cần evidence. Không gọi dataset latest ngầm hoặc tự tạo token/upload.
 
-Status:
-- `candidate`;
-- `confirmed`;
-- `optional`;
-- `excluded`.
+DuckDB/Parquet/PyArrow dùng scan/join/group theo batch, pandas cho bảng vừa RAM. GPU không tăng host RAM. DuckDB spill/shard ingest tạm ở runtime ngoài working; riêng staging xuất Parquet ở cùng filesystem với đích để publish bằng rename, giữ checksum/read-back và bảo vệ bản cũ. Shard tạm chỉ giữ tới khi aggregate.parquet/event.parquet gộp đã kiểm số dòng và publish thành công, không lưu thêm typed trùng dữ liệu trong gói bàn giao; không bỏ raw columns hoặc lineage. source raw không đổi; data/<scope>/ và outputs/<scope>/ chứa kết quả mới, ngân sách output khai báo rõ là ngân sách nhóm chứ không quota dịch vụ đã đo. Sửa vận hành này không bảo đảm toàn quy trình vừa19.5GiB; thiếu tài nguyên phải dừng đúng trạng thái.
 
----
+Một người ghi một stage, takeover có chủ đích. Publish/read-back/checksum tại working tạo checkpoint runtime; chỉ reuse compatible theo nội dung nguồn/version/code/config/split/cohort/backend/package/Python, không theo mount path tuyệt đối hoặc tên file. File artifact dùng relative paths. Memo checksum chỉ trong một lượt xác minh, không che sửa file ở lượt sau.
 
-# 12. Combat Behavior Features
+Kaggle working không tự là lưu bền vững. prepare_handoff xuất inventory đủ code/config/data/outputs cho resume, saved_version_verified=False. Save Version phải kèm output; gắn lại output/version cụ thể và verify_handoff đọc/giải mã/checksum trước bàn giao. Version reference do người dùng chọn, không được gọi xác minh API/quyền tài khoản. Local read-back chỉ chứng minh đọc file local.
 
-Raw:
-- `player_kills`;
-- `player_dmg`.
+restore_handoff chỉ vào working mới/trống, không ghi đè kết quả hiện có; kiểm software/source/stage signatures và mọi prerequisite, không sửa completed bằng tay hoặc mang writer lock sang. Native output folder là luồng chính; không giải nén archive không tin cậy. Gói code ZIP được tạo từ allowlist, không raw/results/secrets.
 
-Derived candidates:
+Tên canonical ghi đè an toàn, không (1)/(2); Kaggle Versions và release snapshots mới có chủ đích tái lập. Dừng khi quota/RAM/disk/GPU/budget thiếu, giữ checkpoint tốt trước đó, không silent sample hoặc đổi estimator. Không hứa resume giữa estimator fit dở, auto-save Drive hoặc chuyển tài khoản vượt quota. Drive chỉ optional export nếu có yêu cầu riêng.
 
-\[
-kills\_per\_minute =
-\frac{player\_kills}{player\_survive\_time / 60}
-\]
+Chỉ tạo notebooks/PUBG_COURSEWORK.ipynb, gồm S00-S12 theo kế hoạch. Xóa 13 notebook và bản tổng hợp cũ khi thực thi dọn dự án; không ghép nguyên cells hoặc khôi phục generator/bundle cũ. Yêu cầu một notebook mới thay quy tắc cũ cấm notebook tổng hợp. Hàm dùng lại nằm trong một số module src nhỏ, cấu hình ở configs/project.yaml; không tạo notebook phụ cho demo/test/summary.
 
-\[
-damage\_per\_minute =
-\frac{player\_dmg}{player\_survive\_time / 60}
-\]
+Mỗi section trong notebook duy nhất theo Phương án 2: bối cảnh/câu hỏi, input và provenance, phương pháp/công thức, thực thi từng bước, kiểm chất lượng, bảng/hình thật, cách đọc, diễn giải, giới hạn, artifact/bàn giao. Tiếng Việt có dấu UTF-8; số cell không thay độ chi tiết. Biểu đồ cần đơn vị/N/scope/mode/split/nguồn/caption; mẫu trực quan có n/seed/rule. Thiếu dữ liệu không dựng hình hoặc metric giả.
 
-\[
-damage\_per\_kill =
-\frac{player\_dmg}{player\_kills}
-\]
+Cấu trúc mới chi tiết nằm tại kế hoạch III. Một README mới gom hướng dẫn nhóm/Kaggle/Input/working/Versions/GPU/sections/troubleshooting; các guide cũ được loại bỏ khi dọn. Không mang code/config/tests cũ vào cây mới. .git được giữ để không mất thông tin repository; đây không phải yêu cầu xóa Git history hoặc remote.
 
-Rules:
-- survival <= 0 → rate invalid/missing;
-- kills=0 → `damage_per_kill = NaN`;
-- không epsilon nếu epsilon làm đổi semantics.
+S00 khai báo execution mode development/full/report_only và START_STAGE/END_STAGE. Trong full/development, stage có completed signature/artifacts hợp lệ được load lại; stage mới chạy theo dependency. Runtime mới vẫn phải bootstrap/init và đọc state từ đĩa; không chỉ mở cell giữa dựa biến RAM. Auto dùng quy tắc 5.2 đã duyệt, không chờ người chốt K/ngưỡng/G4 giữa luồng; manual vẫn dừng khi thiếu quyết định. report_only đọc snapshot không cần raw/current model training state. Mỗi section commit output riêng để nhiều thành viên thay nhau chạy cùng một notebook.
 
-### Forbidden
-`kills_per_minute`, `damage_per_minute`:
-- forbidden for survival prediction;
-- forbidden as primary RQ1 evidence against survival.
+## XI. Hoàn thành và bàn giao
 
----
+G0: code/fixture bài chính phù hợp thiết kế mới. G1: nguồn thật hợp lệ. G2: cohort/split hợp lệ. G3: quyết định có bằng chứng. G4: khóa lựa chọn trước final test. G5: khóa release đủ thành phần bắt buộc. Các cổng không được coi đạt chỉ vì viết xong tài liệu.
 
-# 13. Movement Behavior Features
+Section S10 kiểm required matrix core, signatures/schema/checksum, run IDs và figure sources rồi khóa release mới. Optional chưa chạy ghi not_requested với reason/null metrics. Lifecycle/stage schema mới được thiết kế tối thiểu, không giữ enum/format/compatibility của manager cũ chỉ để reuse kết quả.
 
-Raw:
-- `player_dist_walk`;
-- `player_dist_ride`.
+Execution mode report_only chạy S00 kiểm đọc tối thiểu và S11/S12 trong cùng notebook, chỉ đọc release manifest cụ thể; S01-S10 tính toán phải được bỏ qua bằng nhánh control flow đã test, không train/build/download/write. Báo cáo gồm bài toán/KDD, dữ liệu/chất lượng, EDA/RQ1, RQ2, hồi quy hai target, T0/T1, sai số, giới hạn và khả năng tái lập. Mỗi nhận định truy được bảng/hình/run.
 
-Derived:
+Chuẩn chất lượng hướng tới điểm cao: phương pháp đúng môn học, so sánh công bằng, lời giải thích dễ hiểu, số liệu thật, biểu đồ đọc được, nhận biết giới hạn và các thành viên bảo vệ được lựa chọn. Bảng tiêu chí giảng viên khi có sẽ được đối chiếu vào kế hoạch hiện hành, không tạo kế hoạch ghi đè.
 
-\[
-total\_distance =
-player\_dist\_walk + player\_dist\_ride
-\]
 
-\[
-walking\_velocity =
-\frac{player\_dist\_walk}{player\_survive\_time}
-\]
+## XII. Protocol tự động 5.2 được duyệt ngày 17/10/2026
 
-\[
-riding\_velocity =
-\frac{player\_dist\_ride}{player\_survive\_time}
-\]
+Người dùng đã đồng ý đề xuất tự động hoàn toàn và chỉnh tại từng mục. Đây là thay đổi protocol lựa chọn, không phải tối ưu I/O thuần túy. Giữ ba RQ, hai target, toàn eligible data, per_mode, split 70/15/15, leakage allowlists, bảy fit OLS/baseline, GPU theo backend đã chọn và mọi metric. Không bê quyết định fixture sang nghiên cứu thật.
 
-\[
-walk\_ratio =
-\frac{player\_dist\_walk}{total\_distance}
-\]
+- preprocessing/features/rq2/rq3.decision_mode mặc định auto; manual vẫn giữ cổng chờ. OPTIONS ở mỗi cell thực thi ghi đè các trường đã khai báo; None kế thừa giá trị config hiện tại, không xóa quyết định đã lưu. Các sửa đổi được publish config và đưa vào stage signature; stage sau phải dùng đúng upstream, không đổi split sau khi xem test để che exposure.
+- Chronology auto không coi parse timestamp là bằng chứng semantics. Chỉ chọn A/B khi có chronology_evidence, mọi match nhất quán và có ít nhất ba block; toàn ngày chọn B, có thời gian trong ngày chọn A. Nếu chưa đủ thì C, seeded match-group, công bố không phải future prediction. Ghi đè A/B/C cần reason và vẫn kiểm consistency. mode_evidence phải do nguồn/người vận hành xác nhận.
+- Features auto giữ nguyên/no-log/no-outlier-removal khi chưa có lựa chọn khác. Nếu người dùng bật log, phải cung cấp transform_reason và qua allowlist. Không chọn biến đổi theo test.
+- RQ2 mặc định minimum_games=10 nếu null. Không giảm ngưỡng để cứu mode thiếu profile. Chọn K bằng silhouette development theo quy tắc trên; invalid/undefined diagnostics phải lỗi rõ, không chọn tùy ý. cluster_selection.json khóa hash, ngưỡng, K, reason trước fit full descriptive/outcomes; config không bị tự sửa giữa stage làm stale signature.
+- Auto G4 duyệt tất cả bảy fit đã đăng ký sau kiểm cohort/train-only/model reload/predictions và validation. Kiểm đủ bảy micro experiments, đúng target, n dương, MAE/RMSE hữu hạn không âm; R2 undefined có lý do được giữ, infinity không được nhận. Không đặt ngưỡng điểm tùy tiện, không chọn winner bằng test, không refit train+validation. selection.json lưu validation hash/approval/reason/test_accessed_at_approval=False trước đọc tập test của S08; prior_test_exposure vẫn unknown nếu chưa có bằng chứng.
+- Nguồn/đơn vị là sự kiện phải xác minh, không phải tham số tự chọn. Preflight của lượt đi tới S02/S04 chặn sớm nếu thiếu mode_evidence hoặc thiếu trạng thái đơn vị được chấp nhận/evidence, trước khi tốn giờ S01. Từ 5.3, assumed_seconds được chấp nhận theo phê duyệt có phạm vi ở mục XIII, không nâng thành verified. Các trường SOURCE_MODE_EVIDENCE/SOURCE_TIME_UNIT_STATUS/SOURCE_TIME_UNIT_EVIDENCE tại S00 là đầu vào một lần; không gán verified từ histogram hoặc từ dataset slug. Metadata công khai Kaggle kiểm ngày 17/10 xác nhận license CC0/version3 nhưng API trả cột rỗng, chưa xác minh được đơn vị hoặc mode từ metadata đó.
+- Checkpoint runtime vẫn sau từng stage. Mặc định chỉ prepare_handoff ở END_STAGE, không quét/giải mã lại toàn output sau mỗi cell. HANDOFF_EVERY_STAGE=True là lựa chọn cần thời gian I/O; không bỏ artifact/source hash và kiểm dependency, không memo checksum qua lượt xác minh. Không gọi đây là auto-save Kaggle: lưu Version kèm output/read-back vẫn là thao tác riêng.
+- Giới hạn RAM/VRAM/đĩa vẫn dừng trung thực. max_matrix_gb=2 chưa thay đổi; full-data S07/S08 có thể vượt. Tự động hóa không đổi batch thành thuật toán streaming OLS/KMeans hoặc chứng minh đủ tài nguyên. Lỗi platform JSON/HTML không được sửa bằng thay protocol nghiên cứu.
 
-Do not keep `ride_ratio` simultaneously as main feature because approximately:
 
-\[
-ride\_ratio \approx 1-walk\_ratio
-\]
+## XIII. Giả định giây có công bố, người dùng duyệt ngày 18/10/2026
 
-Rules:
-- total_distance=0 → `walk_ratio` structural missing hoặc rule do EDA quyết định;
-- không tự fill 0;
-- velocity forbidden for survival prediction và không dùng làm primary association với survival.
+Đây là thay đổi protocol diễn giải đơn vị theo yêu cầu rõ của người dùng. Không biến giả định thành sự kiện đã được tác giả nguồn xác nhận. time_unit_info là nơi duy nhất xác định trạng thái/nhãn/điều kiện chấp nhận cho preflight, S03/S04, EDA, mô hình và báo cáo.
 
----
+- pending: chưa chấp nhận để chạy timing; verified: cần evidence xác minh thật; assumed_seconds: cần unit_evidence có nội dung, unit_assumption_approved=True và unit_assumption_scope khớp chính xác source.dataset/versions/source.version. Phê duyệt hiện tại chỉ cho skihikingkevin/pubg-match-deaths/versions/3. Đổi nguồn/version làm giả định không được chấp nhận; không mặc định đưa sự chấp thuận sang nguồn khác.
+- Cấu hình production ghi assumed_seconds cùng bằng chứng và ngày phê duyệt. source.version/path/license vẫn phải nhập đúng nguồn gắn; không suy ra nguồn thật từ tên ZIP local. Người dùng có thể đặt pending để chặn hoặc verified chỉ khi bổ sung evidence xác minh thật. Không tự đổi bất kỳ pending thành verified.
+- Bằng chứng local: Data_PUBG.zip 4.399.919.847bytes, 12members (5aggregate CSV,5deaths CSV,2maps), tổng20.284.734.459bytes sau giải nén, không có README/từ điển/comment. Đọc đầu2000record của từng CSV, tổng20000record, là prefix diagnostic không phải random sample và không đại diện toàn nguồn. Không giải nén toàn bộ hoặc huấn luyện dữ liệu lớn.
+- Trên10000aggregate prefix: party_size1/2/4 lần lượt2040/2276/5684rows. Bỏ nhóm trận đầu/cuối từng prefix CHỈ khi kiểm đội đủ nội bộ mẫu (không loại dữ liệu nghiên cứu):1848team của mode1 đều1người;1081team mode2 có45team1người/1036team2người;1551team mode4 có73/63/567/848team tương ứng1/2/3/4người. Mẫu phù hợp mapping đăng ký, không thay tài liệu gốc hoặc xác minh mọi đội toàn nguồn; match_mode trong prefix chỉ tpp, không suy toàn nguồn chỉ tpp.
+- Đối chiếu10000event prefix với aggregate theo(match_id,victim_name), chỉ dùng identity có một giá trị survival duy nhất trong mẫu, được8096cặp:8038cặp chênh<=1đơn vị nguồn (99.2836%), median abs difference0.296;58cặp lệch>1, max1787.814. Supports common scale, does not prove absolute seconds. Giây là giả định vận hành được người dùng duyệt để tiếp tục, không phải suy luận đã được xác minh từ histogram hoặc 99.28%. Không có full-source consistency proof.
+- Không nhân/chia60 hoặc1000, không đổi minimum_duration60, không thay phase thirds, không clip hoặc xóa58cặp lệch vì kiểm tra này. Không thêm bộ lọc từ audit mẫu vào cohort nghiên cứu. RQ/targets/features/split/leakage/per_mode/OLS/KMeans/GPU/metrics và full eligible data giữ nguyên. MAE/RMSE survival và hệ số có đơn vị giây GIẢ ĐỊNH; nếu thang đo sai, diễn giải giá trị tuyệt đối và ngưỡng60 phải xem lại. R2/tương quan không được gọi là bằng chứng đơn vị.
+- S03 dictionary/figures ghi trạng thái theo config; S03 signature phụ thuộc timing để không reuse nhãn cũ khi đơn vị đổi. S04 tạo manifests/time_unit.json và timing_audit với verified=False khi assumed. Preflight/S00, bảng metrics/coefficients/errors, model metadata, figure metadata/footer, release và report_only hiển thị đúng giả định/giới hạn. Không thay số liệu fit/predictions chỉ để gắn nhãn.
+- Release5.3 phải có metadata đơn vị. Loader so metadata với config và time_unit.json trong snapshot đã kiểm checksum; metadata đầu manifest không được tự nâng giả định thành verified. report_ready nói đủ gói báo cáo, không đồng nghĩa unit verified. Release cũ thiếu trạng thái riêng phải báo thiếu thông tin, không tự nâng độ tin cậy.
+- Src/config/signatures thay đổi; không hứa dùng lại checkpoint bản cũ với code mới. Không sửa code nóng/manifest/checksum để ép reuse. Bộ kiểm local/fixture không chứng minh toàn dữ liệu hoặc GPU/Kaggle đủ tài nguyên; giới hạn2GiB matrix và18GiB output vẫn giữ.
 
-# 14. Support Behavior Features
+## XIV. Hai GPU độc lập theo yêu cầu ngày 18/10/2026
 
-Raw:
-- `player_assists`;
-- `player_dbno`.
+- rq2.gpu_ids và rq3.gpu_ids mặc định [0,1], device=cuda. S00 kiểm đủ GPU đã chọn trước S01, không fallback CPU hoặc một GPU nếu thiếu; cấu hình [0] chỉ là lựa chọn tường minh khác của người vận hành. CPU fixture vẫn phải chọn device=cpu, không nhận là chứng minh CUDA.
+- S07 phân lịch các cặp mode/K độc lập cho tối đa hai tiến trình, mỗi GPU một job; mỗi job vẫn fit toàn eligible development profiles của mode đó cho từng seed, cùng n_init10/seed và diagnostic sample đã đăng ký. Sau khóa K, fit full descriptive riêng từng mode song song. Không shard một bài KMeans hoặc đổi thuật toán/diagnostics/tiêu chí chọn K.
+- S08 các baseline hằng số vẫn CPU; S1/P2/T0 linear fit độc lập có thể chạy đồng thời trên hai GPU. OLS cuML algorithm=svd, feature order/log/imputer/scaler/train-only/common cohort/split không đổi. G4 phải kiểm đủ bảy validation fits trước tạo dữ liệu job test; test predict-only từ model đã lưu, không refit. T1 vẫn alias P2.
+- CUDA_VISIBLE_DEVICES được đặt riêng trước khi Python worker import CUDA/cuML; tránh đổi device toàn cục trong luồng hoặc fork context CUDA đang sống. Theo [cuML device selection](https://docs.nvidia.com/cuml/26.08/advanced/#selecting-the-cuda-device), không dựa cupy.cuda.Device để chọn GPU cho fit cuML; API đó chỉ được dùng truy vấn metadata từng thiết bị. Serialization yêu cầu cùng phiên bản cuML theo [tài liệu persistence](https://docs.nvidia.com/cuml/latest/pickling_cuml_models/); guard phần mềm hiện có được giữ.
+- Tiến trình cha là bên duy nhất publish/record/checkpoint. Worker chỉ ghi file tạm trong thư mục riêng thuộc runtime spill, kiểm reload trước trả labels/predictions/coefficients/compute. Model CUDA không được unpickle trong notebook cha để tránh nạp model GPU1 lên GPU0. Metadata ghi GPU index theo visibility của cha, token visibility của worker, PID, start/finish, compute và dấu mốc test sau G4. Smoke48dòng/GPU kiểm KMeans/OLS/reload; không đọc raw.
+- Scheduler giới hạn một worker/GPU, kiểm tổng ước lượng matrix hai worker theo budget2GiB và host available; mỗi fit vẫn kiểm VRAM riêng. Hai GPU không cộng VRAM, không giải quyết một fit quá lớn, không tăng budget hoặc đổi cohort. Lỗi worker/OOM hoặc hủy phải dừng worker còn lại, không commit completed hoặc chạy lùi âm thầm. Temp ngoài working vẫn cần đủ đĩa; không bỏ prerequisites/output để cứu quota.
+- Đây là thay đổi vận hành song song được user yêu cầu, không đổi RQ/target/estimator/metric/leakage hoặc phạm vi full. Khác phần cứng/thứ tự CUDA có thể gây sai số số thực nhỏ, không hứa bitwise hay tăng tốc2lần. Src/config đổi làm checkpoint5.3 stale; không migration/checksum giả. Local test dùng CPU/fake CUDA ghi rõ simulated, actual Kaggle T4x2/full-data vẫn phải kiểm thật.
 
-Derived:
+## XV. Kiểm tài nguyên và đồng bộ5.5, ngày18/10/2026
 
-\[
-assist\_ratio =
-\frac{assists}{kills+assists}
-\]
+Người dùng yêu cầu thực hiện hướng2 sau audit Run All. Đây là sửa vận hành, không chấp thuận đổi estimator hoặc lấy mẫu. Thay trần matrix2GiB cố định bằng memory_policy=auto, memory_fraction=.60 của RAM đang available; fixed/max_matrix_gb vẫn có thể chọn tường minh. Không dùng tổngRAM thay available, không gộpVRAM, không fallback mộtGPU. S00 kiểm phiên bản code/config, cache src và requirements trước import pipeline. Working v55 mới giữ nguyên dữ liệu phiên cũ; source/code/checkpoint khác nhau vẫn bị chặn.
 
-khi denominator > 0.
+Sau S04, trước S05 tốn thời gian, đếm cohort/profile, ước lượng host của từng tập và tổngworker, VRAM riêng từngOLS. Chỉ đọc counts/độ dài khóa, không dùng test-target giá trị/metrics/fit để quyết định nghiên cứu. Không gọi ước lượng này là measured peak hoặc bảo đảm full-data; S07/S08 vẫn kiểm lại tại thời điểm collect/worker. S10 kiểm byte bản sao release cộng dự phòng metadata1MiB và dung lượng trống trước ghi, giữ budget18GiB.
 
-Main:
-- assists;
-- DBNO;
-- assist_ratio.
+Hash bảng theo batch giữ chính serialization/digest cũ; reload predictions theo batch giữ tolerance; T0/P2 kiểm row IDs không cần tải cả feature matrix lần nữa; dev/full profile không đồng thời sống trongRAM. Giữ tất cả row/float64/features/models/metrics và bảy fit. Không sửa protocol để phù hợp máy: nếu một fit vẫn vượtRAM/VRAM phải dùng môi trường đủ tài nguyên hoặc xin quyết định nghiên cứu riêng, không đánh completed giả.
 
-Excluded from main:
-- dbno_ratio.
+## XVI. Triển khai D0-D1, S02 ngoài RAM, ngày 19/10/2026
 
-Team-level candidates chỉ optional:
-- team_kills;
-- team_damage;
-- team_assists;
-- team_avg_survival.
+Theo kế hoạch OOC mụcXII, đợt5.6 chỉ triển khai D0-D1 để giải quyết OOM metadata S02. Chưa triển khai D2-D6 hoặc đổi huấn luyện S07/S08.
 
-Không đưa team features vào main model nếu chưa có experiment riêng và leakage review.
+- S02 dùng cơ sở dữ liệu tạm trên đĩa trong thư mục runtime riêng; đóng kết nối trước dọn file thuộc lượt chạy, kể cả lỗi. Không đưa database/spill vào output hoặc handoff. DuckDB memory_limit2GB và threads2 giữ nguyên; không dùng thêm bộ nhớ bằng cách mở giới hạn.
+- Metadata tính bảngteam theo(match_id,team_id) rồi tổng hợp sốđội/độimâu thuẫn; roster, ngày khácnhau, party_size khácnhau tính riêng; LEFT JOIN các bảng nhỏ về tập trận. NULL không bị đếm như giátrị distinct; nhóm không cóteam/date/party hợp lệ nhậncount0 như trước. Không lọc target trước roster/durationproxy.
+- Dedup/conflict/filter/lineage và côngthức row_id giữ nguyên. Drop exact/conflicts sau khi không cònconsumer; assigned làview thay vì bảncopy rộng. Toàn cleaned/metadata/split vẫn được xuất/kiểm theo canonical contract; provenance s02_execution.json ghi layout và actual SQL limit/threads.
+- Giữ chữký băm mọi src/runtime, kiểmstale và bảo vệ working. Chưa có migration từ5.5; không sửa checksum/status để ép reuse. Working5.6 riêng, codeZIP và notebook cùng sourcechecksum. Reuse S01 chỉ được kiểm trong cùngbản; chưa hứa bảo toàn signature xuyênversion dù ingest không đổi.
+- Requirements thêm nbconvert7 tươngthích nbclient mới do lỗi môi trường người dùng cungcấp. Không tự chỉnh pandas/requests/jupyter-server để chạy theo yêu cầu google-colab ngoàipipeline.
+- Các kiểm local/null/conflict/split/parity và synthetic lowmemory được ghi vào hai CHANGELOG. Test truyvấn metadata1.2triệudòng không chứngminh toànS02/fullsource hoặc peakRAM thực; actualKaggle/full-data và tiếtkiệm tài nguyên toànpipeline còn mở.
 
----
+## XVII. Triển khai D2, S03-S04 trên đĩa, ngày 19/10/2026
 
-# 15. Combat Timing
+Đợt5.7 thực hiện OOC-03/OOC-04 sau D0-D1. Đây là thay đổi tổ chức thực thi, không đổi protocol nghiên cứu trong IV-VIII; D3-D6 vẫn mở.
 
-## 15.1. Mục tiêu
+- S03 dùng database tạm trên đĩa, metadata projection hẹp. Kiểm unique match_id và match thiếu metadata trước publish; đối soát số dòng sau JOIN. Tất cả feature/target/flags/lineage/kiểu dữ liệu/missing rule giữ nguyên; một lượt aggregate lấy mọi cột validation thay nhiều lượt quét.
+- S04 chia events/metadata/base bằng cùng quy tắc first16hex(SHA256(coalesce(match_id,''))) dưới dạng uint64 moduloP, mặc địnhP=16. Hash chỉ chọn phần; mọi dedup/JOIN dùng khóa gốc đầy đủ, không coi hash collision là cùng thực thể. Giữ canonical event fields và toàn bộ raw_ fields trong dedup, nên sự kiện khácvictim/raw không bị gộp dù cùngkiller/time; replay xuyênshard cùng nội dung chỉ tính mộtlần. EventNULL/orphan vẫn góp audit theo quy tắc cũ, không bị vứt sớm để dễ chia.
+- Mỗi nguồn ghi các phần bằng một COPY PARTITION_BY, giới hạn16file mở và rowgroup8192 cho writer phân vùng. Mọi dòng cùng trận luôn ở cùng phần, gồm metadata durationproxy từ roster trước task exclusions. Tính exact count/min/sum/phase theo match/killer trên database đĩa, JOIN base cùng phần, validateParquet/rows trước-sau, rồi ghép các phần thành canonical player_match.parquet sau khi toàn bộ phần đạt. Không fit estimator riêng từng phần.
+- Giữ absolute eligibility khi event vượtproxy hoặc duration<60; giữ biênpha, mẫu sốphasevalid, confirmed_no_kill/event_missing/absolute_only, has_kill theo aggregate và structuralmissing. Auditglobal cộng các count phân vùng rời nhau, không lấy mean-of-means hoặc trungbình ratio. Công thức feature/target/split/per_mode/KMeans/OLS/G4/metrics/haiGPU không đổi.
+- timing_partition_audit.csv ghi events/unique/eligible và bảo toànrows từngphần; s04_execution.json ghi quy tắc/layout/bytes trước dọn. Bytes này không phải peaktemp/RSS, không gồm mọi spill/databasefile. File tạm của lượt chạy được đóng/dọn kể cả lỗi; không xóa raw/canonical tốt hoặc file không thuộc lượt chạy.
+- Đánh đổi: thêm lượt ghi/đọc và bản sao tạm trên runtime disk, không hứa tăngtốc. Chưa tự tách phần lệch hoặc checkpoint từngphần; một phần/trận quálớn vẫn có thểOOM, hủy giữa phần phải chạy lạiS04. Giữ giới hạnSQL2GB/threads2 và outputbudget18GiB, chưa chứngminh đủ đĩa/Kaggle/fullsource.
+- Chữký conservative vẫn băm toànsrc/runtime và toàntiming trongS03/S04. Đổi partitions làm staleS03, phải chạy lại producer; không giảsignature/status để ép reuse. Chưa có migrationS01 từ5.6; rootv57 mới, notebook/ZIPsourcehash phảikhớp và không cập nhật nóng phiên đang giữ output chưa bảo vệ.
+- Tests có oracle5.6 đóngbăng chỉ trong thưmục kiểmthử, không là nguồn côngthức production hoặc thànhphần ZIP. Kiểm exactschema/rowIDs/NULL/flags/counts và double tolerance cốđịnh rtol=atol=1e-12 trên fixture adversarial, partition1/2/7/16, emptyinput/emptybase, metadata sai, failure/retry và SQL128MiB. Đây không là nghiệmthu CUDA hoặc sốliệu nghiêncứu PUBG.
+- Kiểm mở rộng downstream còn sai khác Davies-Bouldin Solo/K3 khoảng2.35e-9 vượt ngưỡng rtol1e-9/atol1e-10 đã đặt;10bảng phân tích còn lại,14predictions, labels/centers và K từ silhouette đạt trên fixture. Giữ kết quả kiểm không đạt của chỉ số đó, chưa đóng toàn OOC-Q3, không nới ngưỡng hoặc làm tròn để gọi tương đương. Sai khác profile nhỏ do thứ tự/số học là giả thuyết cần kiểm tiếp ở D4; không dùng59tests unit/integration đạt làm chứng minh mọi chỉ số downstream giống nhau hoặc mọi nguồn thật sẽ chạy.
 
-Từ kill/death events, mô tả **thời điểm player thực hiện kill**.
+## XVIII. Triển khai D3, thống kê toàn cục trên đĩa, ngày 19/10/2026
 
-Main features:
-- `first_kill_time`;
-- `avg_kill_time`;
-- `early_kill_count`;
-- `mid_kill_count`;
-- `late_kill_count`;
-- `early_kill_ratio`;
-- `mid_kill_ratio`;
-- `late_kill_ratio`;
-- `has_kill`.
+Bản5.8 thực hiện OOC-05/OOC-06, chỉ đổi tổ chức tính toán S05-S06. Không đổi cohort, feature, target, split, leakage, protocol lựa chọn hoặc estimator. D4-D6 và kiểm số học Davies-Bouldin ở mụcXVII vẫn mở.
 
-Candidate profile helper:
-- `kill_active_match_ratio`.
+- S05 dùng database tạm trên đĩa. Count/mean/std/min/max/skew/zero của 21 cột lấy trong một lượt aggregate có trạng thái nhỏ; vẫn dùng kernel DuckDB cũ, sample std và predicate valid_survival riêng cho thống kê target survival. Không thêm lọc finite/target/missing khác hoặc lấy mẫu để giảm bộ nhớ. Placement và các cột khác giữ predicate cũ.
+- Median/q25/q75 vẫn exact Type-7 trên toàn cột non-NULL thuộc đúng scope. Với phân vị $p$, vị trí tính từ0 là $h=(n-1)p$; dùng row_number sau global sort để xác định hai đầu mút. Kernel quantile_cont gốc nhận tối đa hai giá trị và phần nội suy tương ứng, nên không giữ vector quantile toàn cột trong aggregate; không dùng trung vị từng batch, sketch hoặc phép tính xấp xỉ. Bảng ordinal/value đặt trên đĩa và dọn sau cột cuối cùng dùng nó. Histogram dùng lại min/max exact đã tính, giữ 30bin, mẫu số và units.
+- S06 materialize riêng các cặp x/y hữu hạn theo từng feature-target-mode và target-validity ở train+validation. Global value counts rồi cumulative sum tạo average rank cho ties: $r(v)=N_{<v}+\frac{N_v+1}{2}$. Mọi tie trên đúng cặp được xét chung, không rank theo partition hoặc tái dùng rank y trên cohort khác. Giữ corr(x,y) cho Pearson và corr(rank_x,rank_y) cho Spearman, không trung bình hệ số lô. JOIN hạng x rồi y thành hai bước riêng, đối soát N sau mỗi JOIN, dọn trung gian hết consumer. Empty/constant giữ undefined/NA, không thay0 hoặc clip hệ số.
+- Main tables và plot sources giữ schema/names/scope/units/primary flags. s05_execution.json/s06_execution.json và progress từng cột/cặp chỉ thêm provenance vận hành, không là checkpoint bền vững hoặc measured peak. Giữ report_only chỉ đọc và raw bất biến.
+- Cấu hình SQL2GB/threads2, matrix policy, outputbudget18GiB, haiGPU S07/S08, KMeans per_mode và OLS SVD không đổi. Temporary database/sort spill ngoài working nhưng vẫn cần RAM/đĩa; tăng I/O có thể chậm hơn. Chưa resume riêng cột/cặp, chưa chứng minh đủ ngân sách toàn nguồn. Source/config đổi làm checkpoint trước5.8 stale theo guard cũ; rootv58 riêng, không migration/checksum/status giả.
+- Kiểm tham chiếu5.7 đóng băng chỉ ở tests, không xuất trong gói production. Quantiles so exact; scalar moments/correlations double với rtol1e-10/atol1e-12 đặt trước trên fixtures, counts/schema/NULL/flags theo contract. Có SciPy Spearman độc lập, null/ties/constant/empty/singleton/integer/extreme/nonfinite, test-only mode/outcome, all-missing, failure/retry và stress SQL64MiB. Đây không là kết quả nghiên cứu PUBG hay actualCUDA; kết quả kiểm/benchmark cụ thể ở kế hoạch mụcXII.13 và nhật ký.
 
-## 15.2. Match duration proxy
+## XIX. Triển khai D4, luồng dữ liệu mô hình, ngày 19/10/2026
 
-Primary proxy:
+Bản5.9 thực hiện phần giảm bản sao trong OOC-07/OOC-08. Không đổi công thức profile, cohort, feature, target, split, G4, lựa chọn K, estimator hoặc solver. Không lấy mẫu để fit. D5-D6, CUDA thật và toàn nguồn vẫn cần kiểm riêng.
 
-\[
-estimated\_match\_duration =
-\max(player\_survive\_time)
-\]
+- S07 tổng hợp profile trên database tạm trên đĩa, giữ đầy đủ player-mode trước fit; collect toàn profile vẫn có cổng RAM, không gọi là hoàn toàn ngoài RAM. Không giữ các nhãn đầy đủ của mọi seed khi ARI chỉ cần mẫu diagnostic đã đăng ký; seed đầu vẫn giữ nhãn toàn bộ cho DB/kích thước cụm. Các lần fit, seeds/n_init và silhouette không đổi. Dữ liệu kết quả từng mode lưu Parquet tạm, đọc một mode khi xuất; reload model dự đoán theo lô50000.
+- Đính chính số học Davies-Bouldin ởXVII: khoảng cách theo norm/dot có cancellation (mất chữ số khi trừ các số gần nhau) tại điểm gần tâm cụm. Tính trực tiếp hiệu tọa độ, chuẩn Euclid và trung bình khoảng cách trên toàn profile, float64 theo lô; giữ nguyên định nghĩa chỉ số và quy tắc suy biến. Có oracle Decimal60chữ số, không làm tròn/nới tolerance để giống số cũ sai số học. DB chỉ dùng báo cáo; K vẫn chọn theo silhouette. Vì đây là sửa độ ổn định phép tính, số DB có thể khác bản5.8, không khẳng định bitwise parity của chỉ số cũ.
+- S08 tạo một bộ float64 X/y trên đĩa dạng memory map (ánh xạ file để đọc phần cần thiết) cho mỗi task/split. Khóa chuỗi tách sang Parquet, không gửi DataFrame có tên người chơi tới worker; chỉ gửi đường dẫn nhỏ. SQL ghi theo lô50000 với row_id tăng/unique/nonnull, đủ số dòng, target hữu hạn; cohort hash giữ cách tuần tự hóa cũ. T0/P2 kiểm cùng rows/hash trước fit. Quantile error bins vẫn exact trên toàn target train.
+- Vẫn một Pipeline.fit đầy đủ cho mỗi bảy thí nghiệm: log, mean imputer/missing indicators/keep_empty, StandardScaler train-only và baseline mean/median hoặc OLS hiện hành. Không đổi float32, partial_fit, SGD, solver hoặc distributed fit. Memory map không ngăn estimator copy toàn ma trận; dự toán host/VRAM và cổng từng fit vẫn giữ. Hai GPU chỉ thực thi các fit độc lập.
+- Validation/test transform/predict/reload theo lô, ghi Parquet tạm; worker trả đường dẫn, không trả DataFrame dự đoán toàn tập. Kiểm schema/dtype/shape, checksum metadata, row IDs/target/cohort và reload trước publish. Không mở test trước G4; validation cache vẫn kiểm chữ ký/checksum và không refit khi chỉ duyệt G4. TemporaryDirectory đóng/dọn file sở hữu sau thành công/lỗi; raw/output tốt không bị xóa để giải phóng RAM.
+- Metrics micro/match/team còn đọc một prediction frame đầy đủ và được tính vào dự toán RAM; S09 vẫn cần D5, không nhận đã streaming metrics. S07 còn collect profile, một fit có thể vẫn quá RAM/VRAM. Không thay protocol nếu cổng tài nguyên chặn; cần quyết định riêng cho solver/estimator khác.
+- Source/config mới vẫn làm checkpoint cũ stale; rootv59 riêng, notebook/code ZIP cùng hash. Không có migrationS01 từ5.8, không sửa manifest/checksum để reuse. Kết quả local/parity/failure/đóng gói ghi nối tại kế hoạchXII.14 và hai CHANGELOG, không là chứng minh Run All nguồn thật.
 
-within `match_id`.
+## XX. Triển khai D5, đánh giá trên đĩa và snapshot, ngày 19/10/2026
 
-Đây là proxy, không gọi là exact official match duration.
+Bản5.10 thực hiện OOC-09..11. Giữ toàn bộ cohort, công thức MAE/RMSE/R2, trọng số theo trận, target đội, bảyfit/T1alias/G4/seed/estimators và quy tắc không clip dự đoán. Đây là thay đổi vận hành và ổn định số học, không đổi câu hỏi nghiên cứu hoặc lấy mẫu kết quả chính.
 
-Validation:
-- >0;
-- finite;
-- compare event time range;
-- compare distribution;
-- inspect abnormal cases.
+- S08 đọc prediction Parquet qua database tạm trên đĩa để tính metrics; không collect toàn prediction frame. Micro tính trên tất cả dòng. Match-aware lập count trên đúng cohort rồi dùng trọng số nghịch số dòng trận; team-aware kiểm target nhất quán và team ID không thiếu trước lấy trung bình dự đoán theo đội. Không lấy trung bình RMSE/R2 từng lô, không đổi mẫu số. Kiểm input hữu hạn, row IDs unique/nonnull và match IDs hợp lệ; dữ liệu hỏng bị lỗi, không drop ngầm.
+- Phép tính dùng tổng có bù sai số và hai lượt toàn cục, trừ anchor trước tính variance để tránh mất chữ số ở target có offset lớn. R2 target hằng hoặc n<2 vẫn NA có lý do; min/max cũng kiểm hằng thật thay vì nhận variance giả do rounding. Có đối chiếu Decimal60digits cho số lớn/hằng. Có thể khác vài chữ số cuối so phép cộng cũ; không làm tròn hoặc nới tolerance sau khi thấy số.
+- S09 dùng database đĩa để kiểm unique row IDs từng nhánh, đủ toàn bộ IDs, identity/target/split khớp chính xác trước JOIN/metrics. Không intersect để che dòng mất. SQL JOIN có thể spill theo backend, không tuyên bố tự viết sort-merge. So sánh T0/T1 vẫn candidate-reference trên cùng cohort. Error slices giữ mode và các biên target từ train, histogram giữ biên/nhãn pandas.cut, không cắt cực trị.
+- Bootstrap nếu bật giữ default_rng/seed, cùng resample IDs trận có hoàn lại và multiplicity hai nhánh. Chỉ đưa vectors trạng thái numeric từng trận vào RAM có guard, không full prediction rows. Variance tính within/between quanh anchor để tránh cancellation; constant replicate có R2NA, valid_replicates thật. Type-7 nanquantile và mức2.5/97.5% không đổi; thiếu CI không tuyên bố significance. Không thêm bootstrap mặc định khi chưa được chọn.
+- Plot sample vẫn tối đa1500 dòng, cùng RandomState/seed/quy tắc uniform without replacement và thứ tự file vật lý như pandas.sample bản cũ. Đọc Parquet projected ba cột theo lô50000; giữ workspace chỉ số O(N) có guard để không âm thầm đổi sample. Đây chỉ là mẫu vẽ, không mẫu fit/metrics; không gọi toàn bộ S09 có bộ nhớ hằng. S00 resource_plan chỉ đọc counts/khóa, không đọc giá trị test target, và dự toán cả workspace plot/bootstrap khi đi tớiS09.
+- S10 inventory đầy đủ bytes/hash, tính cả JSON manifest/pointer và dự phòng1MiB trước tạo snapshot. Copy vào thư mục staging sở hữu cùng filesystem, kiểm checksum/giải mã Parquet/load_release rồi rename snapshot UUID mới; publish final_results pointer cuối. Lỗi copy/readback dọn staging, giữ release/pointer cũ. Nếu lỗi pointer sau rename, snapshot đầy đủ nhưng chưa được trỏ tới có thể còn; không là completed hay tự được xóa. Không ghi đè/xóa release cũ hoặc raw/canonical để cứu budget.
+- Loader giữ format1, kiểm checksum/bytes/duplicate/unsafe paths, đọc giải mã Parquet theo lô và đối chiếu đơn vị. Coverage metricsCSV đọc chunks50000 chỉ ba cột; display preview dùng nrows25, không fullCSV.head. report_only không raw/fit/build/download/write; local snapshot readback không chứng minh Kaggle đã lưu Version.
+- Mỗi database đĩa có thư mục spill riêng bên trong thư mục tạm sở hữu, không dùng chung tên file spill giữa hai instance DuckDB. Kiểm bổ sung sau lượt87tests phát hiện native crash khi reader ngoài vẫn cần spill còn kết nối trong ghi/đóng cùng file tạm. Đã tách scope mỗi connection, không tăng memory_limit hoặc đổi query/công thức; có subprocess probe tái hiện và đọc đủ IDs sau khi kết nối trong đóng. Folderdatabase/spill cùng được dọn sau đóng connection, không xóa raw/canonical.
+- Cấu hình khoa học/nguồnVersion3/assumed_seconds/haiGPU/SQL2GB/threads2/output18GiB giữ nguyên ngoài version/rootv510. Chữ ký mọi src/runtime vẫn conservative, chưa migrationS01 từ5.9. Một fullprofile/fullKMeans/OLS vẫn có thể không vừa RAM/VRAM. D6/actualCUDA/Kaggle/fullsource còn mở; nghiệmthu và hash gói ghi nối tại kế hoạchXII.15/haiCHANGELOG.
 
-## 15.3. Relative event time
+## XXI. D6: ranh giới nghiệm thu, ngày19/10/2026
 
-\[
-relative\_event\_time =
-\frac{event\_time}
-{estimated\_match\_duration}
-\]
+D6 kiểm xuyên suốt và đóng gói, không thay protocol hoặc code production5.10. Bộ kiểm mới dùng ba mode/Unicode/replay/conflict/target lỗi, toàn chuỗi S01-S10, restore/reuse/report_only và ngắt thật tiến trình giữa partition. Tham chiếu ghép các helper đóng băng5.6-5.9; ingest/S02 vẫn có phần dùng chung nên không gọi đây là oracle độc lập cho mọi phép tính. Davies-Bouldin kiểm Decimal60 riêng, không nhận số cũ có cancellation làm tiêu chuẩn tuyệt đối. Exact keys/cohort/schema/NULL/flags và tolerance số thực được đăng ký trước, không nới sau kết quả.
 
-Primary phase split:
+Giữ một notebook48cells/16code và sourcechecksum5.10. Tests/tài liệu không nằm trong signature mã nguồn stage, không đổi version/root hoặc cố ý làm S01 stale chỉ để ghi tên D6; vẫn không có migration qua các bản src khác. Ngắt tiến trình có thể để running/lock/scratch dở, không completed hay tự reuse phần chưa commit. Takeover chỉ sau xác nhận tiến trình trước đã dừng; S04 chạy lại toàn stage, không nhận có partition checkpoint hoặc tự dọn an toàn mọi scratch cũ.
 
-- Early: `[0, 1/3)`
-- Mid: `[1/3, 2/3)`
-- Late: `[2/3, 1]`
+Q6/actualT4x2/nguồn PUBG tăng quy mô và toàn nguồn phải có evidence thực riêng. Mốc small/medium chỉ kiểm vận hành trên trọn trận/roster/events, scope rõ và không thay main full cohort. Không chọn/lọc/tune theo test outcomes để đạt tài nguyên. Local CPU/mock/RTX3050 đơn lẻ, số tests hoặc GPU smoke48dòng không đóng được các cổng nguồn thật. Trạng thái/kết quả/log và cổng còn mở ghi tại kế hoạchXII.16/haiCHANGELOG; không gọi D6 hoặc nghiên cứu chính hoàn tất khi thiếu nghiệm thu nguồn thật.
 
-Out-of-range event:
-- không silently clip;
-- flag;
-- audit;
-- quyết định sau validation.
+## XXII. Layout chuẩn hóa5.11, người dùng chọn hướng1 ngày20/10/2026
 
-## 15.4. No-kill semantics
+Ảnh thực tế S02 cho project18.018GiB/budget18/free1.484, cleaned10.681GiB bên cạnh S01aggregate3.173/event4.163. Đây là lỗi lưu trữ ở guard sau publish cleaned, không phải chứng minh hết RAM hoặc tăngGPU giải quyết được. S01completed, S02resource_limited; không nhận cleaned dở là stagecompleted.
 
-Nếu player có 0 kill:
-- `has_kill = 0`;
-- first/avg kill time = NaN;
-- early/mid/late ratios = NaN.
+Chỉ thay layout/producer compatibility, không RQ/cohort/rowIDs/flags/rawcolumns/lineage/feature/target/split/leakage/OLS/KMeans/G4/metrics/seeds/float64. S01 giữ đầy đủ typed/raw. S02 lưu các source_file/source_row được chọn theo exact-dedup/identity/filter cũ; JOIN tái dựng schema sạch cũ, split/mode/row_id giữ công thức và mapping đã khóa. Base là recipe công thức canonical, player_match ghép base với timing states theo match/killer; discrepancy là projection logic. Descriptor chỉ cho các recipe cố định, không thi hành SQL tùy ý. Mọi physical input/descriptor vẫn phải thuộc artifact/dependency được checksum; huấn luyện cache băm toàn cây đầu vào, không chỉ metadata descriptor.
 
-Không biến NaN thành 0 trước khi semantics được bảo toàn.
+Prediction pool có thứ tự position tường minh, lưu row_id/match/team/mode/split/actual một lần mỗi cohort; mỗi experiment lưu position/predictedfloat64 và nhãn hằng ở metadata. Trước publish kiểm exact identities/actual/constants theo lô; khi đọc kiểm checksum pool/count/schema/vị trí liên tục/finite. Không ghép bằng giao IDs, không đổi mẫu vẽ/RNG hoặc giảm precision. Release snapshot copy cả pool/values bất biến, không hardlink canonical vào release; report_only chỉ đọc, không cần raw hoặc ghi lại frame rộng.
 
-## 15.5. Chunk-safe aggregation
+Import S01 là thao tác tường minh chỉ từ producer5.10/sourceSHA71de81ca811d4d66ebb1c432c56a370c12fb48e41411adee5996eb436af23690. Kiểm codeproducer, ASTingest/constants/writer, requirements/software/source/version/license, signature/checksum/giải mãParquet; chỉ sau đó tạo S01signature hiện hành với producer_import giữ dấu vết cũ và recomputedFalse. Dùng hardlink cùngfilesystem, không largecopyfallback. Không import S02failed hoặc tự xem dữ liệu cũ tương thích chỉ vì filename trùng. Rootv511 riêng; source/schema/parser có thay đổi ngoài proof phải từ chối, không sửa checksums để ép reuse.
 
-Partial states:
+CLEANUP_IMPORTED_510=False mặc định. Chỉ sau importS01đạt và operator chủ động xác nhận mới bỏ exact file cleaned của S02failed và tên hardlink aggregate/event cũ nếu vẫn cùnginode với S01 giữ tại rootmới; không writerlock/downstreamcompleted/symlink hoặc filefailed được completedcheckpoint sở hữu. Không xóa raw Input hay recursive root; rawS01 bytes giữ ở rootmới, rootcũ nghỉ dùng. Cleaned dở chỉ dựng lại được từS01, hardlink không là backup độc lập. Không sửa nóng project hoặc xóa dữ liệu Kaggle thật trong lượt triển khai local.
 
-- `kill_count`;
-- `sum_kill_time`;
-- `first_kill_time_partial = min`;
-- early/mid/late counts.
+Giữ budget18GiB, SQL2GB/threads2 và haiGPU. Chuẩn hóa giảm bản sao nhưng thêm JOIN/đọc lại và không bảo đảm đủ dung lượng/host/VRAM cho nguồn thật. Phải kiểm parity/lowmemory/failure/import/restore/read-only/package và đo dung lượng riêng; không suy từ fixture hoặc helperbenchmark thành full-data/CUDA acceptance. Kế hoạchXII.17/haiCHANGELOG ghi evidence và giới hạn.
 
-Final:
+## XXIII. Biến thể Colab Pro được yêu cầu ngày20/10/2026
 
-\[
-avg\_kill\_time =
-sum\_kill\_time / kill\_count
-\]
+Yêu cầu mới cho phép thêm notebooks/PUBG_COURSEWORK_COLAB.ipynb bên cạnh notebook Kaggle canonical, thay giới hạn một file chỉ cho trường hợp Colab này. Không thêm thí nghiệm hoặc bộ công thức khác. tools/build_colab_notebook.py lấy các section khoa học S01-S10 của canonical, đóng kèm 12module src5.11/config/requirements/đặc tả (15file), không cần Dataset code hoặc token chứa trong notebook. Không chứa raw/model/output cũ. SourceSHA4e3f9a19 giữ nguyên; chỉ adapter môi trường/nền tảng ở tools và notebook mới.
 
-Không average partial means.
+Colab dùng GPU0 tường minh với cùng cuML KMeans/OLS và bảyfit; không đòi haiT4 hoặc fallback CPU. Đổi số GPU là thực thi tuần tự các fit độc lập, không đổi estimator/solver/cohort/split/seed/feature/target/metric/G4/precision. Môi trường CUDA/driver/cuML/Python phải qua kiểm và smoke; việc notebook tạo được hoặc CPU fixture đạt không chứng minh actualColab GPU/full-data. Cài dependencies trước raw, khi đổi thư viện phải restart session, không xóa VM. Cố định cuML/cuDF26.2.* và CuPy13.6 đến trước14 cho đúng cu12/cu13; metadata PyPI26.10 yêu cầu pandas3 nên không tương thích core pandas<3. Metadata26.2 yêu cầu pandas2.0 đến trước2.4, giao với core>=2.2/<3; không sửa core requirements để đuổi phiên bảnGPU. Record software của core vẫn chặn reuse không tương thích; chưa chứng minh Linuxpipresolver thực đã chạy.
 
-## 15.6. Kill-event vs aggregate kills
+Nguồn Kaggle chỉ skihikingkevin/pubg-match-deaths/versions/3 đã được cho phép, tải bằng kagglehub.dataset_download với handle có version, cache/runtime riêng. Không gọi latest hoặc dataset_load để nạp CSV toàn bộ vào RAM. License/mapping/assumed_seconds giữ evidence và giới hạn cũ, không nâng thành verified. Public dataset thử không đăng nhập; khi cần chỉ dùng Secrets/login của Kagglehub, không ghi/in token trong notebook/config/Drive.
 
-Không yêu cầu `event_kill_count == player_kills` tuyệt đối.
+Mặc định project mới /content/drive/MyDrive/PUBG_Coursework_Colab_v511 lưu trực tiếp canonical Parquet/checkpoint/model/release; raw/cache/SQL/spill/matrices ở runtime. Không sao toàn project sau mỗi stage; Drive đọc nhiều JOIN có thể chậm, không hứa nhanh hơn Kaggle. USE_GOOGLE_DRIVE=False chỉ lưu runtime và cảnh báo mất khi VM bị thu hồi. Giữ output18GiB/SQL2GB/threads2/batch50000; dự phòng55GiB ổ runtime trước tải và hướng dẫn người dùng tự kiểm quota Drive khoảng25GiB, không gọi đó là quota dịch vụ đã xác minh hoặc Colab Pro cấp sẵn.
 
-Phải audit:
-- match rate;
-- discrepancy distribution;
-- unnamed/environment kills;
-- join failure;
-- source semantics.
+Resume dùng đúng root Drive, rawVersion3 và software/source/config/signature/checksum tương thích. Kiểm completed bằng candidateconfig trước ghi thay thế config, không ép checksum/completed hoặc tự takeover lock. Stage dở vẫn phải chạy lại; hard reset/phiên mới có thể cần cài/tải lại raw, không có resume giữa fit. HandoffColab ghi platform rõ và kiểm file qua mount, không tạo Kaggle Version reference giả. Mounted-file checksum/read-back không xác nhận đồng bộ máy chủ Google hoặc backup độc lập; một writer/root. report_only không giải nén/cài/downloadraw/prepare/copy/train/ghi project, chỉ dùng code/môi trường đã chuẩn bị và release cụ thể, mount Drive để đọc nếu cần.
 
-Không fail pipeline chỉ vì có discrepancy trước khi hiểu nguyên nhân.
+Các thay đổi này không di chuyển/xóa dữ liệu Kaggle/Drive thật. Trạng thái kiểm/notebook/hash/giới hạn ghi ở PLANXII.18 và hai CHANGELOG. Colab Pro không bảo đảm GPU/RAM/runtime cụ thể; fullfit có thể vẫn thiếu tài nguyên, không lấy mẫu hoặc đổi thuật toán để gọi là full.
 
----
+## XXIV. Nhập checkpoint CPU S01-S06 sang GPU, người dùng duyệt 21/10/2026
 
-# 16. Historical Features
+Người dùng báo Version4 quangthinng/pubg-v3 đã chạy S01-S06 thành công, ảnh lưu có handoff_full.json; lần restore đã qua verify_handoff và dừng ở so software. Bảng đối chiếu chỉ thêm cuml-cu12=26.2.0/cupy-cuda12x=14.0.1, các mục Python/CPU không khác. Đây là evidence về metadata/package và checkpoint, chưa chứng minh GPU imports/fit/full-data. Người dùng cho phép sửa với điều kiện không tính lại S01-S06.
 
-Core candidates:
-- `hist_games_played`;
-- `hist_avg_kills`;
-- `hist_avg_damage`;
-- `hist_avg_survival`;
-- `hist_avg_walk`;
-- `hist_avg_ride`;
-- `hist_avg_assists`;
-- `hist_avg_dbno`;
-- `hist_kd`;
-- `hist_avg_normalized_placement`.
+Ngoại lệ vận hành tường minh ALLOW_CPU_GPU_RESUME chỉ áp dụng producer5.11-normalized-storage/sourceSHA4e3f9a191e589c963727c12bbf00ec656ee6bf17de0621ca6a6f520b3641dd3c, có đúng S01-S06 completed, không model/prediction/S07-S10/lock hoặc producer đã import. Python và mọi package CPU giống tuyệt đối; chỉ được thêm distribution trong allowlist cuML/CuPy, không bỏ/đổi GPU đã có hoặc whitelist thay đổi CPU. Requirements giữ nguyên; mọi src ngoài kaggle_runtime.py giống byte, các operation runtime cũ ngoài restore giống AST. Source khác, stage dở, file/raw/source/config/signature khác đều phải dừng.
 
-Optional:
-- same-mode historical versions;
-- rolling last 5;
-- rolling last 10;
-- Combat Timing historical features.
+verify_handoff giữ nguyên. Subprocess chỉ đọc nạp đúng code producer được băm, tính software CPU hiệu dụng từ metadata hiện tại rồi require đủ sáu stage, kiểm raw hashes/dependencies/artifacts/signatures trước copy. Không gọi lại hàm producer. Sau đó staging mới giữ artifact nguyên bytes, thay code vận hành cập nhật, bảo toàn config khoa học, tạo chữ ký import mới bằng actual current software/code, ghi producer_import có nguyên chữ ký/software/version gốc và recomputed=False. Lưu original code ZIP cùng biên nhận/manifest producer; hai file này được băm trong artifacts của sáu stage. Không sửa checksum/completed ở Input, không giả GPU đã tạo dữ liệu cũ. Bản mới handoff/restore nghiêm ngặt thông thường và vẫn stale nếu phần mềm/code thay đổi.
 
-Core default:
-**expanding history**, không rolling.
+Đổi phạm vi mặc định notebook Kaggle sang S07-S07 cho phiên tiếp tục Version4, CODE_INPUT mới được bootstrap ưu tiên trước RESUME_INPUT để tránh gọi lại restore cũ. Chọn T4x2 và giữ smoke synthetic; resource_plan kiểm riêng ngay tại S07/S08 kể cả bắt đầu giữa pipeline. Không thay RQ/cohort/feature/target/split/leakage/KMeans/OLS/metrics/precision/seed/full-data; không chữa giới hạn RAM S08 bằng cách bỏ dòng hoặc đổi estimator. Colab tái sinh gói nhúng đồng bộ source, không tự di chuyển checkpoint Colab/Kaggle khác môi trường. Actual CUDA/Kaggle/whole-source và lưu Version sau migration vẫn cần kiểm thực; tests CPU có metadata GPU giả lập không thay thế chúng.
 
-## 16.1. Chronology validation
+Bootstrap resume có INSTALL_RESUME_ENVIRONMENT riêng: chỉ cài DuckDB đúng version metadata producer và các khoảng nbclient/nbconvert/psutil đã yêu cầu, trước import src, chỉ khi chưa phù hợp. Không nâng hàng loạt CPU/GPU stack, không gọi restart tự động, không sửa manifest; Python khác hoặc DuckDB khác còn trong RAM phải dừng. Không cài/đọc snapshot trong report_only. Import đối chiếu raw hash từ lần require producer với raw hash đóng vào chữ ký mới để chặn thay nguồn trong lúc copy. Target CODE_INPUT phải khớp mã đang chạy; phần mềm thay trong import bị chặn. Source build vận hành mới be2284cda4030beafb99a8b63cca80e15b9de146ecb6a134911b3804471c1a6a, các module tính toán còn lại giữ nguyên byte.
 
-Function:
-`validate_chronology()`
+## XXV. S07 profile phân vùng sau lỗi DuckDB, người dùng yêu cầu sửa ngày21/10/2026
 
-Output:
-- available time columns;
-- granularity;
-- monotonic feasibility;
-- duplicate timestamps;
-- same-day multiplicity;
-- null rate;
-- chronology grade.
+Log thực do người dùng cung cấp xác nhận S00 khôi phục đủ S01-S06, runner bỏ qua cả sáu stage; S07 dừng trong profiles trước KMeans khi DuckDB dùng1.8GiB/1.8GiB. Ngân sách ma trận17.686GiB không phải memory_limit SQL2GB. Cảnh báo pip/google-colab không phải traceback dừng này. Ngoại lệ XXIV trước đó không cho sửa analysis.py; mục này mở rộng có kiểm riêng cho lỗi vận hành, không bỏ guard chung.
 
-## 16.2. Grade A
+- profiles chiếu đúng cột cần thiết và predicate gốc từ player_match; COPY một lượt sang32phân vùng Parquet tạm theo16hex đầu SHA256(to_json(struct_pack(p:=player_name,m:=team_size_mode))) modulo32. Hash chỉ chọn phần; GROUP BY vẫn dùng đầy đủ khóa gốc. Cùng player-mode qua mọi trận/shard nằm cùng một phần. Tách các JOIN của normalized view khỏi GROUP BY profile; không quét lại raw32lần, không cộng hash làm identity.
+- Từng phần dùng nguyên công thức avg/stddev_samp/conditional means/valid counts/outcome train+validation cũ. Singleton std vẫn NULL; full descriptive hành vi dùng cảtest nhưng outcomes chỉdevelopment như trước. Không lấy mẫu, thêm lọc giá trị, đổi precision/feature order/minimum_games/K/seeds/scaler/KMeans/OLS/metrics. Không huấn luyện từng phần. Profile cuối vẫn gom vàoRAM và fullfit giữ cổng tài nguyên.
+- Chỉ scope profile dùng một luồng SQL và tối đa8file partition mở; khôi phục connection settings khi xong/lỗi. Giới hạn SQL2GB/hostbudget/output18GiB trong config giữ nguyên. Scratch nằm trong TemporaryDirectory riêng ngoài savedoutput; dọn bucket sau consumer, không đụng raw/checkpoint/artifact tốt. Cổng host kiểm tổng profile trước mỗi lần đưa kết quả phần vàopandas; thiếuRAM/đĩa vẫn dừng đúng trạng thái. Không có checkpoint giữa partition hoặc cam kết toànnguồn vừaRAM/VRAM.
+- Import từ producerCPU4e3f9a19 vẫn xác minh bằng code gốc, checksum/raw/config/signature/software; cho phép analysis.py đích đúng SHA2561378b2ff27abe1438fe32185de073adc027377e1ca529a2dbd9a4d2862b3c6b1 và AST mọi thành phần ngoài profiles/bounded_profiles/profile_query giống gốc. Mọi module khác ngoài kaggle_runtime.py vẫn byte-identical. Không nhận producer khác, môi trường khác hoặc checkpoint đãmigrate/đãS07; không ép chữ ký. Provenance giữ toàn bộ producer gốc và target sourcehash b663bd7528cd4bd0be7a64bb03f88e07f5c97418b340ba09626853691af602a0.
+- Notebook tái sinh giữ Version4/S07-S07/GPU T4x2, đổi working sang PUBG_Coursework_v511_S07_profiles để không ghi đè lượt cũ. Người dùng cập nhật code Dataset và notebook cùnggói, restartkernel rồi Save&RunAll; S00 kiểm/copy lại nhưng không chạy S01-S06. Colab chỉ tái sinh bundle đồng bộ, không cho di chuyển checkpoint qua môi trường tùy ý.
 
-Exact trustworthy ordering:
+Kiểm CPU synthetic:4test mới đạt42.208s; case540000dòng/180000player-mode ở SQL64MiB làm truy vấn cũ OutOfMemoryException, bản phân vùng đủ180000profile/mỗi3trận và outcomes2trậndevelopment, khớp tham chiếu theo tolerance đãđịnh1e-9/1e-10. Có Unicode/null/singleton/empty/test-only/normalized/parity/cleanup/guard/settings;7test analysis/models cũ đạt66.932s. Đây không phải bằng chứng actualT4 hoặc fullPUBG hoàn tất. Kết quả hồi quy cuối ghi ở kế hoạch và nhật ký.
 
-```text
-groupby(player)
-→ sort(time)
-→ expanding
-→ shift(1)
-```
+## XXVI. S08 OLS chia khối, người dùng duyệt ngày21/10/2026
 
-Current match không được nằm trong history.
+Người dùng yêu cầu triển khai hướng2 với điều kiện không chạy lại S01-S07 hoặc ảnh hưởng kết quả cũ. Version6 của quangthinng/pubg-v3 đã được đọc kiểm qua giao diện: Successful, S01-S07 completed/full, GPU T4x2, root PUBG_Coursework_v511_S07_profiles/source b663bd7528cd4bd0be7a64bb03f88e07f5c97418b340ba09626853691af602a0, có handoff_full.json. Đây là bản nguồn bất biến cho đường nhập mới, không suy diễn chỉ từ số version trong chuỗi cấu hình. Bảng preflight S08 thực có47158595trainS1/47068529trainP2, hostbudget17.556GiB, mỗi GPU14.46GiB; densefit dự toán vượt cả RAM và VRAM. Guard đã dừng trước fit, không gọi đây là đo peak hoặc OOM CUDA thực.
 
-## 16.3. Grade B
+Quyết định này cho phép thay solver S08 và cách tích lũy scaler, thay thế riêng các cấm solver/partial_fit ở mục XVIII/D3 và mô tả cuML OLS ở mục XIV cho đường rq3.solver=tsqr. Không đổi KMeans, RQ, cohort, raw, rowID, feature/target/transform allowlists, matchsplit70/15/15, leakage, bảy fit, T1aliasP2, G4, metric, seed, precisionfloat64 hoặc đơn vị assumed_seconds. OLS vẫn cực tiểu tổng bình phương phần dư trên toàn bộ train; không SGD, mini-batch estimator, lấy mẫu, normal equations, fit từng phần rồi trung bình hệ số hoặc cộng VRAM. Dense solver vẫn là nhánh cũ nếu không chọn tsqr; checkpoint cũ không tự bị chuyển.
 
-Chỉ có day/date:
+S08 TSQR dùng nhiều lượt đọc mmap có thứ tự, khối tối đa50000dòng. Log theo allowlist cũ; imputer thống kê toàn train, giữ cột trống với mean0 và missing indicators chỉ từ train. StandardScaler.partial_fit tích lũy toàn train (population variance như bản cũ), không partial_fit mô hình hồi quy. Offset X và trung bình y tính toàn train; mỗi QR trên ma trận augmented [X-centered,y-centered], gộp R bằng QR. SVD ma trận nhỏ giải minimum-norm với cutoff max(n_train,p_processed)*eps(float64), không dùng số hàng R thay n_train. GPU dùng CuPy QR/SVD float64 với cupyx.errstate linalg=raise; CUDA thiếu/lỗi phải dừng, không fallback CPU. Hai GPU vẫn chạy các fit độc lập; baseline mean/median vẫn CPU, median và bins train Type7 được tính bằng global external sort, không median của chunk medians. Không đọc test outcome trước G4.
 
-Historical features cho match ngày D dùng:
+Solver số học mới không bảo đảm hệ số/cuML hoặc dự đoán giống từng bit. Đăng ký kiểm tham chiếu sklearn densefloat64: preprocessing/prediction rtol1e-9/atol1e-10, coefficients1e-8/1e-9, toàn S08 predictions1e-8/1e-9; cùng exact rowIDs/actual/split/cohort và bảy thí nghiệm. Kiểm rank-deficient/near-rank-cutoff, allmissing/constant/singleton, missing mới ở prediction, biên50000, globalmedian/quantiles, finite/reload/G4. Không nới tolerance để hợp kết quả và không gọi CPUfixture là chứng minh parity với GPUcuML/fullPUBG. S00 thêm QR smoke48dòng trên từng GPU trước toàn nguồn.
 
-\[
-\{matches: date < D\}
-\]
+Import có xác minh tường minh ALLOW_S07_TSQR_RESUME chỉ từ sourceb663bd75 đúng S01-S07completed, software Python/CPU/GPU giống tuyệt đối, requirements không đổi, không prediction/S08/model lạ/lock. Mọi src khác modeling.py/kaggle_runtime.py phải byte-identical, gồm analysis.py/KMeans; modeling mới pinSHA, runtime ngoài các operation được phép phải cùng AST. Verifier chạy codeproducer gốc trong subprocess chỉ đọc, require bảy stage/raw hashes/dependencies/KMeans checksums, không gọi producer. Copy artifact nguyên bytes vào target mới/trống, không ghi Input/targetcũ; overlay code mới, chỉ thêm rq3.solver=tsqr và remount paths. Ghi archive/receipt/oldmanifest/signatures/software/version/recomputedFalse trong provenance, bảo toàn producer_import cũ, rồi rebind chữ ký execution hiện hành có truy nguyên. Copy/raw/software/checksum/đĩa lỗi không công bố project dở. Restore không opt-in vẫn strict như trước, không ép trạng thái completed hoặc bỏ guard.
 
-Không dùng `date == D`.
+Root S08 riêng v511_S08_tsqr; notebook mặc định S08-S08/Version6, CODE_INPUT cập nhật bắt buộc, ALLOW_CPU_GPU_RESUME=False. Cần cập nhật cả Dataset code và notebook, pin OutputVersion6/rawVersion3. Full-source GPU/time/scratch/outputquota/saved-Version sau S08 vẫn là cổng mở; giải pháp giảm fit working set, không hứa mọi bước toàn pipeline đều vừa. Không sửa kết quả S01-S07, không upload/Gitpush/tải dữ liệu tài khoản trong lượt triển khai local. Nguồn phương pháp: https://arxiv.org/abs/0806.2159 và tài liệu chính thức cupy.linalg.qr/cupy.linalg.svd, sklearn StandardScaler.partial_fit; không thêm dependency.
 
-Điều này tránh việc arbitrary file order tạo fake chronology.
+## XXVII. Sửa API chia CuPy trong TSQR, ngày22/10/2026
 
-## 16.4. Grade C
+Log Kaggle thực xác nhận TSQR smoke dừng ở xp.divide(..., where=keep), TypeError Wrong arguments {'where': ...}; không phải bằng chứng OOM hoặc sai cohort. Thay bằng weights=zeros_like(s), weights[keep]=(u.T@rhs)[keep]/s[keep]. Mặt nạ keep/ngưỡng rank/float64/OLS/QR/SVD/globaltrainstats/bảyfit/G4 không đổi; chỉ diễn đạt phép chia tương thích backend, không chia trước rồi che NaN và không fallback CPU. Không đổi requirements/software hoặc dữ liệu đã lưu. Modeling được pinSHA mới632187b6f1732bdee13fbbdfb816e6a3c3fd893a3bdc29bebbb748c65ab966f1; producer nguồn S07 vẫn b663bd75, verifier/provenance/strict guards như XXVI. Root cupyfix mới, không ghi đè working S08 cũ hay InputVersion6. TestAPI NumPy-backed cũ đã không mô phỏng giới hạn where; thêm test tái hiện lỗi trước sửa và full/zero/deficient-rank sau sửa, worker mock cũng từ chối keyword. Không dùng testCPU làm bằng chứng actualCUDA; phải kiểm smoke thật lại, giữ RUN_GPU_SMOKE=True.
 
-Không có trustworthy chronology:
+## XXVIII. Tách JOIN và sort của ma trận S08 qua đĩa, ngày22/10/2026
 
-- historical future prediction bị disable;
-- S2/P3 status = `blocked_by_chronology`;
-- không đổi tên thành future prediction;
-- có thể giữ exploratory player profile analysis nhưng phải tách khỏi historical claim.
+Người dùng cho phép chọn cách sửa hợp lý sau log bản a73054d6: S00 khôi phục thành công, S01-S07 ngoài khoảng thực thi, S08 dừng trong matrix_data tại SELECT ... FROM p ... ORDER BY row_id với DuckDB1.8GiB/1.8GiB. Không kết luận GPU/TSQR đã huấn luyện hoặc bộ nhớ host17.69GiB là SQLbudget. Giữ producerVersion6/sourceb663, toàn eligible cohort, feature/target/split/leakage/float64/rowID/order/counts/cohort hash/bảyfit/TSQR/rank/G4/metrics/KMeans/đơn vị như XXVI-XXVII.
 
----
+matrix_data mới chỉ chiếu metadata, feature/target, player_name cho thống kê và cờ hợp lệ tương ứng, lọc đúng task/split trước COPY Parquet tạm không ORDER BY. Source JOIN chỉ đọc một lần mỗi task/split. COPY dùng một SQLthread/rowgroup8192, khôi phục threads cha trong finally. Kết nối disk_db khác với spill riêng, một SQLthread, chỉ đọc projection để count/max-key-length/distinctmatch/player và global ORDER BY row_id, rồi dùng nguyên thân hàm matrix builder cũ (_matrix_data) ghi mmap float64/metadata lô50000. Đây là tách blocking operators và external sort, không dùng hash làm identity, không giảm dòng/precision, không bỏ sort, không chia mô hình hoặc trung bình kết quả. Matrix schema/guard/checksum và kiểm sorted/unique/nonnull/finite/offset giữ nguyên. Helper wrapper chỉ đọc/gỡ projection tạm riêng sau đóng mọi consumer, kể cả lỗi; không sửa raw/canonical hoặc publish checkpoint dở.
 
-# 17. RQ2 Player Profile
+Giữ configSQL2GB/threads2/preserve_insertion_order=false/output18GiB/hostpolicy và requirements/software; một thread chỉ là thực thi cục bộ ở hai pha. Không tăng ngân sách sản xuất. Thêm một projection tạm trên đĩa, dọn sau mỗi matrix; toàn ma trận vẫn gồm X/y/metadata và các bản của task khác theo luồng cũ, cần scratchdisk/I/O và có thể còn resource limited ở bước khác. Không hứa mọi quy mô/whole-source hoàn tất hoặc đổi protocol khi thiếu tài nguyên. Import S01-S07 vẫn verifier/provenance/bytehash b663 nguyên, chỉ cập nhật modeling pin84dbb3e2ff7a2afc2e5062c7710618068a37ac767e1a664e497b3e369f62ce47. RootS08matrixdisk riêng để không ghi đè workingfailed cũ; notebook vẫnVersion6/S08-only/GPU smoke bắt buộc. Không tự import S08failed hoặc nâng/hạ thư viện để ép reuse.
 
-## 17.1. Minimum games threshold
+Kiểm CPU tổng hợp:1.2triệu dòng JOIN rộng ở SQL128MiB, query ghép+ORDER BY cũ thật bị OOM, wrapper xử lý đủ1.2triệu dòng/uniquehashrowIDs/đúng toàn bộ X/y/target/sortedmetadata/countmatches/players, sourcehash nguyên. CaseUnicode/signedzero/unsorted input/projection-no-sort/scan-no-JOIN/scope-thread1/restore-parent2 và failure/cleanup/unrelatedfile được kiểm. Lượt thử64MiB dừng ở COPY/JOIN tối thiểu nên không nhận là nghiệm thu64;128MiB chỉ là kiểm local, sản xuất vẫn2GB. Không nới tolerance số học hoặc coiCPU/mock là actualT4/fullPUBG. Nguồn kỹ thuật chính thức: DuckDB how_to_tune_workloads về nhiều blocking operators và larger-than-memory workloads; nghiệm thu và hash gói ghi kế hoạch23/hai journals.
 
-Chưa chốt trước data.
-
-Candidate diagnostics:
-- 5;
-- 10;
-- 20;
-- 50.
-
-Chọn dựa trên:
-- players retained;
-- profile stability;
-- feature reliability;
-- compute feasibility.
-
-Không chọn threshold dựa trên:
-- cluster survival;
-- cluster placement;
-- test performance.
-
-## 17.2. Main Design 3 — Selected Behavioral Profile
-
-### Combat Level
-- `avg_kills`;
-- `avg_damage`;
-- `std_kills`;
-- `std_damage`.
-
-### Movement Style
-- `avg_walk`;
-- `avg_ride`;
-- `avg_walk_ratio`.
-
-### Support Style
-- `avg_assists`;
-- `avg_dbno`;
-- `avg_assist_ratio`.
-
-### Combat Timing
-- `avg_early_kill_ratio`;
-- `avg_mid_kill_ratio`;
-- `avg_late_kill_ratio`;
-- `early_combat_match_ratio`.
-
-Candidate:
-- `kill_active_match_ratio`.
-
-### Meta
-- `games_played` dùng để filter reliability;
-- mặc định không clustering input;
-- C3 sensitivity: with/without `games_played`.
-
-## 17.3. Conditional averages
-
-Nếu match-level ratio structural missing:
-- `avg_early_kill_ratio` phải ghi rõ là average **trên kill-active matches** nếu NaN bị bỏ khi aggregate.
-- lưu denominator:
-  - `kill_active_matches`;
-  - `support_active_matches` nếu cần.
-
-Không để `mean(skipna=True)` tạo semantics ngầm.
-
-## 17.4. Outcomes — tuyệt đối không dùng làm clustering input
-
-- `avg_survival`;
-- `avg_normalized_placement`.
-
-Chỉ dùng sau clustering.
-
----
-
-# 18. RQ2 Mode Confounding Rule
-
-Sau Game Mode EDA:
-
-### Nếu mode differences nhỏ/chấp nhận được
-Có thể dùng overall player profile.
-
-### Nếu mode differences rõ
-Main clustering:
-- per-mode player profiles;
-- hoặc `(player_name, team_size_mode)` profile.
-
-Không đưa `team_size_mode` dạng one-hot vào clustering chỉ để “sửa” confounding nếu điều đó khiến cluster chủ yếu phản ánh mode.
-
-Decision phải:
-- ghi trong config;
-- ghi lý do;
-- được khóa trước outcome interpretation.
-
----
-
-# 19. Clustering Methods
-
-## 19.1. Main
-K-Means.
-
-Nếu full profile data quá lớn:
-- được phép dùng MiniBatchKMeans như scalable implementation;
-- phải log algorithm change;
-- không gọi MiniBatchKMeans là exact K-Means;
-- cùng feature space/scaling.
-
-## 19.2. Supporting
-Hierarchical Clustering.
-
-Nếu full data không khả thi:
-- reproducible subset;
-- hoặc cluster centroids;
-- chỉ dùng supporting validation.
-
-## 19.3. Optional
-DBSCAN chỉ khi EDA cho thấy density/outlier structure có lý do rõ.
-
-## 19.4. Scaling
-Fit scaler trên clustering training/development profiles.
-
-Default implementation hỗ trợ:
-- StandardScaler;
-- RobustScaler sensitivity.
-
-Log transform:
-- code có khả năng;
-- mặc định off/TBD;
-- chỉ bật sau skew/outlier EDA.
-
-## 19.5. K selection
-
-Dùng:
-- Elbow;
-- Silhouette;
-- Davies-Bouldin;
-- stability;
-- interpretability.
-
-Không dùng survival/placement để chọn K.
-
-Silhouette full data quá đắt:
-- diagnostic sample được phép;
-- seed cố định;
-- ghi n/sample rule.
-
-## 19.6. Cluster naming
-
-Chỉ đặt tên sau:
-- centers/profiles;
-- standardized means;
-- feature distributions.
-
-Không đặt tên trước rồi ép cluster theo kỳ vọng.
-
----
-
-# 20. RQ3 Experiment Matrix
-
-## 20.1. Survival
-
-### S1 — Current-match safe
-Current-match feature không chứa survival trong formula.
-
-Đây là:
-**retrospective current-match modeling**, không phải pre-match prediction.
-
-### S2 — Historical
-Previous-match behavior → current `player_survive_time`.
-
-Chỉ chạy nếu chronology Grade A/B.
-
-## 20.2. Placement
-
-### P1 — Current Full Behavior
-Combat + Movement + Support + Combat Timing + `player_survive_time`
-→ `normalized_placement`.
-
-### P2 — Current Behavior Without Survival
-Giống P1 nhưng bỏ `player_survive_time`.
-
-P1 vs P2 là comparison chính.
-
-### P3 — Historical
-Historical features → current normalized placement.
-
-Chỉ Grade A/B.
-
-## 20.3. Combat Timing Contribution
-
-### T0
-Combat + Movement + Support.
-
-### T1
-Combat + Movement + Support + Combat Timing.
-
-Compare:
-- ΔMAE;
-- ΔRMSE;
-- ΔR².
-
-Comparison phải:
-- same cohort;
-- same split;
-- same model;
-- same preprocessing;
-- same rows.
-
-## 20.4. Group Ablation
-
-- ABL-FULL;
-- ABL-C remove Combat;
-- ABL-M remove Movement;
-- ABL-S remove Support;
-- ABL-T remove Combat Timing.
-
-Khi remove group:
-- remove raw;
-- remove derived descendants.
-
-Ví dụ bỏ Movement mà còn `total_distance` là sai.
-
----
-
-# 21. Leakage Rules
-
-## 21.1. Survival target — forbidden current features
-
-- `player_survive_time`;
-- `kills_per_minute`;
-- `damage_per_minute`;
-- `walking_velocity`;
-- `riding_velocity`;
-- `death_time`;
-- bất kỳ feature nào chứa current survival target.
-
-## 21.2. Placement target — forbidden current features
-
-- `team_placement`;
-- `normalized_placement`;
-- feature trực tiếp/gián tiếp tạo từ placement.
-
-Historical previous placement được phép.
-
-## 21.3. RQ1 target-derived association rule
-
-Nếu feature chứa target trong formula:
-- không dùng làm primary evidence về relationship với chính target đó.
-
-## 21.4. Fit leakage
-
-Mọi learned preprocessing:
-- imputer;
-- scaler;
-- feature selector;
-- model;
-- clustering scaler;
-
-phải fit trên training/development appropriate partition, không toàn dataset nếu artifact được đánh giá trên heldout.
-
-## 21.5. Match grouping
-
-Mọi row cùng `match_id` phải thuộc cùng split.
-
-Không split player rows của cùng match qua train/test.
-
-## 21.6. Historical leakage
-
-Current match tuyệt đối không được vào:
-- history count;
-- historical mean;
-- rolling window;
-- historical rank;
-- historical Combat Timing.
-
----
-
-# 22. Split Strategy
-
-## 22.1. Main — chronology reliable
-
-Nếu Grade A/B:
-
-- Past → Train;
-- Later → Validation;
-- Latest → Test.
-
-Mỗi `match_id` chỉ ở một split.
-
-Exact proportions:
-- TBD sau inventory/time coverage;
-- không chốt trước data.
-
-Test:
-- locked;
-- không dùng để chọn threshold, K, feature, model, hyperparameter.
-
-## 22.2. Fallback — chronology Grade C
-
-Nếu no reliable chronology:
-- group split by `match_id`;
-- không gọi là future prediction;
-- gọi là heldout retrospective generalization.
-
-Historical S2/P3 không chạy chính thức.
-
-## 22.3. Optional secondary split
-
-Group by `player_name`:
-- test unseen-player generalization.
-
-Không thay main split.
-
----
-
-# 23. Models
-
-## 23.1. Constant Baselines
-
-Cần cả:
-- train mean;
-- train median.
-
-Lý do:
-- mean hữu ích cho squared-error comparison;
-- median là constant baseline tự nhiên cho MAE.
-
-## 23.2. Linear
-- Linear Regression;
-- scalable SGDRegressor optional/core fallback nếu full data cần streaming.
-
-## 23.3. Nonlinear candidates
-- Random Forest Regressor;
-- Gradient Boosting / HistGradientBoosting nếu phù hợp;
-- XGBoost nếu environment/resource cho phép.
-
-Không cần chạy tất cả Cartesian product.
-
-## 23.4. Full-data rule
-
-Official full-data model:
-- phải fit toàn training cohort hợp lệ của experiment đó.
-
-Nếu model không khả thi:
-- status `resource_limited`;
-- không thay bằng sample và gọi cùng tên kết quả.
-
----
-
-# 24. Feature Selection
-
-Task-specific feature sets:
-
-- `feature_set_rq1`;
-- `feature_set_rq2`;
-- `feature_set_rq3_survival`;
-- `feature_set_rq3_placement`.
-
-Pipeline:
-
-```text
-RuleBasedFiltering
-→ Variance/SparsityCheck
-→ CorrelationAnalysis
-→ VIF/RedundancyAnalysis
-→ InterpretabilityReview
-→ ModelBasedImportance
-→ GroupAblation
-→ Final Task-Specific Feature Set
-```
-
-## 24.1. Correlation
-Use:
-- Pearson;
-- Spearman.
-
-Không dùng p-value nhỏ vì N lớn làm bằng chứng “mạnh”.
-Tập trung:
-- effect size;
-- direction;
-- consistency;
-- mode differences.
-
-## 24.2. VIF
-Diagnostic only.
-
-Không mechanical delete theo threshold duy nhất.
-
-Chỉ dùng trên:
-- numeric suitable subset;
-- sau missing handling;
-- tránh đưa deterministic descendants cùng lúc.
-
-## 24.3. Importance
-RQ3:
-- model importance;
-- permutation importance.
-
-Interpret correlated features cẩn thận.
-
-## 24.4. Ablation
-Feature-group ablation là evidence chính về group contribution.
-
----
-
-# 25. EDA Plan — 8 Phases
-
-## Phase 1 — Structural EDA
-- matches;
-- players;
-- teams;
-- files/shards;
-- game size;
-- team_size_mode;
-- perspective mode nếu có;
-- games_per_player;
-- N_teams;
-- date/time coverage.
-
-## Phase 2 — Data Quality EDA
-- missing;
-- duplicates;
-- invalid ranges;
-- outliers;
-- match consistency;
-- join quality;
-- identity coverage.
-
-## Phase 3 — Raw Feature EDA
-- mean;
-- median;
-- std;
-- skewness;
-- zero rate;
-- histograms;
-- boxplots.
-
-## Phase 4 — Derived Feature Validation
-- ranges;
-- NaN;
-- Inf;
-- denominator counts;
-- structural missing rates.
-
-## Phase 5 — Game Mode EDA
-Overall vs Solo/Duo/Squad.
-
-Quyết định:
-- joint;
-- stratified;
-- player-mode profile.
-
-## Phase 6 — Relationship EDA for RQ1
-Combat/Movement/Support vs:
-- survival;
-- placement.
-
-Pearson + Spearman khi phù hợp.
-
-Target-derived features không được dùng sai.
-
-## Phase 7 — Combat Timing EDA
-- phase counts;
-- ratios;
-- first kill;
-- survival/placement associations;
-- mode differences.
-
-## Phase 8 — Historical Feasibility EDA
-- chronology grade;
-- games history distribution;
-- history depth;
-- same-day collisions;
-- stability.
-
-Chỉ sau Phase 1–8 mới chốt data-dependent parameters.
-
----
-
-# 26. Chart Catalog
-
-## A. Dataset Overview
-- A01 Games per Player Distribution
-- A02 Players Remaining by Threshold
-- A03 Team Size Mode Distribution
-- A04 Game Size Distribution
-- A05 Teams per Match Distribution
-- A06 Match Date Coverage
-
-## B. Raw Features
-- B01 kills histogram + box
-- B02 damage histogram + box
-- B03 assists
-- B04 DBNO
-- B05 walk
-- B06 ride
-- B07 total distance
-- B08 survival
-- B09 team placement
-- B10 normalized placement
-
-## C. Derived Validation
-- C01 kills/minute
-- C02 damage/minute
-- C03 damage/kill
-- C04 walk ratio
-- C05 assist ratio
-- C06 structural missing rates
-
-## D. Mode Comparison
-- D01 kills by mode
-- D02 damage
-- D03 assists
-- D04 DBNO
-- D05 walk
-- D06 ride
-- D07 survival
-- D08 placement
-
-## E. Correlation
-- E01 Pearson heatmap
-- E02 Spearman heatmap
-
-## F. Behavior vs Survival
-Selected F01–F07 based on valid non-target-derived features.
-
-## G. Behavior vs Placement
-G01–G06.
-
-## H. Combat Timing
-- H01 Kill Phase Distribution
-- H02 Kill Phase Ratio
-- H03 First Kill Time Distribution
-- H04 First Kill Time vs Survival
-- H05 First Kill Time vs Placement
-- H06 Combat Phase by Placement Group — high priority
-- H07 Combat Timing by Mode
-
-## I. Historical
-- I01 Historical Games Available
-- I02 Historical Feature Stability
-- I03 Same-Day Chronology Collision Rate
-
----
-
-# 27. Visualization Rule
-
-Full-data statistic ≠ vẽ mọi điểm.
-
-Được phép:
-- hexbin;
-- binning;
-- density;
-- aggregated mean;
-- fixed-seed visualization sample.
-
-Nếu sample chỉ để plot:
-ghi rõ:
-`visualization sample only — statistics computed on full valid data`.
-
----
-
-# 28. Data Quality Report
-
-Bắt buộc có:
-
-## Dataset Summary
-- rows;
-- columns;
-- unique matches;
-- unique players;
-- unique teams;
-- date range;
-- shards;
-- dtypes.
-
-## Missing
-- per column;
-- structural vs error.
-
-## Duplicate
-- exact row;
-- duplicate `(match_id, player_name)` agg;
-- event duplicates theo validated event key.
-
-## Range
-- kills/damage/assists/dbno >=0;
-- walk/ride/survival >=0;
-- placement valid;
-- ratios [0,1].
-
-## Match Consistency
-- team placement;
-- team count;
-- survive vs duration proxy;
-- event time.
-
-## Join Quality
-- matched killer;
-- unmatched killer;
-- matched victim;
-- unmatched victim;
-- unmatched match;
-- join success rate;
-- discrepancy.
-
----
-
-# 29. Player Identity Audit
-
-`player_name` không được mặc định là immutable account ID.
-
-Audit:
-- missing player_name;
-- duplicates same player name within match;
-- games_per_player;
-- suspicious identifiers;
-- join case/whitespace;
-- encoding.
-
-Rows missing `player_name`:
-- có thể giữ cho RQ1 nếu các field khác hợp lệ;
-- không được đưa vào player-profile/history như một fake `"UNKNOWN"` player chung.
-
----
-
-# 30. RQ1 Output
-
-RQ1 phải tạo:
-
-`reports/tables/rq1_relationship_summary.csv`
-
-Columns gợi ý:
-- feature;
-- feature_group;
-- outcome;
-- mode;
-- n;
-- Pearson;
-- Spearman;
-- valid_for_primary_interpretation;
-- target_derived_flag;
-- notes.
-
-RQ1 kết luận:
-- group-level;
-- feature-level;
-- mode-aware;
-- Combat Timing riêng.
-
----
-
-# 31. RQ2 Experiments
-
-- C1 Main K-Means
-- C2 Hierarchical Validation
-- C3 games_played Sensitivity
-- C4 Minimum Games Threshold Sensitivity
-- C5 Outcome Comparison
-
-Optional:
-- C6 mode-specific clustering sensitivity nếu mode strategy cần.
-
-Output:
-- cluster assignments;
-- cluster centers;
-- standardized profiles;
-- cluster sizes;
-- silhouette/DB;
-- outcome comparison;
-- robustness summary.
-
----
-
-# 32. RQ3 Evaluation Metrics
-
-Main:
-- MAE;
-- RMSE;
-- R².
-
-Placement MAE dễ diễn giải trên [0,1].
-
-Không gọi R² là accuracy.
-
-## Error aggregation
-
-Report:
-- micro by player-match;
-- match-aware summary;
-- nếu phù hợp team-aware summary cho placement.
-
----
-
-# 33. Uncertainty / Confidence Interval
-
-Main comparisons nên hỗ trợ paired bootstrap by match.
-
-Process:
-1. aggregate per-match error contribution;
-2. sample matches with replacement;
-3. same resampled matches for candidate/reference;
-4. compute delta;
-5. 95% percentile CI.
-
-Priorities:
-- P1 vs P2;
-- T0 vs T1;
-- strongest nonlinear model vs baseline;
-- ABL group effects.
-
-Không bắt buộc chạy CI cho mọi exploratory chart.
-
----
-
-# 34. Error Analysis
-
-Required:
-
-## By mode
-Solo/Duo/Squad.
-
-## By historical depth
-Candidate bins:
-- 5–10;
-- 11–20;
-- 21–50;
-- 50+.
-
-Actual bins có thể điều chỉnh theo EDA trước final test.
-
-## By placement region
-- top;
-- middle;
-- bottom.
-
-## By survival region
-- short;
-- medium;
-- long.
-
-Boundary phải dựa trên train/validation distribution, không test cherry-pick.
-
----
-
-# 35. Experiment Registry
-
-Metadata:
-
-- `experiment_id`;
-- `research_question`;
-- `task`;
-- `dataset`;
-- `target`;
-- `feature_set`;
-- `model`;
-- `split`;
-- `metrics`;
-- `status`;
-- `result_path`;
-- `model_path`;
-- `figure_path`;
-- `run_id`;
-- `dataset_version`;
-- `feature_version`;
-- `pipeline_version`;
-- `config_hash`;
-- `random_state`;
-- `n_train`;
-- `n_val`;
-- `n_test`;
-- `chronology_grade`.
-
-Statuses:
-- planned;
-- running;
-- completed;
-- failed;
-- resource_limited;
-- blocked;
-- stale.
-
-Không gán score giả cho failed.
-
----
-
-# 36. Experiment Execution Order
-
-```text
-Data validation
-→ RQ1 analysis
-→ RQ2 clustering
-→ RQ3 baselines
-→ RQ3 stronger models
-→ Combat Timing comparison
-→ Feature group ablation
-→ Error analysis
-→ Uncertainty
-→ Finalization
-```
-
----
-
-# 37. Cloud-First Execution
-
-Môi trường ưu tiên:
-Google Colab.
-
-Không khóa project cứng vào Colab.
-
-Core code phải chạy Python chuẩn nếu đường dẫn/config hợp lệ.
-
-## CPU-first
-Preprocessing/EDA:
-- CPU;
-- RAM;
-- disk throughput.
-
-GPU:
-- optional;
-- chỉ model hỗ trợ và có lợi;
-- không phải dependency.
-
----
-
-# 38. Storage Model
-
-## Raw
-Immutable.
-
-## Interim
-Rebuildable checkpoint.
-
-## Processed
-Core processed datasets.
-
-## Artifacts
-Models, metrics, figures, registries, manifests.
-
-Structure:
-
-```text
-storage/
-├── raw/
-├── interim/
-├── processed/
-└── artifacts/
-```
-
----
-
-# 39. Ephemeral vs Persistent
-
-## Ephemeral
-Runtime local disk:
-- temp chunk;
-- temporary sort;
-- visualization cache;
-- extracted files.
-
-## Persistent
-Cần giữ qua session reset:
-- processed Parquet;
-- expensive interim;
-- metrics;
-- model;
-- figures;
-- registry;
-- manifests;
-- logs.
-
-Persistent backend configurable:
-- mounted Drive;
-- another mounted cloud path;
-- manually exported checkpoint/release.
-
-Raw public download không bắt buộc mount Drive.
-
-Nếu persistent backend không được cấu hình:
-- README phải cảnh báo;
-- user phải export checkpoint trước khi runtime bị reset.
-
----
-
-# 40. Large Data Strategy
-
-## 40.1. Full-data engine
-
-Recommended default:
-- DuckDB/PyArrow/Parquet cho scan/join/group;
-- pandas cho bảng vừa/summary/model matrices khi phù hợp.
-
-Không yêu cầu pandas giữ toàn raw dataset trong RAM.
-
-Backend phải abstract đủ để không phụ thuộc notebook.
-
-## 40.2. Two-pass match processing
-
-Pass 1:
-build match metadata.
-
-Pass 2:
-player-level feature build.
-
-## 40.3. Combat Timing
-Aggregate event data sớm trước merge.
-
-## 40.4. Historical
-Không build trực tiếp từ raw chunk.
-
-Flow:
-
-```text
-player_match_features
-→ chronology validation
-→ partition/sort
-→ historical features
-```
-
-## 40.5. Player hash partition
-
-Nếu cần:
-
-\[
-bucket = stable\_hash(player\_name) \bmod B
-\]
-
-Không dùng Python built-in `hash()` nếu hash seed làm kết quả thay đổi giữa process.
-
-Dùng stable hash:
-- SHA;
-- xxhash với seed cố định;
-- deterministic library hash.
-
----
-
-# 41. Parquet Strategy
-
-Processed datasets dùng partitioned Parquet.
-
-Không partition mỗi player/match vì tạo quá nhiều small files.
-
-Options:
-- numbered parts;
-- stable hash buckets;
-- mode partitions nếu hợp lý.
-
-Output metadata phải ghi:
-- rows;
-- columns;
-- schema;
-- parts;
-- bytes;
-- source version.
-
----
-
-# 42. Checkpoint and Versioning
-
-Mỗi checkpoint quan trọng có `_metadata.json`.
-
-Version types:
-- `schema_version`;
-- `feature_version`;
-- `pipeline_version`;
-- `config_hash`.
-
-Không chỉ:
-`if file exists → load`.
-
-Phải check metadata compatibility.
-
----
-
-# 43. Dependency Invalidation
-
-Ví dụ sửa Combat Timing:
-
-```text
-combat_timing
-→ player_match_features
-→ player_profile_features
-→ historical_player_match_features
-→ dependent RQ runs
-```
-
-Downstream artifact phải `stale`.
-
----
-
-# 44. Checkpoint Manifest
-
-`artifacts/checkpoints/checkpoint_manifest.json`
-
-Fields:
-- stage;
-- status;
-- version;
-- config hash;
-- output;
-- dependencies;
-- created;
-- validated;
-- row count.
-
-Statuses:
-- planned;
-- running;
-- completed;
-- failed;
-- stale.
-
----
-
-# 45. Resume
-
-Stage dài:
-- partial checkpoints;
-- deterministic chunk ID;
-- progress state.
-
-Combat Timing example:
-- partial chunk state;
-- progress manifest;
-- final reduce.
-
-Resume không:
-- double count;
-- skip chunk;
-- append duplicate.
-
----
-
-# 46. Cache Safety
-
-Cache invalid nếu:
-- schema changes;
-- feature formula changes;
-- relevant config changes;
-- source checksum changes;
-- upstream dependency changes.
-
-Không dùng cache cũ chỉ vì filename giống nhau.
-
----
-
-# 47. Development vs Full Mode
-
-`mode: development`
-- smoke test;
-- limited rows/matches;
-- code validation;
-- no official result.
-
-`mode: full`
-- all valid data;
-- final statistics;
-- official experiments.
-
-Cùng code path.
-
-Không viết separate “mini pipeline” cho development.
-
----
-
-# 48. Runtime Diagnostics
-
-`00_setup.ipynb` kiểm tra:
-
-- Python version;
-- package versions;
-- CPU count;
-- RAM;
-- disk;
-- GPU;
-- storage backend;
-- write permission;
-- checkpoint status;
-- config validity.
-
-Chunk size:
-- config default;
-- có thể adaptive theo RAM;
-- actual value log.
-
----
-
-# 49. Logging
-
-Structured logging:
-
-Levels:
-- INFO;
-- WARNING;
-- ERROR.
-
-Log:
-- stage;
-- start/end;
-- input;
-- output;
-- rows in/out;
-- rows removed;
-- warnings;
-- checkpoint;
-- version;
-- config hash;
-- memory/disk nếu đo được.
-
----
-
-# 50. Config Management
-
-Files:
-
-```text
-configs/
-├── data.yaml
-├── schema.yaml
-├── paths.yaml
-├── preprocessing.yaml
-├── features.yaml
-├── eda.yaml
-├── rq2.yaml
-├── rq3.yaml
-├── models.yaml
-└── runtime.yaml
-```
-
-No research-important hard-coded parameter in notebook.
-
----
-
-# 51. TBD / NULL Rule
-
-Data-dependent values ban đầu để:
-
-`null` / `TBD`
-
-Examples:
-- minimum_games_threshold;
-- minimum_history_threshold;
-- n_clusters;
-- final split ratio/cutoffs;
-- log transforms;
-- outlier removal thresholds nếu chưa có evidence;
-- final model hyperparameters.
-
-Nếu notebook cần value chưa chốt:
-- fail gracefully;
-- print instruction;
-- không tự đoán.
-
----
-
-# 52. Random Seed
-
-Global:
-`random_state: 42` (default recommendation)
-
-Dùng nhất quán cho:
-- K-Means;
-- model;
-- visualization sampling;
-- diagnostic sampling;
-- randomized search.
-
-Seed không thay thế versioning.
-
----
-
-# 53. Reproducibility Metadata
-
-Mỗi run lưu:
-
-`run_metadata.json`
-
-Bao gồm:
-- run_id;
-- experiment;
-- dataset version;
-- feature version;
-- pipeline version;
-- config hash;
-- random seed;
-- train/val/test rows;
-- split definition;
-- package versions;
-- model params;
-- chronology grade;
-- hardware summary.
-
----
-
-# 54. Environment Files
-
-Initial:
-`requirements.txt`
-
-Sau khi first successful Colab setup:
-- generate environment snapshot;
-- optional `requirements-lock.txt`.
-
-Không dùng unbounded “latest” cho final reproduction.
-
----
-
-# 55. Final Results Manifest
-
-`final_results_manifest.json`
-
-Khóa:
-- RQ1 official tables;
-- RQ2 official run;
-- S1/S2;
-- P1/P2/P3;
-- T0/T1;
-- ablation;
-- error analysis;
-- figure versions.
-
-Report/summary không dùng “whatever latest”.
-
----
-
-# 56. Figure Manifest
-
-Fields:
-- figure_id;
-- source_experiment;
-- research_question;
-- source_table;
-- purpose;
-- caption;
-- report_ready;
-- version.
-
----
-
-# 57. Report Tables
-
-`reports/tables/`
-
-Examples:
-- `data_quality_summary.csv`;
-- `rq1_relationship_summary.csv`;
-- `cluster_profile.csv`;
-- `rq3_model_comparison.csv`;
-- `combat_timing_comparison.csv`;
-- `ablation_results.csv`;
-- `error_analysis.csv`.
-
----
-
-# 58. Notebook Architecture
-
-Final proposed order:
-
-```text
-00_setup.ipynb
-01_download_validate.ipynb
-02_data_quality_and_structure.ipynb
-03_build_player_match.ipynb
-04_combat_timing.ipynb
-05_eda.ipynb
-06_rq1_analysis.ipynb
-07_rq2_clustering.ipynb
-08_build_historical.ipynb
-09_rq3_prediction.ipynb
-10_ablation_error_analysis.ipynb
-11_finalize_results.ipynb
-12_final_results_summary.ipynb
-```
-
----
-
-# 59. Notebook Responsibility
-
-## 00_setup
-- environment;
-- configs;
-- storage;
-- runtime;
-- checkpoint status.
-
-## 01_download_validate
-- public download;
-- source inventory;
-- checksum;
-- schema report.
-
-## 02_data_quality_and_structure
-- structural EDA;
-- DQ;
-- chronology preliminary inspection;
-- mode inspection.
-
-## 03_build_player_match
-- cleaning;
-- metadata;
-- behavior features;
-- normalized placement;
-- base player-match dataset.
-
-## 04_combat_timing
-- event aggregation;
-- join audit;
-- final player_match_features.
-
-## 05_eda
-- full EDA phases;
-- threshold diagnostics;
-- transform diagnostics.
-
-## 06_rq1_analysis
-- relationships;
-- correlation;
-- timing analysis;
-- RQ1 table/figures.
-
-## 07_rq2_clustering
-- profile creation;
-- threshold application;
-- scaling;
-- K diagnostics;
-- clustering;
-- robustness.
-
-## 08_build_historical
-- chronology grade;
-- historical construction;
-- history depth diagnostics.
-
-## 09_rq3_prediction
-- S1/S2;
-- P1/P2/P3;
-- baselines;
-- model comparison;
-- T0/T1.
-
-## 10_ablation_error_analysis
-- group ablation;
-- error slices;
-- CI/bootstrap;
-- importance.
-
-## 11_finalize_results
-- validate official runs;
-- lock final manifest;
-- create report tables;
-- figure manifest;
-- consistency checks.
-
-## 12_final_results_summary
-Read-only summary:
-- no preprocessing;
-- no training;
-- no silent run creation.
-
----
-
-# 60. Notebook Precondition Checks
-
-Mỗi notebook kiểm tra:
-- config valid;
-- dependencies completed;
-- checkpoint compatible;
-- required parameter not null;
-- schema expected;
-- previous stage validation passed.
-
-Nếu fail:
-- stop early;
-- actionable message;
-- không chạy nửa pipeline rồi fail.
-
----
-
-# 61. Core Project Structure
-
-```text
-pubg_data_mining_project/
-├── PUBG_RESEARCH_SPEC.md
-├── README.md
-├── requirements.txt
-├── configs/
-├── notebooks/
-├── src/
-│   ├── data/
-│   ├── features/
-│   ├── analysis/
-│   ├── models/
-│   ├── evaluation/
-│   └── utils/
-├── tests/
-├── data/
-│   ├── raw/
-│   ├── interim/
-│   └── processed/
-├── artifacts/
-│   ├── checkpoints/
-│   ├── experiments/
-│   ├── manifests/
-│   ├── models/
-│   ├── metrics/
-│   └── logs/
-├── figures/
-└── reports/
-    ├── tables/
-    └── appendix/
-```
-
-Notebook không chứa core business logic dài.
-
----
-
-# 62. Recommended `src/` Modules
-
-## `src/data/`
-- `download_data.py`
-- `inventory.py`
-- `schema.py`
-- `cleaning.py`
-- `match_metadata.py`
-- `io.py`
-- `checkpoints.py`
-
-## `src/features/`
-- `combat.py`
-- `movement.py`
-- `support.py`
-- `placement.py`
-- `combat_timing.py`
-- `historical.py`
-- `profiles.py`
-- `registry.py`
-
-## `src/analysis/`
-- `eda.py`
-- `correlation.py`
-- `mode_analysis.py`
-- `rq1.py`
-- `clustering.py`
-
-## `src/models/`
-- `baselines.py`
-- `linear.py`
-- `tree_models.py`
-- `xgboost_model.py`
-- `training.py`
-
-## `src/evaluation/`
-- `metrics.py`
-- `bootstrap.py`
-- `error_analysis.py`
-- `importance.py`
-- `ablation.py`
-
-## `src/utils/`
-- `config.py`
-- `logging.py`
-- `runtime.py`
-- `hashing.py`
-- `validation.py`
-
----
-
-# 63. README.md Requirements
-
-README là hướng dẫn sử dụng project.
-
-Phải gồm:
-
-1. Project Overview.
-2. Research Questions.
-3. Folder structure.
-4. Cách mở/chạy trên Google Colab.
-5. Thứ tự notebook.
-6. Cách cấu hình data public URL.
-7. Cách cấu hình persistent storage.
-8. Development vs full mode.
-9. Cách thay parameter.
-10. Parameter nào được thay sau EDA.
-11. Research rule nào không được tự thay.
-12. Leakage rules không được phá.
-13. Checkpoint/resume.
-14. Status `stale`.
-15. Dependency invalidation.
-16. Cách chạy lại khi đổi Combat Timing.
-17. Cách chạy lại khi đổi threshold RQ2.
-18. Cách chạy lại khi đổi model config.
-19. Troubleshooting:
-    - RAM;
-    - disk;
-    - reset;
-    - download fail;
-    - stale checkpoint;
-    - null config;
-    - schema mismatch;
-    - chronology fail;
-    - join quality fail.
-20. Cách mở `12_final_results_summary.ipynb`.
-
-README phải có bảng:
-
-| Muốn thay | File config | Key | Notebook cần chạy lại |
-|---|---|---|---|
-
----
-
-# 64. Unit Tests
-
-Bắt buộc:
-
-## Placement
-- winner = 1;
-- last = 0;
-- bounds;
-- N_teams invalid.
-
-## Ratios
-- bounds;
-- denominator zero;
-- structural missing.
-
-## Combat Timing
-- phase boundaries;
-- partial aggregation;
-- average via sum/count;
-- first kill min;
-- no-kill semantics.
-
-## Historical
-- current match excluded;
-- expanding shift;
-- same-day exclusion Grade B;
-- stable sort;
-- no future rows.
-
-## Split
-- same match same split;
-- deterministic.
-
-## Cache
-- config hash invalidates;
-- source hash invalidates.
-
----
-
-# 65. Smoke Tests
-
-Dùng:
-- synthetic fixtures;
-- small development sample.
-
-Smoke output không phải research result.
-
-Smoke test:
-- raw parse;
-- schema;
-- join;
-- feature formulas;
-- checkpoint resume;
-- historical leakage;
-- model train/predict;
-- artifact writing.
-
----
-
-# 66. Execution Workflow — Code First, Execute Later
-
-## Stage A — Build entire codebase
-Trước full data execution:
-- src;
-- configs;
-- notebooks;
-- tests;
-- checkpoint logic;
-- README;
-- spec.
-
-## Stage B — Code review
-Check:
-- no hard-coded research threshold;
-- no leakage;
-- notebook thin;
-- tests;
-- null/TBD;
-- dependency graph;
-- paths.
-
-## Stage C — Colab execution
-Sau khi code hoàn chỉnh:
-- open notebook in order;
-- mostly Run All;
-- inspect outputs;
-- update only configs where data-dependent.
-
-## Stage D — Finalize
-- lock runs;
-- summary notebook;
-- user writes final report manually.
-
----
-
-# 67. Data-Dependent Decisions — Chưa Chốt
-
-Các giá trị sau **không được coding agent tự chốt trước khi có evidence**:
-
-- RQ2 `minimum_games_threshold`;
-- RQ3 `minimum_history_threshold`;
-- K;
-- median additions;
-- log transform;
-- actual outlier exclusions;
-- overall vs mode-specific clustering;
-- chronology grade;
-- final feature sets;
-- final model;
-- hyperparameters;
-- exact train/val/test boundaries;
-- adaptive chunk size;
-- hierarchical sample size;
-- DBSCAN use;
-- same-mode historical extension.
-
----
-
-# 68. Decision Rules for TBD Parameters
-
-## Minimum games
-Choose from retention + stability, not outcome.
-
-## Minimum history
-Choose from history coverage/stability, not test MAE.
-
-## K
-Choose from unsupervised metrics + stability + interpretability, no outcome.
-
-## Log transform
-Use skewness/outlier diagnosis + validation impact, fit/decision on development only.
-
-## Outlier removal
-Only when evidence suggests invalid/error or clearly predeclared rule.
-
-## Mode split
-Use Phase 5 EDA before RQ2/RQ3 final strategy.
-
----
-
-# 69. Outlier Policy
-
-Default:
-**do not auto-delete.**
-
-Outlier categories:
-- valid extreme;
-- data error;
-- impossible value;
-- uncertain.
-
-Only remove:
-- invalid/impossible;
-- source error with evidence;
-- predeclared justified rule.
-
-Winsorization/clipping:
-- not default;
-- any learned threshold fit on training only;
-- log.
-
----
-
-# 70. Model Selection Rule
-
-Không chỉ chọn lowest metric.
-
-Final model assessment:
-
-**Performance + Generalization + Interpretability + Stability + Compute Feasibility**
-
-Có thể báo:
-- best-performing model;
-- interpretable baseline.
-
-Không cần tạo một “overall winner” nếu mục tiêu nghiên cứu khác nhau.
-
----
-
-# 71. Report Architecture
-
-Người dùng tự viết report sau.
-
-Khung đề xuất:
-
-1. Introduction
-2. Related Work
-3. Dataset
-4. Preprocessing
-5. EDA
-6. RQ1
-7. RQ2
-8. RQ3
-9. Combat Timing Contribution
-10. Feature Importance + Ablation
-11. Error Analysis
-12. Discussion
-13. Limitations
-14. Conclusion
-15. Appendix
-
----
-
-# 72. Final Summary Notebook
-
-`12_final_results_summary.ipynb`
-
-Sections:
-
-1. Dataset Summary
-2. Data Quality Summary
-3. RQ1 Results
-4. RQ2 Results
-5. RQ3 Survival
-6. RQ3 Placement
-7. Combat Timing T0/T1
-8. Ablation
-9. Error Analysis
-10. Uncertainty
-11. Key Findings
-12. Limitations / Notes
-
-Notebook này là nguồn chính để người dùng tự tổng hợp báo cáo.
-
----
-
-# 73. Report Figure Policy
-
-Main report:
-- Report Charts.
-
-Notebook/appendix:
-- Diagnostic Charts.
-
-Figure chỉ `report_ready=true` mới xuất trong summary official.
-
----
-
-# 74. Scientific Interpretation Rules
-
-Không viết:
-- “walking causes survival”;
-- “early kills make players win”;
-- “cluster X is objectively the best playstyle”.
-
-Viết:
-- “walk distance is positively associated…”;
-- “players in cluster X show higher observed…”;
-- “Combat Timing provides incremental predictive information…” nếu T1 comparison hỗ trợ.
-
----
-
-# 75. Limitations to Report
-
-At least:
-
-- post-match/retrospective features;
-- observational data;
-- survival-derived feature coupling;
-- match-duration proxy;
-- player_name identity limitation;
-- event join mismatch;
-- chronology granularity;
-- same-day order if Grade B;
-- repeated team outcome across player rows;
-- clustering representation dependence;
-- K sensitivity;
-- Colab resource constraints;
-- source dataset age/version;
-- lack of unobserved gameplay variables.
-
----
-
-# 76. Literature Use
-
-Three core papers:
-
-1. Dehpanah et al. — behavioral signals / historical behavior.
-2. Lee & Lee — factors influencing rank, mode analysis, VIF/importance.
-3. Ghazali et al. — placement prediction, feature selection/model comparison.
-
-Use literature to:
-- motivate;
-- compare method;
-- discuss result.
-
-Do not copy metric directly across different dataset/split/target as if comparable.
-
----
-
-# 77. Scope Exclusions
-
-Unless later explicitly added:
-
-- no Association Rule Mining core deliverable;
-- no full spatial hotspot research;
-- no Elo/Glicko/TrueSkill core baseline;
-- no NDCG core metric;
-- no deep neural network requirement;
-- no survival-analysis censoring model;
-- no causal claim;
-- no classification requirement.
-
----
-
-# 78. Security / Privacy / Data Handling
-
-- không commit token/cookie;
-- public URLs trong config có thể commit nếu thực sự public;
-- secrets dùng environment variable;
-- không đưa danh sách player names vào public report nếu không cần;
-- raw data không bắt buộc commit Git;
-- large artifact không commit Git.
-
----
-
-# 79. Code Quality Requirements
-
-- type hints cho core function khi hợp lý;
-- docstring;
-- deterministic paths;
-- no duplicated formulas giữa notebook/src;
-- one canonical implementation per feature;
-- explicit exceptions;
-- no silent fallback làm đổi research meaning;
-- clear logs;
-- tests cho leakage-critical logic.
-
----
-
-# 80. Definition of Done — Research Design
-
-Design complete khi:
-- RQ rõ;
-- target rõ;
-- unit rõ;
-- feature rules rõ;
-- leakage rules rõ;
-- experiment matrix rõ;
-- EDA rõ;
-- cloud architecture rõ;
-- checkpoint/reproducibility rõ;
-- data-dependent TBD được đánh dấu.
-
-**Trạng thái hiện tại: đạt.**
-
----
-
-# 81. Definition of Done — Implementation
-
-Implementation complete trước full execution khi:
-
-- tất cả module tồn tại;
-- notebook tồn tại;
-- config tồn tại;
-- README tồn tại;
-- tests pass trên synthetic/development fixture;
-- precondition checks hoạt động;
-- no hard-coded TBD;
-- checkpoint metadata hoạt động;
-- full mode path tồn tại;
-- final summary notebook không train.
-
----
-
-# 82. Definition of Done — Full Run
-
-Full run complete khi:
-
-- mọi raw shard đã inventory;
-- processed full valid data;
-- DQ report hoàn thành;
-- RQ1 complete;
-- RQ2 complete hoặc limitation rõ;
-- RQ3 complete theo chronology grade;
-- official experiment rows locked;
-- error analysis;
-- final manifests;
-- summary notebook render được;
-- không có official metric từ development sample.
-
----
-
-# 83. Exit Criteria per Notebook
-
-## 00
-Environment/config/storage healthy.
-
-## 01
-All sources verified + schema contract result.
-
-## 02
-DQ + structural EDA complete, no unresolved critical schema error.
-
-## 03
-Base player-match dataset validated.
-
-## 04
-Combat Timing built, join audit complete.
-
-## 05
-EDA complete; data-dependent decisions required for RQ2/RQ3 ready.
-
-## 06
-RQ1 tables/figures generated.
-
-## 07
-RQ2 cluster run + robustness + outcome profiling generated.
-
-## 08
-Chronology grade assigned; historical dataset built or blocked.
-
-## 09
-RQ3 official candidate runs completed.
-
-## 10
-Ablation/error/importance/CI complete for selected runs.
-
-## 11
-Final runs locked; tables/figures manifest created.
-
-## 12
-Summary notebook loads only official artifacts successfully.
-
----
-
-# 84. Audit Checks Before Running on Colab
-
-Coding agent/reviewer must answer YES:
-
-- Does every feature formula exist once?
-- Does survival feature registry block rate features?
-- Does RQ1 block target-derived association?
-- Does historical Grade B exclude same-day matches?
-- Are all match rows grouped in same split?
-- Does clustering exclude outcome?
-- Is K chosen without outcome?
-- Are threshold choices independent of final test?
-- Does Combat Timing aggregate correctly across chunks?
-- Can cache become stale when formula changes?
-- Can failed experiment remain failed without fake metric?
-- Does full mode use all eligible data?
-- Can Colab resume after reset?
-- Does README tell user exactly what to change?
-- Does final summary avoid retraining?
-
-Nếu một câu trả lời là NO → implementation chưa sẵn sàng.
-
----
-
-# 85. Suggested Config Skeletons
-
-## `configs/data.yaml`
-
-```yaml
-source:
-  dataset_name: "PUBG Match Deaths and Statistics"
-  dataset_slug: "skihikingkevin/pubg-match-deaths"
-  archive_url: null
-  agg_urls: []
-  kill_urls: []
-  expected_checksums: {}
-
-discovery:
-  agg_patterns:
-    - "agg_match_stats*.csv"
-  kill_patterns:
-    - "kill_match_stats*.csv"
-```
-
-## `configs/runtime.yaml`
-
-```yaml
-mode: development
-random_state: 42
-chunk_size: null
-storage_backend: local
-resume: true
-```
-
-## `configs/rq2.yaml`
-
-```yaml
-minimum_games_threshold: null
-profile_level: auto
-n_clusters: null
-algorithm: kmeans
-scaler: standard
-hierarchical_validation: true
-include_games_played_in_main: false
-```
-
-## `configs/rq3.yaml`
-
-```yaml
-minimum_history_threshold: null
-chronology_required_for_historical: true
-split:
-  strategy: auto
-  train_ratio: null
-  validation_ratio: null
-  test_ratio: null
-```
-
-## `configs/features.yaml`
-
-```yaml
-combat_timing:
-  enabled: true
-  early_cutoff: 0.3333333333
-  mid_cutoff: 0.6666666667
-
-transforms:
-  log_transform_features: []
-
-feature_versions:
-  schema_version: 1
-  feature_version: 1
-  pipeline_version: 1
-```
-
----
-
-# 86. Coding-Agent Instructions
-
-Coding agent MUST:
-
-1. đọc toàn bộ file này;
-2. không tự thay RQ;
-3. không tự thêm extension vào core;
-4. không hard-code TBD;
-5. tạo plan trước implementation nếu được yêu cầu;
-6. giữ core logic trong `src/`;
-7. notebook chỉ gọi function + visualize;
-8. viết tests trước/đồng thời cho leakage-critical code;
-9. đảm bảo `development` và `full` cùng code path;
-10. làm fail-fast thay vì silent correction;
-11. sinh README usage guide;
-12. không chạy full data nếu user chỉ yêu cầu code;
-13. không gọi result thật nếu chưa chạy;
-14. không điền metric giả;
-15. không sửa raw;
-16. log mọi removal/invalid/stale;
-17. preserve full-data policy;
-18. preserve chronology rule;
-19. preserve current-vs-historical distinction;
-20. tạo finalization + summary notebooks.
-
----
-
-# 87. Final Canonical Workflow
-
-```text
-RESEARCH SPEC
-      ↓
-FULL CODEBASE IMPLEMENTATION
-      ↓
-STATIC REVIEW + UNIT/SMOKE TESTS
-      ↓
-GOOGLE COLAB
-      ↓
-00 Setup
-      ↓
-01 Download + Validate
-      ↓
-02 Data Quality + Structural EDA
-      ↓
-03 Build Player-Match Base
-      ↓
-04 Combat Timing + Final Player-Match
-      ↓
-05 Full EDA
-      ↓
-06 RQ1
-      ↓
-07 RQ2
-      ↓
-08 Historical Build
-      ↓
-09 RQ3
-      ↓
-10 Ablation + Error + Uncertainty
-      ↓
-11 Finalize Official Results
-      ↓
-12 Final Results Summary
-      ↓
-USER WRITES REPORT
-```
-
----
-
-# 88. Final Status
-
-## Đã chốt
-- problem;
-- 3 RQ;
-- full-data policy;
-- Combat Timing;
-- player profile design;
-- historical architecture;
-- leakage rules;
-- EDA;
-- visualization;
-- clustering;
-- RQ3 experiment matrix;
-- feature selection;
-- evaluation;
-- error analysis;
-- cloud-first;
-- checkpoint;
-- versioning;
-- logging;
-- reproducibility;
-- notebook architecture;
-- final summary workflow;
-- README requirements;
-- code-first execution.
-
-## Chờ data
-- source public URL;
-- exact schema;
-- chronology grade;
-- mode strategy;
-- RQ2 threshold;
-- RQ3 history threshold;
-- K;
-- transforms;
-- outlier decisions;
-- final features;
-- final models;
-- hyperparameters;
-- exact split cutoffs;
-- final report findings.
-
----
-
-# 89. Kết luận của bản audit
-
-Thiết kế hiện tại đủ trưởng thành để chuyển sang implementation.
-
-Rủi ro lớn nhất không còn là “thiếu mô hình”, mà là:
-1. chronology không đủ tốt;
-2. target-derived feature bị diễn giải sai;
-3. mode confounding trong RQ2;
-4. event join mismatch;
-5. full-data resource limits;
-6. cache/stale artifact;
-7. accidental reuse of old plan;
-8. final test bị dùng để ra quyết định;
-9. summary/report lấy nhầm run.
-
-Các quy tắc trong version 3.0 đã bổ sung guardrail cho chín rủi ro này.
-
-**Bước tiếp theo:** dùng tài liệu này làm input chính thức để Codex/Claude triển khai toàn bộ project theo workflow `code-first, execute-later`.
