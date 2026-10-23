@@ -1,0 +1,57 @@
+{
+  "status": "passed",
+  "section": "rf_grid",
+  "test_read": false,
+  "training_rows": 1000000,
+  "validation_rows": 480891,
+  "train_matches": 34614,
+  "validation_matches": 7373,
+  "classes": [
+    "AR",
+    "DMR",
+    "Other",
+    "SMG",
+    "SR",
+    "Shotgun"
+  ],
+  "input_sha256": {
+    "dataset_manifest": "5b95abab6f2773161d66f2504cd71b86a51ea806b16795edb5e1d94b4f906fbe",
+    "experiments": "73a5bc7c57f4d27233b35556e2354b742521f3eb966cb846acdc1785c023c32b",
+    "selection": "6ab0c0b38e2e3d85e98de43b778784de2fdf0461adb2b4565c86578ff87272b1",
+    "train": "599b12fd22f12eb3e024fbec431ff32a8995cf9f309532c123e298b962f49704",
+    "validation": "a14df8d27b31ee197af858128702eb57d136c60790c7ac3d8925a5b0761e3a6b"
+  },
+  "main_selection_unchanged": "random_forest_balanced_loadout_history",
+  "seconds": 6067.898564174,
+  "process_peak_rss_mb": 2812.58984375,
+  "blocking_warnings": [],
+  "library_warnings": [],
+  "result": {
+    "family": "random_forest",
+    "candidates": 12,
+    "cv_fits": 36,
+    "refits": 1,
+    "best_params": {
+      "model__estimator__max_depth": 22,
+      "model__estimator__max_samples": 0.15,
+      "model__estimator__min_samples_leaf": 5
+    },
+    "best_cv_macro_f1": 0.4329126952418214,
+    "best_validation_metrics": {
+      "macro_f1": 0.43190810549521963,
+      "weighted_f1": 0.527984084636675,
+      "accuracy": 0.5119642496948373,
+      "tactical_role_accuracy": 0.6500558338584004,
+      "tactical_role_macro_f1": 0.6247142479324942,
+      "top_2_accuracy": 0.7067069252699676
+    },
+    "fixed_params": {
+      "n_estimators": 300,
+      "max_depth": 18,
+      "min_samples_leaf": 5,
+      "max_samples": 0.15
+    },
+    "weight_policy": "exact_alpha_1_weights_learned_inside_each_fold",
+    "seconds": 6057.240582593
+  }
+}

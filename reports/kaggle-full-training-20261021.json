@@ -1,0 +1,263 @@
+{
+  "status": "passed",
+  "source_hashes": {
+    "configs/development_matches.csv": "7d5085ab6a8c5b32eae23ca931d0fde0fd462b00e9d1a5a6c8d850ec98a8e0e3",
+    "configs/label_mapping.json": "b06ec3bb2cff6f97245cbc30cffaefefe9ed48b85664bb3fdaa70140a3ffdd9e",
+    "kaggle/runner.py": "e6e8f631049de3581143f11cb79a72f26003b78c932ed8a12cc92244b19518f1",
+    "pyproject.toml": "df9cfd1e3e265e0560004f92b26980767d9ea2a1e44ce3c27d419cd783ca0916",
+    "scripts/01_eda.py": "7ec6b5c2ab84cac8880136203ff487f186b00da23f1d298cf0a5c1eb546882cd",
+    "scripts/02_preprocess.py": "aace66064ffa452d3e4da7445086baebd894b919d33dfc2632334019a2308f10",
+    "scripts/03_models.py": "a752a56e38c536880e28d2847c221602f92e33af505267a5b6c4d3dd3bcc9ee1",
+    "scripts/04_evaluation.py": "ca5904621bd0a143416fccea9e74e7a82e62f306c5468fff6c29c05f8b506e5a",
+    "scripts/05_diagnostics.py": "00385dffab6826bb8a8bf09cc36df9bec7897e4a1599a2d6a129e3fcce6908af",
+    "scripts/06_rf_regularization.py": "6a6fbf173dd70caf6ac220ba8aae3e6f656c629d27574272a0d7e73ae1db8e14",
+    "src/pubg_weapon/__init__.py": "f7bcf62b0befbdf59623a107fa678aa8601a00c615c01155a4d609aaabc52c12",
+    "src/pubg_weapon/bootstrap.py": "70ef332d7cafba1db4bf9ca4892c8e0ec5759ef7b5867bcb8cee9789a377a96d",
+    "src/pubg_weapon/config.py": "de3da213538856f060ceaf7c0e566938ba01706f84f35e55a59c5114dc3b8256",
+    "src/pubg_weapon/diagnostics.py": "307ea42704b81a6758e2839db8be109c8d2bae0f283bc30a96be0b0f0ac9544c",
+    "src/pubg_weapon/eda.py": "f3de80fd5a4a354cc0f1b775bcbced1688e2cf35f2fad8f29be8861640b28fb7",
+    "src/pubg_weapon/error_analysis.py": "6bcf40d8a43f51d172255805c95fa1409f052310c094ea7265c16a65bc8f19df",
+    "src/pubg_weapon/evaluation.py": "34080f34960641a5359aba7e38761d658a8039ae8c02e0d884d80d40423024cc",
+    "src/pubg_weapon/features.py": "3ff3c035a3bb959d32ce420b7047198b3cee2f422c2352bcf6cc880fd4d2e766",
+    "src/pubg_weapon/io.py": "4e448408c52cb4dff03de25a0048943de61468356e8f44d4a98e597144297931",
+    "src/pubg_weapon/labels.py": "d9ead236db1f33ad43be28421dca0b100b6c523252bb33ab0d81a5973de0fb02",
+    "src/pubg_weapon/models.py": "b5d892827856b85bfea4d2270e9c3b66b59e016977bda4ca4003d472627d4a2c",
+    "src/pubg_weapon/preprocessing.py": "4969760413cedfd2b70ecb26ceaa4bbb343a532d445152f15a5349f92bef773b",
+    "src/pubg_weapon/rf_experiment.py": "3c0f446cd49e2fb372d229df24b19f5c7353e447efc8e37167f981a9ba168ef8",
+    "src/pubg_weapon/schema.py": "03bdf41db55711fc47faea9f8e24c78611257ae47a557d3d10aefd1bc5e5b89f",
+    "src/pubg_weapon/splits.py": "db9d8c8c38d03b3c653ad1154775bdd7af9f7a48a0c4bcb4daa2d62c4fbd7214",
+    "src/pubg_weapon/training.py": "bb072155344c41f935019f60d4423d415e9586355fa71fd0c637f53f997b01c0",
+    "tests/conftest.py": "c36daf0178a42d7dd7236ef91fa5b300ab0a360ab118effc28853c1eb597779d",
+    "tests/test_data.py": "dae6217da52dfb65f64dcfa9c511c96fa799e22ed437d4e1c633c7d4de27dfa2",
+    "tests/test_models.py": "8b897a472d8a5647b4a84e3de0be2c0849c0ba2ed57317869f6ae9a28d8d0325",
+    "tests/test_rf_experiment.py": "042ec3c16069270f21a440aca5745ea5b56b0418387cfe18b41223ef237d9599",
+    "tests/test_statistics.py": "bb8cc6df77c3a529a1b0c04b05cddd3a2af68095fdabfadb13836c156967fb51",
+    "tests/test_workflow.py": "811be7b5dde66f9ed9a0b724cdcf96d1a99bc313c7bd8c9f6f1ea4dcdbf3b38b"
+  },
+  "mode": "full",
+  "tests_returncode": 0,
+  "matches_requested": 50000,
+  "max_train_rows": 1000000,
+  "seconds": 2193.4814362859997,
+  "selection": {
+    "best": "random_forest_balanced_full",
+    "ablation": {
+      "A": "hist_gradient_boosting_balanced_distance",
+      "B": "hist_gradient_boosting_balanced_context",
+      "C": "hist_gradient_boosting_balanced_full"
+    },
+    "selection_metric": "validation_macro_f1",
+    "with_placement": false,
+    "interpretation": "event_context"
+  },
+  "dataset": {
+    "seed": 42,
+    "classes": [
+      "AR",
+      "DMR",
+      "LMG",
+      "Other",
+      "SMG",
+      "SR",
+      "Shotgun"
+    ],
+    "rare_groups_merged": [],
+    "audit_cause_column": "cause_for_audit",
+    "split_seed": 42,
+    "source_match_splits_sha256": "3cd3e1a76c8679b510ee791bbd280a3684a51ffc03676c39ffbcc7466296c8ce",
+    "train_rows_before_cap": 2274070,
+    "max_train_rows": 1000000,
+    "source": {
+      "source": "/kaggle/input/datasets/skihikingkevin/pubg-match-deaths/deaths/kill_match_stats_final_0.csv",
+      "source_bytes": 2002938578,
+      "source_sha256": "8c40331ba496bdda621bf061b110e9c953a5cd723f0e98a13c4e82b945926e74",
+      "source_rows": 13426348,
+      "seed": 42,
+      "available_matches": 148308,
+      "sampled_matches": 50000,
+      "sampled_rows": 4525712,
+      "columns": [
+        "killed_by",
+        "killer_name",
+        "killer_placement",
+        "killer_position_x",
+        "killer_position_y",
+        "map",
+        "match_id",
+        "time",
+        "victim_name",
+        "victim_placement",
+        "victim_position_x",
+        "victim_position_y"
+      ],
+      "sample_sha256": "2e746bea16c9cada7d3a8868489c833c9fdacc38ebff8b17cc70b1c3a3ff95d7",
+      "split_seed": 42,
+      "prior_development_matches_excluded_from_test": 2294,
+      "source_match_splits_sha256": "3cd3e1a76c8679b510ee791bbd280a3684a51ffc03676c39ffbcc7466296c8ce",
+      "source_weapon_counts_sha256": "b962defdc533fb59aa4d8c27e92c7718e9913eadc6c212878f4f88aa11889e41"
+    },
+    "label_mapping_sha256": "b06ec3bb2cff6f97245cbc30cffaefefe9ed48b85664bb3fdaa70140a3ffdd9e",
+    "max_class_deviation_percentage_points": 0.12420791434641781,
+    "splits": {
+      "train": {
+        "rows": 1000000,
+        "matches": 34614,
+        "class_counts": {
+          "AR": 526330,
+          "SMG": 125746,
+          "Shotgun": 120934,
+          "Other": 98038,
+          "DMR": 77445,
+          "SR": 44815,
+          "LMG": 6692
+        }
+      },
+      "validation": {
+        "rows": 484965,
+        "matches": 7374,
+        "class_counts": {
+          "AR": 255553,
+          "SMG": 60380,
+          "Shotgun": 58812,
+          "Other": 47392,
+          "DMR": 38093,
+          "SR": 21600,
+          "LMG": 3135
+        }
+      },
+      "test": {
+        "rows": 488107,
+        "matches": 7418,
+        "class_counts": {
+          "AR": 257104,
+          "SMG": 60968,
+          "Shotgun": 59350,
+          "Other": 47748,
+          "DMR": 37888,
+          "SR": 21848,
+          "LMG": 3201
+        }
+      }
+    },
+    "files": {
+      "train": "6673b42db6e68370d68c1f86eb75919e7998eefcfed8a53e05428c788e52c1e9",
+      "validation": "da4daf7ccaf3d2b7c35c5191757ed71b342fb495b80c0ab9457ba46819c87eac",
+      "test": "3ee338e9eef87bd00fea85424be4458ebec2af06d1ea00ae174360a7ac99f346"
+    }
+  },
+  "test_evaluated": false,
+  "training_warnings": [],
+  "library_warnings": [],
+  "trial_count": 15,
+  "process_peak_rss_mb_by_stage": {
+    "after_tests": 209.6171875,
+    "after_eda": 4101.5,
+    "after_preprocessing": 5198.26171875,
+    "after_training": 5198.26171875,
+    "after_diagnostics": 5198.26171875
+  },
+  "diagnostics": {
+    "status": "passed",
+    "test_read": false,
+    "interpretation": "event_context",
+    "train_rows": 1000000,
+    "validation_rows": 484965,
+    "train_metric_rows": 20000,
+    "selected_on_validation": "random_forest_balanced_full",
+    "controls": {
+      "real_labels": {
+        "macro_f1": 0.26528020231643396,
+        "weighted_f1": 0.33366805582015635,
+        "accuracy": 0.31349685028816515
+      },
+      "shuffled_labels": {
+        "macro_f1": 0.11482554274543791,
+        "weighted_f1": 0.17704654923774146,
+        "accuracy": 0.14661676615838257
+      }
+    },
+    "signal_macro_f1_difference": 0.15045465957099605,
+    "importance_model": "random_forest_balanced_full",
+    "importance_rows": 2000,
+    "process_peak_rss_mb": 5198.26171875,
+    "blocking_warnings": [],
+    "library_warnings": []
+  },
+  "reference": null,
+  "versions": {
+    "numpy": "2.1.3",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "pyarrow": "23.0.1",
+    "matplotlib": "3.10.0",
+    "pytest": "8.4.2"
+  },
+  "validation_results": [
+    {
+      "name": "majority_plain_full",
+      "macro_f1": 0.09860009190477861,
+      "accuracy": 0.5269514294846019,
+      "seconds": 3.1912949149999577
+    },
+    {
+      "name": "logistic_balanced_full",
+      "macro_f1": 0.23731295076972206,
+      "accuracy": 0.2582227583433856,
+      "seconds": 21.548104111000043
+    },
+    {
+      "name": "naive_bayes_plain_full",
+      "macro_f1": 0.21528376588746384,
+      "accuracy": 0.43417360015671236,
+      "seconds": 4.773749426999984
+    },
+    {
+      "name": "decision_tree_plain_full",
+      "macro_f1": 0.21648504364370372,
+      "accuracy": 0.5507098450403637,
+      "seconds": 32.218552687000056
+    },
+    {
+      "name": "decision_tree_balanced_full",
+      "macro_f1": 0.2492689884197788,
+      "accuracy": 0.2787128968069861,
+      "seconds": 37.54697309799997
+    },
+    {
+      "name": "random_forest_plain_full",
+      "macro_f1": 0.21072360007065724,
+      "accuracy": 0.5563246832245626,
+      "seconds": 182.96794789600006
+    },
+    {
+      "name": "random_forest_balanced_full",
+      "macro_f1": 0.3020384173578758,
+      "accuracy": 0.4327817471363913,
+      "seconds": 223.31066661
+    },
+    {
+      "name": "hist_gradient_boosting_plain_full",
+      "macro_f1": 0.21413295383822417,
+      "accuracy": 0.556400977390121,
+      "seconds": 85.28763206500003
+    },
+    {
+      "name": "hist_gradient_boosting_balanced_full",
+      "macro_f1": 0.2622076992331368,
+      "accuracy": 0.29594300619632347,
+      "seconds": 83.62919422899995
+    },
+    {
+      "name": "hist_gradient_boosting_balanced_distance",
+      "macro_f1": 0.2133884433534979,
+      "accuracy": 0.24969224583217345,
+      "seconds": 78.8235811440004
+    },
+    {
+      "name": "hist_gradient_boosting_balanced_context",
+      "macro_f1": 0.24991521338188624,
+      "accuracy": 0.2909405833410659,
+      "seconds": 48.89642586800028
+    }
+  ]
+}

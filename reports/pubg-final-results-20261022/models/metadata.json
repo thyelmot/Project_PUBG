@@ -1,0 +1,27 @@
+{
+  "quick": false,
+  "jobs": 2,
+  "python": "3.13.15",
+  "versions": {
+    "numpy": "2.1.3",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "pyarrow": "23.0.1",
+    "joblib": "1.6.0"
+  },
+  "processed": "/kaggle/working/full/processed",
+  "dataset_manifest_sha256": "5b95abab6f2773161d66f2504cd71b86a51ea806b16795edb5e1d94b4f906fbe",
+  "experiments_sha256": "73a5bc7c57f4d27233b35556e2354b742521f3eb966cb846acdc1785c023c32b",
+  "selection_sha256": "6ab0c0b38e2e3d85e98de43b778784de2fdf0461adb2b4565c86578ff87272b1",
+  "trials_sha256": "926d6be64127545ac75329791f15609c6f743dafa68129fa0b3d9b2bd62a8b2e",
+  "classes": [
+    "AR",
+    "DMR",
+    "Other",
+    "SMG",
+    "SR",
+    "Shotgun"
+  ],
+  "train_rows": 1000000,
+  "validation_rows": 480891
+}

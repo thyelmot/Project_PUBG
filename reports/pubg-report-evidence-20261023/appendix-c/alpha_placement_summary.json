@@ -1,0 +1,65 @@
+{
+  "status": "passed",
+  "section": "alpha_placement",
+  "test_read": false,
+  "training_rows": 1000000,
+  "validation_rows": 480891,
+  "train_matches": 34614,
+  "validation_matches": 7373,
+  "classes": [
+    "AR",
+    "DMR",
+    "Other",
+    "SMG",
+    "SR",
+    "Shotgun"
+  ],
+  "input_sha256": {
+    "dataset_manifest": "5b95abab6f2773161d66f2504cd71b86a51ea806b16795edb5e1d94b4f906fbe",
+    "experiments": "73a5bc7c57f4d27233b35556e2354b742521f3eb966cb846acdc1785c023c32b",
+    "selection": "6ab0c0b38e2e3d85e98de43b778784de2fdf0461adb2b4565c86578ff87272b1",
+    "train": "599b12fd22f12eb3e024fbec431ff32a8995cf9f309532c123e298b962f49704",
+    "validation": "a14df8d27b31ee197af858128702eb57d136c60790c7ac3d8925a5b0761e3a6b"
+  },
+  "main_selection_unchanged": "random_forest_balanced_loadout_history",
+  "seconds": 3098.0155114570002,
+  "process_peak_rss_mb": 3920.234375,
+  "blocking_warnings": [],
+  "library_warnings": [
+    "'enablePackrat' deprecated - use 'enable_packrat'",
+    "'oneOf' deprecated - use 'one_of'",
+    "'parseString' deprecated - use 'parse_string'",
+    "'resetCache' deprecated - use 'reset_cache'"
+  ],
+  "result": {
+    "alpha": {
+      "fits": 12,
+      "majority_validation_accuracy": 0.5267617817759118,
+      "weight_formula": "(N / (K * N_c)) ** alpha; no clipping or normalization",
+      "fixed_parameters_source": "balanced_D_experiment_in_frozen_main_run",
+      "rf_weight_note": "fixed per-training-class sample weights; alpha=1 differs from balanced_subsample"
+    },
+    "placement": {
+      "fits": 1,
+      "family": "random_forest",
+      "fixed_params": {
+        "n_estimators": 300,
+        "max_depth": 18,
+        "min_samples_leaf": 5,
+        "max_samples": 0.15
+      },
+      "baseline": "random_forest_balanced_loadout_history",
+      "placement_columns": [
+        "killer_placement",
+        "victim_placement",
+        "placement_gap"
+      ],
+      "history_gain_minus_placement_gain": 0.06964780314902091,
+      "history_gain_minus_placement_gain_ci95": [
+        0.06772878658880661,
+        0.07142753950040562
+      ],
+      "interpretation": "retrospective placement is excluded from the frozen main model"
+    }
+  }
+}

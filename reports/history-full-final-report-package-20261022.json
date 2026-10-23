@@ -1,0 +1,15 @@
+{
+  "kernel": "sangtranminh211/pubg-loadout-history-full-final-20261022",
+  "version": 1,
+  "status": "complete",
+  "created_at_utc": "2026-10-22T04:34:06.229878+00:00",
+  "archive": "pubg-final-results-20261022.zip",
+  "archive_sha256": "65f90c8759258ddeba6d515ec1c7c7c513ec805f12ec46e45ed6fd14c3acf81a",
+  "files": 79,
+  "file_manifest_sha256": "a03ec8f30ea56e3b28d11b1504b50700a7ad3119cf095f466899cb00f6d31459",
+  "holdout_evaluations": 1,
+  "best_selected_on_validation": "random_forest_balanced_loadout_history",
+  "test_macro_f1": 0.4218984503921157,
+  "test_rows": 484074,
+  "test_matches": 7418
+}

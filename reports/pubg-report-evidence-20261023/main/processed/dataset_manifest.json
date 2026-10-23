@@ -1,0 +1,95 @@
+{
+  "seed": 42,
+  "classes": [
+    "AR",
+    "DMR",
+    "Other",
+    "SMG",
+    "SR",
+    "Shotgun"
+  ],
+  "rare_groups_merged": [
+    "LMG"
+  ],
+  "audit_cause_column": "cause_for_audit",
+  "history_policy": "strict_prior_timestamp_before_train_cap",
+  "min_class_fraction": 0.01,
+  "split_seed": 42,
+  "source_match_splits_sha256": "3cd3e1a76c8679b510ee791bbd280a3684a51ffc03676c39ffbcc7466296c8ce",
+  "train_rows_before_cap": 2255190,
+  "max_train_rows": 1000000,
+  "source": {
+    "source": "/kaggle/input/datasets/skihikingkevin/pubg-match-deaths/deaths/kill_match_stats_final_0.csv",
+    "source_bytes": 2002938578,
+    "source_sha256": "8c40331ba496bdda621bf061b110e9c953a5cd723f0e98a13c4e82b945926e74",
+    "source_rows": 13426348,
+    "seed": 42,
+    "available_matches": 148308,
+    "sampled_matches": 50000,
+    "sampled_rows": 4525712,
+    "columns": [
+      "killed_by",
+      "killer_name",
+      "killer_placement",
+      "killer_position_x",
+      "killer_position_y",
+      "map",
+      "match_id",
+      "time",
+      "victim_name",
+      "victim_placement",
+      "victim_position_x",
+      "victim_position_y"
+    ],
+    "sample_sha256": "2e746bea16c9cada7d3a8868489c833c9fdacc38ebff8b17cc70b1c3a3ff95d7",
+    "split_seed": 42,
+    "prior_development_matches_excluded_from_test": 2294,
+    "source_match_splits_sha256": "3cd3e1a76c8679b510ee791bbd280a3684a51ffc03676c39ffbcc7466296c8ce",
+    "source_weapon_counts_sha256": "b962defdc533fb59aa4d8c27e92c7718e9913eadc6c212878f4f88aa11889e41"
+  },
+  "label_mapping_sha256": "b06ec3bb2cff6f97245cbc30cffaefefe9ed48b85664bb3fdaa70140a3ffdd9e",
+  "max_class_deviation_percentage_points": 0.12383228961212883,
+  "splits": {
+    "train": {
+      "rows": 1000000,
+      "matches": 34614,
+      "class_counts": {
+        "AR": 526120,
+        "SMG": 125786,
+        "Shotgun": 121045,
+        "Other": 104719,
+        "DMR": 77525,
+        "SR": 44805
+      }
+    },
+    "validation": {
+      "rows": 480891,
+      "matches": 7373,
+      "class_counts": {
+        "AR": 253315,
+        "SMG": 59894,
+        "Shotgun": 58362,
+        "Other": 50115,
+        "DMR": 37798,
+        "SR": 21407
+      }
+    },
+    "test": {
+      "rows": 484074,
+      "matches": 7418,
+      "class_counts": {
+        "AR": 254854,
+        "SMG": 60463,
+        "Shotgun": 58950,
+        "Other": 50505,
+        "DMR": 37640,
+        "SR": 21662
+      }
+    }
+  },
+  "files": {
+    "train": "599b12fd22f12eb3e024fbec431ff32a8995cf9f309532c123e298b962f49704",
+    "validation": "a14df8d27b31ee197af858128702eb57d136c60790c7ac3d8925a5b0761e3a6b",
+    "test": "0b2b5a62f70f7a214983d9c15eef4b4e01858fdfcb3bae41bfde505d094e9119"
+  }
+}

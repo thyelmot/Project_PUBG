@@ -1,0 +1,46 @@
+{
+  "section": "alpha_recall",
+  "kernel": "sangtranminh211/pubg-appendix-alpha-recall-20261023",
+  "version": 1,
+  "status": "passed",
+  "test_read": false,
+  "tests_passed": 80,
+  "source_hashes_verified": 40,
+  "input_sha256": {
+    "dataset_manifest": "5b95abab6f2773161d66f2504cd71b86a51ea806b16795edb5e1d94b4f906fbe",
+    "experiments": "73a5bc7c57f4d27233b35556e2354b742521f3eb966cb846acdc1785c023c32b",
+    "selection": "6ab0c0b38e2e3d85e98de43b778784de2fdf0461adb2b4565c86578ff87272b1",
+    "train": "599b12fd22f12eb3e024fbec431ff32a8995cf9f309532c123e298b962f49704",
+    "validation": "a14df8d27b31ee197af858128702eb57d136c60790c7ac3d8925a5b0761e3a6b"
+  },
+  "output_sha256": {
+    "alpha_reference_check.json": "200da5f213eb200d1536b668dfdfa69f5ebca9dc5bcfc649b4c9ff2fd53d579c",
+    "progress.json": "88e07fffc76db633bae1a98abc47105b9301c82082dffd029825de82fe95b5c0",
+    "readiness.json": "59df56008238062c4e4573aaa065f08bafd4e4f0c3eda7ed05aa33a8a9131176",
+    "results/appendix_alpha_class_recall.csv": "6384250a12ebe7c2c689e69f75f71731c5a0f4c9de6758131354a2dcaa142e29",
+    "results/appendix_alpha_confusion.csv": "b8aa596eed143d72084e7b7b152bf272acac17c15556ad7d471dc0ea52ffdc8a",
+    "results/appendix_alpha_minority_recall.png": "1c4aad801635d8acdee9bc684f6f4b2c078a6d4c78b7260489e525d5d7374657",
+    "results/appendix_alpha_tradeoff.csv": "170846fe46458d959b50772921449d94b019c33553bf621f8ba88429c2d10d12",
+    "results/appendix_alpha_tradeoff.png": "a6c891f1a19ab22d99d14889770c87e8ab2ec1fdf92cffac81cca086ae3b80fa",
+    "results/appendix_summary.json": "345aa70576f6266b6fbbfd7992ff47f7045b9523fbdf37c20b705bb9c1e3259f",
+    "tests.log": "96d28f8b1677ffffe7c9d6923404db046a8a5e6a93fc216d60374b02b6da424b",
+    "tests.xml": "944afc36630caace55fce26d40a5d9536a296175cc404904624f405d4dbfffb3"
+  },
+  "class_recall_rows_verified": 72,
+  "confusion_cells_verified": 432,
+  "alpha_reference_metrics_max_delta": 0.0,
+  "visual_plot_checked": true,
+  "report_copies_sha256": {
+    "reports/appendix-c-20261022/appendix_alpha_tradeoff.csv": "170846fe46458d959b50772921449d94b019c33553bf621f8ba88429c2d10d12",
+    "reports/appendix-c-20261022/appendix_alpha_tradeoff.png": "a6c891f1a19ab22d99d14889770c87e8ab2ec1fdf92cffac81cca086ae3b80fa",
+    "reports/appendix-c-20261022/appendix_alpha_class_recall.csv": "6384250a12ebe7c2c689e69f75f71731c5a0f4c9de6758131354a2dcaa142e29",
+    "reports/appendix-c-20261022/appendix_alpha_confusion.csv": "b8aa596eed143d72084e7b7b152bf272acac17c15556ad7d471dc0ea52ffdc8a",
+    "reports/appendix-c-20261022/appendix_alpha_minority_recall.png": "1c4aad801635d8acdee9bc684f6f4b2c078a6d4c78b7260489e525d5d7374657",
+    "reports/appendix-c-20261022/alpha_recall_summary.json": "345aa70576f6266b6fbbfd7992ff47f7045b9523fbdf37c20b705bb9c1e3259f",
+    "reports/appendix-c-20261022/alpha_recall_readiness.json": "59df56008238062c4e4573aaa065f08bafd4e4f0c3eda7ed05aa33a8a9131176",
+    "reports/appendix-c-20261022/alpha_recall_tests.xml": "944afc36630caace55fce26d40a5d9536a296175cc404904624f405d4dbfffb3",
+    "reports/appendix-c-20261022/alpha_recall_tests.log": "96d28f8b1677ffffe7c9d6923404db046a8a5e6a93fc216d60374b02b6da424b",
+    "reports/appendix-c-20261022/alpha_recall_reference_check.json": "200da5f213eb200d1536b668dfdfa69f5ebca9dc5bcfc649b4c9ff2fd53d579c",
+    "reports/appendix-c-20261022/alpha_recall_progress.json": "88e07fffc76db633bae1a98abc47105b9301c82082dffd029825de82fe95b5c0"
+  }
+}

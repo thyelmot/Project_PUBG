@@ -1,0 +1,89 @@
+{
+  "checked_at_utc": "2026-10-23T02:55:47.876464+00:00",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "jobs": [
+    {
+      "section": "rf_grid",
+      "version": 1,
+      "status": "COMPLETE",
+      "verified": true
+    },
+    {
+      "section": "alpha_placement",
+      "version": 1,
+      "status": "COMPLETE",
+      "verified": true
+    },
+    {
+      "section": "hgb_grid",
+      "version": 3,
+      "status": "COMPLETE",
+      "verified": true,
+      "error_evidence": "reports/appendix-c-hgb_grid-error-20261023.json",
+      "previous_version": 2,
+      "previous_status": "ERROR",
+      "retry_submission": "reports/appendix-c-hgb-retry-v3-submission-20261023.json",
+      "local_tests_passed": 76,
+      "kaggle_tests_passed": 76,
+      "cv_started": true,
+      "cv_fits_planned": 36,
+      "source_hashes_verified": 39,
+      "previous_errors": [
+        "reports/appendix-c-hgb_grid-error-20261023.json",
+        "reports/appendix-c-hgb_grid-v2-error-20261023.json"
+      ],
+      "cv_fits_completed": 36,
+      "refits_completed": 1,
+      "verification_report": "reports/appendix-c-hgb_grid-v3-verification-20261023.json",
+      "best_cv_macro_f1": 0.4083343262593246,
+      "cv_macro_f1_sd": 0.0010253368117002,
+      "best_cv_accuracy": 0.4585359998579172,
+      "best_validation_metrics": {
+        "macro_f1": 0.4071834507203178,
+        "weighted_f1": 0.47922822120820396,
+        "accuracy": 0.45781268520309176,
+        "tactical_role_accuracy": 0.6061498343699507,
+        "tactical_role_macro_f1": 0.5858163782788751,
+        "top_2_accuracy": 0.6674755817846456
+      },
+      "best_params": {
+        "model__estimator__learning_rate": 0.1,
+        "model__estimator__max_leaf_nodes": 63,
+        "model__estimator__min_samples_leaf": 50
+      }
+    },
+    {
+      "section": "alpha_recall",
+      "version": 1,
+      "kernel": "sangtranminh211/pubg-appendix-alpha-recall-20261023",
+      "status": "COMPLETE",
+      "verified": true,
+      "submission": "reports/appendix-c-alpha-recall-submission-20261023.json",
+      "local_tests_passed": 80,
+      "source_hashes_verified": 40,
+      "kaggle_tests_passed": 80,
+      "fit_phase_started": true,
+      "planned_fits": 12,
+      "completed_fits": 12,
+      "verification_report": "reports/appendix-c-alpha_recall-verification-20261023.json",
+      "class_recall_rows": 72,
+      "confusion_cells": 432,
+      "reference_metrics_max_delta": 0.0
+    }
+  ],
+  "missing_metrics": [],
+  "plan_updated": true,
+  "holdout_read_again": false,
+  "monitoring": "stopped: all appendix experiments verified and complete",
+  "appendix_complete": true,
+  "automation_deleted": true,
+  "minority_definition": "train_fraction < 1/K; unweighted mean of validation class recalls; zero_division=0",
+  "minority_classes": [
+    "DMR",
+    "Other",
+    "SMG",
+    "SR",
+    "Shotgun"
+  ],
+  "automation_id": "ch-t-ph-l-c-c-v-g-i-s-li-u-b-o-c-o"
+}

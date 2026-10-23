@@ -1,0 +1,27 @@
+{
+  "checked_at_utc": "2026-10-23T00:23:59.424778+00:00",
+  "kernel": "sangtranminh211/pubg-appendix-hgb-cv-20261022",
+  "version": 2,
+  "status": "ERROR",
+  "root_cause": "Packaging omission: new bundle test imports scripts/build_appendix_kaggle.py, excluded by scripts/0*.py glob.",
+  "tests_passed": 75,
+  "tests_failed": 1,
+  "failure": {
+    "status": "failed",
+    "section": "hgb_grid",
+    "progress": {
+      "stage": "tests"
+    },
+    "error_type": "CalledProcessError",
+    "error": "Command '['/usr/bin/python3', '-m', 'pytest', '-q', '/kaggle/working/project/tests', '--junitxml=/kaggle/working/appendix_hgb_grid/tests.xml']' returned non-zero exit status 1.",
+    "traceback": "Traceback (most recent call last):\n  File \"/kaggle/src/script.py\", line 34, in execute\n    return run(project, section, expected_manifest, expected_metadata, expected_split)\n  File \"/kaggle/src/script.py\", line 64, in run\n    test.check_returncode()\n    ~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/usr/lib/python3.13/subprocess.py\", line 508, in check_returncode\n    raise CalledProcessError(self.returncode, self.args, self.stdout,\n                             self.stderr)\nsubprocess.CalledProcessError: Command '['/usr/bin/python3', '-m', 'pytest', '-q', '/kaggle/working/project/tests', '--junitxml=/kaggle/working/appendix_hgb_grid/tests.xml']' returned non-zero exit status 1.\n"
+  },
+  "parquet_reads": [],
+  "reached_frozen_data": false,
+  "evidence_sha256": {
+    "artifacts/kaggle-appendix-hgb_grid-v2-output-20261023/appendix_hgb_grid/tests.xml": "c30b2b1bbc35d16a4bd2e22af0de9afea019fabf96b566e4b45c89ce366f19ca",
+    "artifacts/kaggle-appendix-hgb_grid-v2-output-20261023/appendix_hgb_grid/progress.json": "6603ebea7ba937bda621b11058f0d85ca1723c6e62645b9c159b2ebe8ac75e85",
+    "artifacts/kaggle-appendix-hgb_grid-v2-output-20261023/appendix_hgb_grid/tests.log": "5a4a5f52d25fa67af85457245890b627eee556e5480a0c4101b708a89c6e9675",
+    "artifacts/kaggle-appendix-hgb_grid-v2-output-20261023/appendix_hgb_grid/failure.json": "3fbffd117fc2f1a54704df34fe08e2e49daffb6845033e1d8b1400b168db76fe"
+  }
+}

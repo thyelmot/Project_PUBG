@@ -1,0 +1,212 @@
+{
+  "status": "passed",
+  "source_hashes": {
+    "configs/label_mapping.json": "b06ec3bb2cff6f97245cbc30cffaefefe9ed48b85664bb3fdaa70140a3ffdd9e",
+    "kaggle/runner.py": "89a17daf446e1ce6189cc17c35dd842c0e73ed33a09fa61e41fbd9a11b086331",
+    "pyproject.toml": "df9cfd1e3e265e0560004f92b26980767d9ea2a1e44ce3c27d419cd783ca0916",
+    "scripts/01_eda.py": "7ec6b5c2ab84cac8880136203ff487f186b00da23f1d298cf0a5c1eb546882cd",
+    "scripts/02_preprocess.py": "aace66064ffa452d3e4da7445086baebd894b919d33dfc2632334019a2308f10",
+    "scripts/03_models.py": "a752a56e38c536880e28d2847c221602f92e33af505267a5b6c4d3dd3bcc9ee1",
+    "scripts/04_evaluation.py": "ca5904621bd0a143416fccea9e74e7a82e62f306c5468fff6c29c05f8b506e5a",
+    "src/pubg_weapon/__init__.py": "f7bcf62b0befbdf59623a107fa678aa8601a00c615c01155a4d609aaabc52c12",
+    "src/pubg_weapon/config.py": "de3da213538856f060ceaf7c0e566938ba01706f84f35e55a59c5114dc3b8256",
+    "src/pubg_weapon/eda.py": "1a9bd58469e41fa0316780f950139101a5b4b3f3f291b72fa13337ed6fbf82a0",
+    "src/pubg_weapon/evaluation.py": "1e33d54fe55c35342e27b65c7ca0031d3aacece6f508575b0b771a5ac8b9c864",
+    "src/pubg_weapon/features.py": "f9254517e35ed8f284eb284bb00952b725047c332d5e9604e60c93c64b8d4498",
+    "src/pubg_weapon/io.py": "91db10f017b03d36dc74e840216db84eafa4e35a5cdd90ca30e40545fd047c98",
+    "src/pubg_weapon/labels.py": "d9ead236db1f33ad43be28421dca0b100b6c523252bb33ab0d81a5973de0fb02",
+    "src/pubg_weapon/models.py": "84dd50da8dda420be8ca7da2aa1fc217316970103032307c84bbb0e22f79054d",
+    "src/pubg_weapon/preprocessing.py": "483ae9e223597557be3b689f13d8586f87233f7779f1ecf3a204c68c45d5acb1",
+    "src/pubg_weapon/schema.py": "272656df547d13358790b564966e6b720cf0d1642539bf7d4e7f35649a9e2c89",
+    "src/pubg_weapon/splits.py": "1e0805debb455017424c7908d85d8cfd3a248cc88bfe1df1a1ac820e85a8eec9",
+    "src/pubg_weapon/training.py": "2b564b25a0a7e8622c912bd26a38fba9dc7d88752ac0efbe2448889459da58fc",
+    "tests/conftest.py": "c36daf0178a42d7dd7236ef91fa5b300ab0a360ab118effc28853c1eb597779d",
+    "tests/test_data.py": "0dafa64bc4b195fb49fb357c56c85de965b90fc4252aa823a348ccfdb4e29eb3",
+    "tests/test_models.py": "c7799d58e2cc692b39af1bbc77fdb8724c657dd663c2615c8c994c724bb0b758",
+    "tests/test_workflow.py": "9e1cdf10a1f44e7018eb9bd09fa747da4bf526db6d9179d7ca8d93df4b0f42d2"
+  },
+  "mode": "smoke",
+  "tests_returncode": 0,
+  "matches_requested": 2000,
+  "max_train_rows": 30000,
+  "seconds": 161.01406448200004,
+  "selection": {
+    "best": "random_forest_balanced_full",
+    "ablation": {
+      "A": "hist_gradient_boosting_balanced_distance",
+      "B": "hist_gradient_boosting_balanced_context",
+      "C": "hist_gradient_boosting_balanced_full"
+    },
+    "selection_metric": "validation_macro_f1",
+    "with_placement": false,
+    "interpretation": "event_context"
+  },
+  "dataset": {
+    "seed": 42,
+    "classes": [
+      "AR",
+      "DMR",
+      "LMG",
+      "Other",
+      "SMG",
+      "SR",
+      "Shotgun"
+    ],
+    "rare_groups_merged": [],
+    "train_rows_before_cap": 90910,
+    "max_train_rows": 30000,
+    "source": {
+      "source": "/kaggle/input/datasets/skihikingkevin/pubg-match-deaths/deaths/kill_match_stats_final_0.csv",
+      "source_bytes": 2002938578,
+      "source_sha256": "8c40331ba496bdda621bf061b110e9c953a5cd723f0e98a13c4e82b945926e74",
+      "source_rows": 13426348,
+      "seed": 42,
+      "available_matches": 148308,
+      "sampled_matches": 2000,
+      "sampled_rows": 180963,
+      "columns": [
+        "killed_by",
+        "killer_name",
+        "killer_placement",
+        "killer_position_x",
+        "killer_position_y",
+        "map",
+        "match_id",
+        "time",
+        "victim_name",
+        "victim_placement",
+        "victim_position_x",
+        "victim_position_y"
+      ],
+      "sample_sha256": "df760283e77c7c43d28ad3a453aba45bcf6d60c16c9ec2f313f4fce5262a64f7",
+      "source_weapon_counts_sha256": "b962defdc533fb59aa4d8c27e92c7718e9913eadc6c212878f4f88aa11889e41"
+    },
+    "label_mapping_sha256": "b06ec3bb2cff6f97245cbc30cffaefefe9ed48b85664bb3fdaa70140a3ffdd9e",
+    "max_class_deviation_percentage_points": 0.5551576354622014,
+    "splits": {
+      "train": {
+        "rows": 30000,
+        "matches": 1380,
+        "class_counts": {
+          "AR": 15747,
+          "SMG": 3855,
+          "Shotgun": 3605,
+          "Other": 2899,
+          "DMR": 2335,
+          "SR": 1368,
+          "LMG": 191
+        }
+      },
+      "validation": {
+        "rows": 19504,
+        "matches": 296,
+        "class_counts": {
+          "AR": 10280,
+          "SMG": 2398,
+          "Shotgun": 2398,
+          "Other": 1961,
+          "DMR": 1479,
+          "SR": 864,
+          "LMG": 124
+        }
+      },
+      "test": {
+        "rows": 19586,
+        "matches": 296,
+        "class_counts": {
+          "AR": 10263,
+          "Shotgun": 2453,
+          "SMG": 2439,
+          "Other": 1876,
+          "DMR": 1486,
+          "SR": 959,
+          "LMG": 110
+        }
+      }
+    },
+    "files": {
+      "train": "cee4bd8218fb5c5243a866290358812d16f09e6917388aa34604172369c4115b",
+      "validation": "26aef26e860eacce29cb5e81123332e3e7948f6594a22c742b85da4afefbe42c",
+      "test": "fb55bdc034256013698cf7da87c3002404e43aef853c828a887d614c58d7b1a8"
+    }
+  },
+  "test_evaluated": false,
+  "training_warnings": [],
+  "library_warnings": [],
+  "versions": {
+    "numpy": "2.1.3",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "pyarrow": "23.0.1",
+    "matplotlib": "3.10.0",
+    "pytest": "8.4.2"
+  },
+  "validation_results": [
+    {
+      "name": "majority_plain_full",
+      "macro_f1": 0.09861478838110586,
+      "accuracy": 0.5270713699753896,
+      "seconds": 0.10529748600004041
+    },
+    {
+      "name": "logistic_balanced_full",
+      "macro_f1": 0.25027196571094884,
+      "accuracy": 0.2759946677604594,
+      "seconds": 1.075603440000009
+    },
+    {
+      "name": "naive_bayes_plain_full",
+      "macro_f1": 0.23293039233970272,
+      "accuracy": 0.4361156685808039,
+      "seconds": 0.12686016999998628
+    },
+    {
+      "name": "decision_tree_plain_full",
+      "macro_f1": 0.23235486036061576,
+      "accuracy": 0.5186628383921247,
+      "seconds": 0.6643695149999758
+    },
+    {
+      "name": "decision_tree_balanced_full",
+      "macro_f1": 0.2512486498053567,
+      "accuracy": 0.32054963084495486,
+      "seconds": 0.7315175100000033
+    },
+    {
+      "name": "random_forest_plain_full",
+      "macro_f1": 0.20712524558710513,
+      "accuracy": 0.5534762100082035,
+      "seconds": 0.9441087129999914
+    },
+    {
+      "name": "random_forest_balanced_full",
+      "macro_f1": 0.2876913629716131,
+      "accuracy": 0.38433141919606234,
+      "seconds": 0.9613310449999517
+    },
+    {
+      "name": "hist_gradient_boosting_plain_full",
+      "macro_f1": 0.20465108790737618,
+      "accuracy": 0.5552194421657096,
+      "seconds": 0.9915660830000093
+    },
+    {
+      "name": "hist_gradient_boosting_balanced_full",
+      "macro_f1": 0.2699106922971094,
+      "accuracy": 0.3208059885151764,
+      "seconds": 1.0230529240000124
+    },
+    {
+      "name": "hist_gradient_boosting_balanced_distance",
+      "macro_f1": 0.20801804447149147,
+      "accuracy": 0.22841468416735028,
+      "seconds": 0.6811372599999572
+    },
+    {
+      "name": "hist_gradient_boosting_balanced_context",
+      "macro_f1": 0.2605165877278562,
+      "accuracy": 0.3128589007383101,
+      "seconds": 0.6606698070000334
+    }
+  ]
+}

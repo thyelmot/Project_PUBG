@@ -1,0 +1,133 @@
+{
+  "status": "passed",
+  "kind": "data_preflight_only",
+  "test_evaluated": false,
+  "source_hashes": {
+    "configs/development_matches.csv": "7d5085ab6a8c5b32eae23ca931d0fde0fd462b00e9d1a5a6c8d850ec98a8e0e3",
+    "configs/label_mapping.json": "b06ec3bb2cff6f97245cbc30cffaefefe9ed48b85664bb3fdaa70140a3ffdd9e",
+    "kaggle/runner.py": "e6e8f631049de3581143f11cb79a72f26003b78c932ed8a12cc92244b19518f1",
+    "pyproject.toml": "df9cfd1e3e265e0560004f92b26980767d9ea2a1e44ce3c27d419cd783ca0916",
+    "scripts/01_eda.py": "7ec6b5c2ab84cac8880136203ff487f186b00da23f1d298cf0a5c1eb546882cd",
+    "scripts/02_preprocess.py": "aace66064ffa452d3e4da7445086baebd894b919d33dfc2632334019a2308f10",
+    "scripts/03_models.py": "a752a56e38c536880e28d2847c221602f92e33af505267a5b6c4d3dd3bcc9ee1",
+    "scripts/04_evaluation.py": "ca5904621bd0a143416fccea9e74e7a82e62f306c5468fff6c29c05f8b506e5a",
+    "scripts/05_diagnostics.py": "00385dffab6826bb8a8bf09cc36df9bec7897e4a1599a2d6a129e3fcce6908af",
+    "src/pubg_weapon/__init__.py": "f7bcf62b0befbdf59623a107fa678aa8601a00c615c01155a4d609aaabc52c12",
+    "src/pubg_weapon/bootstrap.py": "70ef332d7cafba1db4bf9ca4892c8e0ec5759ef7b5867bcb8cee9789a377a96d",
+    "src/pubg_weapon/config.py": "de3da213538856f060ceaf7c0e566938ba01706f84f35e55a59c5114dc3b8256",
+    "src/pubg_weapon/diagnostics.py": "307ea42704b81a6758e2839db8be109c8d2bae0f283bc30a96be0b0f0ac9544c",
+    "src/pubg_weapon/eda.py": "f3de80fd5a4a354cc0f1b775bcbced1688e2cf35f2fad8f29be8861640b28fb7",
+    "src/pubg_weapon/error_analysis.py": "6bcf40d8a43f51d172255805c95fa1409f052310c094ea7265c16a65bc8f19df",
+    "src/pubg_weapon/evaluation.py": "34080f34960641a5359aba7e38761d658a8039ae8c02e0d884d80d40423024cc",
+    "src/pubg_weapon/features.py": "3ff3c035a3bb959d32ce420b7047198b3cee2f422c2352bcf6cc880fd4d2e766",
+    "src/pubg_weapon/io.py": "4e448408c52cb4dff03de25a0048943de61468356e8f44d4a98e597144297931",
+    "src/pubg_weapon/labels.py": "d9ead236db1f33ad43be28421dca0b100b6c523252bb33ab0d81a5973de0fb02",
+    "src/pubg_weapon/models.py": "60110917c1ac69d0eac46619ebe45cb0a4deb8903d3d08d1063c9c158c3ec935",
+    "src/pubg_weapon/preprocessing.py": "4969760413cedfd2b70ecb26ceaa4bbb343a532d445152f15a5349f92bef773b",
+    "src/pubg_weapon/schema.py": "8e6d95c3ff0ae46df5cafc6c0c2c55dff057191c7fe704086c2de02c45a2cc07",
+    "src/pubg_weapon/splits.py": "db9d8c8c38d03b3c653ad1154775bdd7af9f7a48a0c4bcb4daa2d62c4fbd7214",
+    "src/pubg_weapon/training.py": "91472fd3449d4b66c138816b4293a598144e084fd9c916ff6694be127660ffa1",
+    "tests/conftest.py": "c36daf0178a42d7dd7236ef91fa5b300ab0a360ab118effc28853c1eb597779d",
+    "tests/test_data.py": "dae6217da52dfb65f64dcfa9c511c96fa799e22ed437d4e1c633c7d4de27dfa2",
+    "tests/test_models.py": "8b897a472d8a5647b4a84e3de0be2c0849c0ba2ed57317869f6ae9a28d8d0325",
+    "tests/test_statistics.py": "bb8cc6df77c3a529a1b0c04b05cddd3a2af68095fdabfadb13836c156967fb51",
+    "tests/test_workflow.py": "811be7b5dde66f9ed9a0b724cdcf96d1a99bc313c7bd8c9f6f1ea4dcdbf3b38b"
+  },
+  "dataset": {
+    "seed": 42,
+    "classes": [
+      "AR",
+      "DMR",
+      "LMG",
+      "Other",
+      "SMG",
+      "SR",
+      "Shotgun"
+    ],
+    "rare_groups_merged": [],
+    "audit_cause_column": "cause_for_audit",
+    "split_seed": 42,
+    "source_match_splits_sha256": "3cd3e1a76c8679b510ee791bbd280a3684a51ffc03676c39ffbcc7466296c8ce",
+    "train_rows_before_cap": 2274070,
+    "max_train_rows": 1000000,
+    "source": {
+      "source": "/kaggle/input/datasets/skihikingkevin/pubg-match-deaths/deaths/kill_match_stats_final_0.csv",
+      "source_bytes": 2002938578,
+      "source_sha256": "8c40331ba496bdda621bf061b110e9c953a5cd723f0e98a13c4e82b945926e74",
+      "source_rows": 13426348,
+      "seed": 42,
+      "available_matches": 148308,
+      "sampled_matches": 50000,
+      "sampled_rows": 4525712,
+      "columns": [
+        "killed_by",
+        "killer_name",
+        "killer_placement",
+        "killer_position_x",
+        "killer_position_y",
+        "map",
+        "match_id",
+        "time",
+        "victim_name",
+        "victim_placement",
+        "victim_position_x",
+        "victim_position_y"
+      ],
+      "sample_sha256": "2e746bea16c9cada7d3a8868489c833c9fdacc38ebff8b17cc70b1c3a3ff95d7",
+      "split_seed": 42,
+      "prior_development_matches_excluded_from_test": 2294,
+      "source_match_splits_sha256": "3cd3e1a76c8679b510ee791bbd280a3684a51ffc03676c39ffbcc7466296c8ce",
+      "source_weapon_counts_sha256": "b962defdc533fb59aa4d8c27e92c7718e9913eadc6c212878f4f88aa11889e41"
+    },
+    "label_mapping_sha256": "b06ec3bb2cff6f97245cbc30cffaefefe9ed48b85664bb3fdaa70140a3ffdd9e",
+    "max_class_deviation_percentage_points": 0.12420791434641781,
+    "splits": {
+      "train": {
+        "rows": 1000000,
+        "matches": 34614,
+        "class_counts": {
+          "AR": 526330,
+          "SMG": 125746,
+          "Shotgun": 120934,
+          "Other": 98038,
+          "DMR": 77445,
+          "SR": 44815,
+          "LMG": 6692
+        }
+      },
+      "validation": {
+        "rows": 484965,
+        "matches": 7374,
+        "class_counts": {
+          "AR": 255553,
+          "SMG": 60380,
+          "Shotgun": 58812,
+          "Other": 47392,
+          "DMR": 38093,
+          "SR": 21600,
+          "LMG": 3135
+        }
+      },
+      "test": {
+        "rows": 488107,
+        "matches": 7418,
+        "class_counts": {
+          "AR": 257104,
+          "SMG": 60968,
+          "Shotgun": 59350,
+          "Other": 47748,
+          "DMR": 37888,
+          "SR": 21848,
+          "LMG": 3201
+        }
+      }
+    },
+    "files": {
+      "train": "6673b42db6e68370d68c1f86eb75919e7998eefcfed8a53e05428c788e52c1e9",
+      "validation": "da4daf7ccaf3d2b7c35c5191757ed71b342fb495b80c0ab9457ba46819c87eac",
+      "test": "3ee338e9eef87bd00fea85424be4458ebec2af06d1ea00ae174360a7ac99f346"
+    }
+  },
+  "seconds": 216.338195219,
+  "process_peak_rss_mb": 5157.7890625
+}

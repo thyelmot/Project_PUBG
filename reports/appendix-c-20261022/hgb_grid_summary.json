@@ -1,0 +1,56 @@
+{
+  "status": "passed",
+  "section": "hgb_grid",
+  "test_read": false,
+  "training_rows": 1000000,
+  "validation_rows": 480891,
+  "train_matches": 34614,
+  "validation_matches": 7373,
+  "classes": [
+    "AR",
+    "DMR",
+    "Other",
+    "SMG",
+    "SR",
+    "Shotgun"
+  ],
+  "input_sha256": {
+    "dataset_manifest": "5b95abab6f2773161d66f2504cd71b86a51ea806b16795edb5e1d94b4f906fbe",
+    "experiments": "73a5bc7c57f4d27233b35556e2354b742521f3eb966cb846acdc1785c023c32b",
+    "selection": "6ab0c0b38e2e3d85e98de43b778784de2fdf0461adb2b4565c86578ff87272b1",
+    "train": "599b12fd22f12eb3e024fbec431ff32a8995cf9f309532c123e298b962f49704",
+    "validation": "a14df8d27b31ee197af858128702eb57d136c60790c7ac3d8925a5b0761e3a6b"
+  },
+  "main_selection_unchanged": "random_forest_balanced_loadout_history",
+  "seconds": 4624.963425563999,
+  "process_peak_rss_mb": 1735.21484375,
+  "blocking_warnings": [],
+  "library_warnings": [],
+  "result": {
+    "family": "hist_gradient_boosting",
+    "candidates": 12,
+    "cv_fits": 36,
+    "refits": 1,
+    "best_params": {
+      "model__estimator__learning_rate": 0.1,
+      "model__estimator__max_leaf_nodes": 63,
+      "model__estimator__min_samples_leaf": 50
+    },
+    "best_cv_macro_f1": 0.4083343262593246,
+    "best_validation_metrics": {
+      "macro_f1": 0.4071834507203178,
+      "weighted_f1": 0.47922822120820396,
+      "accuracy": 0.45781268520309176,
+      "tactical_role_accuracy": 0.6061498343699507,
+      "tactical_role_macro_f1": 0.5858163782788751,
+      "top_2_accuracy": 0.6674755817846456
+    },
+    "fixed_params": {
+      "max_iter": 150,
+      "learning_rate": 0.1,
+      "max_leaf_nodes": 31
+    },
+    "weight_policy": "exact_alpha_1_weights_learned_inside_each_fold",
+    "seconds": 4611.9696347280005
+  }
+}

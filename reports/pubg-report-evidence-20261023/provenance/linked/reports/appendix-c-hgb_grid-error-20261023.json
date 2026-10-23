@@ -1,0 +1,15 @@
+{
+  "checked_at_utc": "2026-10-22T23:23:08.841541+00:00",
+  "kernel": "sangtranminh211/pubg-appendix-hgb-cv-20261022",
+  "submitted_version": 1,
+  "status": "ERROR",
+  "failure_message": null,
+  "output_files": [],
+  "next_page_token": null,
+  "log_path": "artifacts/kaggle-appendix-hgb_grid-output-20261022/pubg-appendix-hgb-cv-20261022.log",
+  "log_content": "[]",
+  "log_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "root_cause": "unknown; Kaggle returned no failure message and empty log array",
+  "hgb_results_verified": false,
+  "local_holdout_read_again": false
+}

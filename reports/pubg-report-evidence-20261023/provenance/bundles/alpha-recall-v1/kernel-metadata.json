@@ -1,0 +1,16 @@
+{
+  "id": "sangtranminh211/pubg-appendix-alpha-recall-20261023",
+  "title": "pubg appendix alpha recall 20261023",
+  "code_file": "main.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": false,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [
+    "sangtranminh211/pubg-loadout-history-full-final-20261022"
+  ],
+  "docker_image": "gcr.io/kaggle-images/python@sha256:81b1e7c4b4f0f2a7e0a33943c95754b1b7af6b30d65221633a284b6b601cd84a"
+}

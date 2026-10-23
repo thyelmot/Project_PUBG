@@ -1,0 +1,11 @@
+{
+  "data": "synthetic_only",
+  "rows": 500000,
+  "matches": 7500,
+  "pipelines": 11,
+  "bootstrap_repeats": 1000,
+  "seed": 42,
+  "threads": 2,
+  "seconds": 0.8026220839819871,
+  "process_peak_rss_mb": 407.46875
+}

@@ -1,0 +1,25 @@
+{
+  "section": "rf_grid",
+  "kernel": "sangtranminh211/pubg-appendix-rf-cv-20261022",
+  "version": 1,
+  "status": "passed",
+  "test_read": false,
+  "tests_passed": 73,
+  "source_hashes_verified": 38,
+  "input_sha256": {
+    "dataset_manifest": "5b95abab6f2773161d66f2504cd71b86a51ea806b16795edb5e1d94b4f906fbe",
+    "experiments": "73a5bc7c57f4d27233b35556e2354b742521f3eb966cb846acdc1785c023c32b",
+    "selection": "6ab0c0b38e2e3d85e98de43b778784de2fdf0461adb2b4565c86578ff87272b1",
+    "train": "599b12fd22f12eb3e024fbec431ff32a8995cf9f309532c123e298b962f49704",
+    "validation": "a14df8d27b31ee197af858128702eb57d136c60790c7ac3d8925a5b0761e3a6b"
+  },
+  "output_sha256": {
+    "readiness.json": "ce17d784ba553ab9d49495a6c84ce1796aad2971262b6b18adb7264f8937ba7d",
+    "results/appendix_cv_best_validation.csv": "eb7fcf6e00ab63f9cac829551ac2315f0b96a761368d35cb0a02926b2afecaa0",
+    "results/appendix_cv_match_folds.csv": "839c0d1c8d927cb82b68a14c1191b114ee50a7098207c5277ef1aa4bb1d63c30",
+    "results/appendix_rf_gridsearch_cv.csv": "c0e0126576a25f0518681f121a9202aa25dd0ce373ec22c1586c037fdac20b42",
+    "results/appendix_summary.json": "e2fad92b1d6762cc751c092705ce7dd4308224e8b61c2bec193a014d733ecf92",
+    "tests.log": "0a16df33fba0a07ffd6dccaa3c8a60b87565aa5187b1e608f23afad7c25acb95",
+    "tests.xml": "a75ba693ce83c03493685347c6744a67ed3cbe46fae2c388dfee0de9f72dc0af"
+  }
+}

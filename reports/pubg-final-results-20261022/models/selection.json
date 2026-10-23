@@ -1,0 +1,13 @@
+{
+  "best": "random_forest_balanced_loadout_history",
+  "ablation": {
+    "A": "random_forest_balanced_distance",
+    "B": "random_forest_balanced_context",
+    "C": "random_forest_balanced_full",
+    "D": "random_forest_balanced_loadout_history"
+  },
+  "main_feature_set": "loadout_history",
+  "selection_metric": "validation_macro_f1",
+  "with_placement": false,
+  "interpretation": "event_context"
+}

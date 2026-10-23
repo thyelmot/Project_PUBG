@@ -1,0 +1,37 @@
+{
+  "checked_at_utc": "2026-10-23T00:17:54.448129+00:00",
+  "kernels": [
+    {
+      "kernel": "sangtranminh211/pubg-appendix-hgb-cv-20261022",
+      "version": 1,
+      "last_run_time": "2026-10-20 00:17:48.058000",
+      "docker_image": "",
+      "source_sha256": "337757bb3d376a71cef8784a97fba39ed8469d0ffe32ea228aca424f33a0fc8d",
+      "status": "KernelWorkerStatus.ERROR"
+    },
+    {
+      "kernel": "sangtranminh211/pubg-appendix-rf-cv-20261022",
+      "version": 1,
+      "last_run_time": "2026-10-20 00:17:50.130000",
+      "docker_image": "gcr.io/kaggle-images/python@sha256:81b1e7c4b4f0f2a7e0a33943c95754b1b7af6b30d65221633a284b6b601cd84a",
+      "source_sha256": "2879c19b8bd9c416cc3e62d879f9c98b70cec03addd29b86be5020051529bfe1",
+      "status": "KernelWorkerStatus.COMPLETE"
+    },
+    {
+      "kernel": "sangtranminh211/pubg-appendix-alpha-placement-20261022",
+      "version": 1,
+      "last_run_time": "2026-10-20 00:17:51.480000",
+      "docker_image": "gcr.io/kaggle-images/python@sha256:81b1e7c4b4f0f2a7e0a33943c95754b1b7af6b30d65221633a284b6b601cd84a",
+      "source_sha256": "88c0fa23f7286390f362c59658e9a69c87707323ec6c803eb84c3360a3058e97",
+      "status": "KernelWorkerStatus.COMPLETE"
+    },
+    {
+      "kernel": "sangtranminh211/pubg-loadout-history-full-final-20261022",
+      "version": 1,
+      "last_run_time": "2026-10-20 00:17:53.538000",
+      "docker_image": "gcr.io/kaggle-images/python@sha256:81b1e7c4b4f0f2a7e0a33943c95754b1b7af6b30d65221633a284b6b601cd84a",
+      "source_sha256": "cb37f70ad88e5510bbc4627c90062d79df2b688a0891d1031bb4e004ecec9b25",
+      "status": "KernelWorkerStatus.COMPLETE"
+    }
+  ]
+}

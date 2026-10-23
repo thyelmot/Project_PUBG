@@ -1,0 +1,29 @@
+{
+  "source": "/kaggle/input/datasets/skihikingkevin/pubg-match-deaths/deaths/kill_match_stats_final_0.csv",
+  "source_bytes": 2002938578,
+  "source_sha256": "8c40331ba496bdda621bf061b110e9c953a5cd723f0e98a13c4e82b945926e74",
+  "source_rows": 13426348,
+  "seed": 42,
+  "available_matches": 148308,
+  "sampled_matches": 50000,
+  "sampled_rows": 4525712,
+  "columns": [
+    "killed_by",
+    "killer_name",
+    "killer_placement",
+    "killer_position_x",
+    "killer_position_y",
+    "map",
+    "match_id",
+    "time",
+    "victim_name",
+    "victim_placement",
+    "victim_position_x",
+    "victim_position_y"
+  ],
+  "sample_sha256": "2e746bea16c9cada7d3a8868489c833c9fdacc38ebff8b17cc70b1c3a3ff95d7",
+  "split_seed": 42,
+  "prior_development_matches_excluded_from_test": 2294,
+  "source_match_splits_sha256": "3cd3e1a76c8679b510ee791bbd280a3684a51ffc03676c39ffbcc7466296c8ce",
+  "source_weapon_counts_sha256": "b962defdc533fb59aa4d8c27e92c7718e9913eadc6c212878f4f88aa11889e41"
+}

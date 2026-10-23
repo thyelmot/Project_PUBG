@@ -1,19 +1,36 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-.ipynb_checkpoints/
-
-# Environment / local configs
+# Local environment and credentials
+.venv/
+.env
 .env.*
-*.pem
+!.env.example
+!.env.sample
 credentials*.json
 secrets*.json
-.env
-*.token
+*.pem
 *.key
+*.token
 
-# Data directories (raw / heavy parquet / temp)
+# Python and tool caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+build/
+dist/
+
+# Local-only project folders (requested)
+/artifacts/
+/kaggle/
+/tests/
+
+# Data generated or supplied locally
 data/raw/*
 !data/raw/.gitkeep
 data/interim/*
@@ -21,37 +38,17 @@ data/interim/*
 data/processed/*
 !data/processed/.gitkeep
 
-# Checkpoint staging & large experiment artifacts
-artifacts/checkpoints/*.tmp
-artifacts/checkpoints/staging/
-artifacts/experiments/
-artifacts/metrics/
-artifacts/logs/temp/
-*.partial
-*.ready.json
-artifacts/checkpoints/
-artifacts/backups/
-artifacts/models/*.joblib
-artifacts/models/*.xgb
-artifacts/logs/*.log
-artifacts/manifests/runtime_snapshot.json
+# Scratch output, handoff notes and generated report bundles
+/tmp/
+/handoff-session.md
+/reports/*.zip
+/reports/bao_cao_assets/muc_luc.json
 
-# Local transfer bundles and scratch scripts
-*.zip
-temp_*.py
-scratch/
-scripts/*_patch.py
-scripts/inspect_*.py
-scripts/restore_*.py
-scripts/replay_*.py
-scripts/check_conversation_modifications.py
-scripts/check_generator_escapes.py
-scripts/fix_*.py
-scripts/test_exec_nb00.py
-scripts/apply_all_replaces.py
-scripts/audit_notebooks_detail.py
-
-# Operating system artifacts
+# OS and editor temporary files
 .DS_Store
 Thumbs.db
-desktop.ini
+*.swp
+*.swo
+*~
+/handoff_session.md
+/plan.md

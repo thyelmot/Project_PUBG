@@ -1,0 +1,2 @@
+family,selected_by,folds,params_json,cv_macro_f1,alpha,training_rows,validation_rows,macro_f1,weighted_f1,accuracy,tactical_role_accuracy,tactical_role_macro_f1,top_2_accuracy
+hist_gradient_boosting,grouped_cv_macro_f1,3,"{""model__estimator__learning_rate"": 0.1, ""model__estimator__max_leaf_nodes"": 63, ""model__estimator__min_samples_leaf"": 50}",0.4083343262593246,1.0,1000000,480891,0.4071834507203178,0.47922822120820396,0.45781268520309176,0.6061498343699507,0.5858163782788751,0.6674755817846456

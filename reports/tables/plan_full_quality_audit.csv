@@ -1,0 +1,7 @@
+rule,rows,fraction_of_input
+missing_killer,312962,0.06915199199595555
+missing_coordinates,312962,0.06915199199595555
+zero_killer_position,21203,0.004685008679297313
+zero_victim_position,205948,0.04550620985162114
+invalid_time,0,0.0
+invalid_map,52268,0.011549121994506058

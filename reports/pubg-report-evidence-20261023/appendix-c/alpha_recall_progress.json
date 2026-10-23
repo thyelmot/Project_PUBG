@@ -1,0 +1,7 @@
+{
+  "stage": "complete",
+  "parquet_reads": [
+    "train.parquet",
+    "validation.parquet"
+  ]
+}

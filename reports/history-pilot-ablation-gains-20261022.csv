@@ -1,0 +1,4 @@
+ablation_change,before,after,macro_f1_difference,ci95_low,ci95_high,conclusion
+A->B,random_forest_balanced_distance,random_forest_balanced_context,0.037726074567350776,0.030418595197940546,0.043934731319519776,after_higher
+B->C,random_forest_balanced_context,random_forest_balanced_full,0.01077029361393389,0.004498737380428804,0.016880891782480666,after_higher
+C->D,random_forest_balanced_full,random_forest_balanced_loadout_history,0.07824626854327743,0.07172304150561695,0.08544646571920951,after_higher

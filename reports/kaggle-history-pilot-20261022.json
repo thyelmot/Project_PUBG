@@ -1,0 +1,276 @@
+{
+  "status": "passed",
+  "source_hashes": {
+    "configs/development_matches.csv": "7d5085ab6a8c5b32eae23ca931d0fde0fd462b00e9d1a5a6c8d850ec98a8e0e3",
+    "configs/label_mapping.json": "b06ec3bb2cff6f97245cbc30cffaefefe9ed48b85664bb3fdaa70140a3ffdd9e",
+    "kaggle/runner.py": "e6e8f631049de3581143f11cb79a72f26003b78c932ed8a12cc92244b19518f1",
+    "pyproject.toml": "df9cfd1e3e265e0560004f92b26980767d9ea2a1e44ce3c27d419cd783ca0916",
+    "scripts/01_eda.py": "7ec6b5c2ab84cac8880136203ff487f186b00da23f1d298cf0a5c1eb546882cd",
+    "scripts/02_preprocess.py": "aace66064ffa452d3e4da7445086baebd894b919d33dfc2632334019a2308f10",
+    "scripts/03_models.py": "a8f9071fdbf5d91faf9c14e0ae5cf135a10fb0c7ec1ddc1f0d4ca4c81ce707a5",
+    "scripts/04_evaluation.py": "ca5904621bd0a143416fccea9e74e7a82e62f306c5468fff6c29c05f8b506e5a",
+    "scripts/05_diagnostics.py": "00385dffab6826bb8a8bf09cc36df9bec7897e4a1599a2d6a129e3fcce6908af",
+    "scripts/06_rf_regularization.py": "6a6fbf173dd70caf6ac220ba8aae3e6f656c629d27574272a0d7e73ae1db8e14",
+    "src/pubg_weapon/__init__.py": "f7bcf62b0befbdf59623a107fa678aa8601a00c615c01155a4d609aaabc52c12",
+    "src/pubg_weapon/bootstrap.py": "70ef332d7cafba1db4bf9ca4892c8e0ec5759ef7b5867bcb8cee9789a377a96d",
+    "src/pubg_weapon/config.py": "f0344fac62270e7ef898a6049018eacef26b1f4637e9684568735f7c8790ab38",
+    "src/pubg_weapon/diagnostics.py": "673ff020b3a20b9c87607d7a9ffe4a2e6f4cab4ebd6c8301d4018aa8221670d7",
+    "src/pubg_weapon/eda.py": "f3de80fd5a4a354cc0f1b775bcbced1688e2cf35f2fad8f29be8861640b28fb7",
+    "src/pubg_weapon/error_analysis.py": "6bcf40d8a43f51d172255805c95fa1409f052310c094ea7265c16a65bc8f19df",
+    "src/pubg_weapon/evaluation.py": "007b5b504bbb53c9106de6d96bf081339619b17cd727a66878bfb7b7d9615fd8",
+    "src/pubg_weapon/features.py": "c64d2addfead35ea7eb89dd14be394d42a2e74ba2c229a5a4a4efd3826e3e29c",
+    "src/pubg_weapon/io.py": "4e448408c52cb4dff03de25a0048943de61468356e8f44d4a98e597144297931",
+    "src/pubg_weapon/labels.py": "d9ead236db1f33ad43be28421dca0b100b6c523252bb33ab0d81a5973de0fb02",
+    "src/pubg_weapon/models.py": "1e64a933c73c0707d9e110c3f30f179f08b983565e0c63aeb0f1fbb50f8de478",
+    "src/pubg_weapon/preprocessing.py": "94e8483e6350e082f3c82cc08d27cd052fd7a16f324613f7f266dd8a00bcc258",
+    "src/pubg_weapon/rf_experiment.py": "3c0f446cd49e2fb372d229df24b19f5c7353e447efc8e37167f981a9ba168ef8",
+    "src/pubg_weapon/schema.py": "55a64fc457969304df9a33d20c035cfa55f8baa7db397e8af0379e4eef47c35f",
+    "src/pubg_weapon/splits.py": "db9d8c8c38d03b3c653ad1154775bdd7af9f7a48a0c4bcb4daa2d62c4fbd7214",
+    "src/pubg_weapon/training.py": "0d557e2486fc9026f82d3bddd7d85ff00f963339a77997e4964f360ee77fd0d0",
+    "tests/conftest.py": "c36daf0178a42d7dd7236ef91fa5b300ab0a360ab118effc28853c1eb597779d",
+    "tests/test_data.py": "a8f97d2fc6e90563c714c5c389b3ab9a899fcacac4037e4e5aea6bc67e140665",
+    "tests/test_history.py": "c93fb468ce946d598b7b35c6e1d8fc3df0146a3ff42e3143a96f51595b348abf",
+    "tests/test_models.py": "8b897a472d8a5647b4a84e3de0be2c0849c0ba2ed57317869f6ae9a28d8d0325",
+    "tests/test_rf_experiment.py": "c61af16aa64406936b0c3723ce1f04299b7a2a1ead5fb8e682bdd75248bf90cc",
+    "tests/test_statistics.py": "bb8cc6df77c3a529a1b0c04b05cddd3a2af68095fdabfadb13836c156967fb51",
+    "tests/test_workflow.py": "29be8811c55ab2ee2af0c41e03c70cbb33ae97f3d177a10ad2feef599736ba7c"
+  },
+  "mode": "pilot",
+  "tests_returncode": 0,
+  "matches_requested": 3000,
+  "max_train_rows": 100000,
+  "seconds": 540.6294053309999,
+  "selection": {
+    "best": "random_forest_balanced_loadout_history",
+    "ablation": {
+      "A": "random_forest_balanced_distance",
+      "B": "random_forest_balanced_context",
+      "C": "random_forest_balanced_full",
+      "D": "random_forest_balanced_loadout_history"
+    },
+    "main_feature_set": "loadout_history",
+    "selection_metric": "validation_macro_f1",
+    "with_placement": false,
+    "interpretation": "event_context"
+  },
+  "dataset": {
+    "seed": 42,
+    "classes": [
+      "AR",
+      "DMR",
+      "Other",
+      "SMG",
+      "SR",
+      "Shotgun"
+    ],
+    "rare_groups_merged": [
+      "LMG"
+    ],
+    "audit_cause_column": "cause_for_audit",
+    "history_policy": "strict_prior_timestamp_before_train_cap",
+    "min_class_fraction": 0.01,
+    "split_seed": 42,
+    "source_match_splits_sha256": "3cd3e1a76c8679b510ee791bbd280a3684a51ffc03676c39ffbcc7466296c8ce",
+    "train_rows_before_cap": 136351,
+    "max_train_rows": 100000,
+    "source": {
+      "source": "/kaggle/input/datasets/skihikingkevin/pubg-match-deaths/deaths/kill_match_stats_final_0.csv",
+      "source_bytes": 2002938578,
+      "source_sha256": "8c40331ba496bdda621bf061b110e9c953a5cd723f0e98a13c4e82b945926e74",
+      "source_rows": 13426348,
+      "seed": 42,
+      "available_matches": 148308,
+      "sampled_matches": 3000,
+      "sampled_rows": 271395,
+      "columns": [
+        "killed_by",
+        "killer_name",
+        "killer_placement",
+        "killer_position_x",
+        "killer_position_y",
+        "map",
+        "match_id",
+        "time",
+        "victim_name",
+        "victim_placement",
+        "victim_position_x",
+        "victim_position_y"
+      ],
+      "sample_sha256": "d3a07c91c59df10980f785e55a734d8f966f1075c98fe2302fa7d47db549829c",
+      "split_seed": 42,
+      "prior_development_matches_excluded_from_test": 2294,
+      "source_match_splits_sha256": "3cd3e1a76c8679b510ee791bbd280a3684a51ffc03676c39ffbcc7466296c8ce",
+      "source_weapon_counts_sha256": "b962defdc533fb59aa4d8c27e92c7718e9913eadc6c212878f4f88aa11889e41"
+    },
+    "label_mapping_sha256": "b06ec3bb2cff6f97245cbc30cffaefefe9ed48b85664bb3fdaa70140a3ffdd9e",
+    "max_class_deviation_percentage_points": 0.53703144896321,
+    "splits": {
+      "train": {
+        "rows": 100000,
+        "matches": 2095,
+        "class_counts": {
+          "AR": 52633,
+          "SMG": 12561,
+          "Shotgun": 12131,
+          "Other": 10363,
+          "DMR": 7744,
+          "SR": 4568
+        }
+      },
+      "validation": {
+        "rows": 28165,
+        "matches": 434,
+        "class_counts": {
+          "AR": 14714,
+          "SMG": 3557,
+          "Shotgun": 3446,
+          "Other": 2867,
+          "DMR": 2310,
+          "SR": 1271
+        }
+      },
+      "test": {
+        "rows": 27814,
+        "matches": 429,
+        "class_counts": {
+          "AR": 14680,
+          "SMG": 3495,
+          "Shotgun": 3328,
+          "Other": 2846,
+          "DMR": 2227,
+          "SR": 1238
+        }
+      }
+    },
+    "files": {
+      "train": "41949408a4641874755600da8d2ddb5553246f0be96fa279f4e99bd1143cb699",
+      "validation": "f9f4e6dbf9069b2f17f468e7d370692ba9107eb8b96a17bb8eff464220a819a0",
+      "test": "115bf02b3ef0944887c8ab860dd12e434f930922e19d04a7435e350f53f2d60d"
+    }
+  },
+  "test_evaluated": false,
+  "training_warnings": [],
+  "library_warnings": [],
+  "trial_count": 16,
+  "process_peak_rss_mb_by_stage": {
+    "after_tests": 209.48046875,
+    "after_eda": 556.71875,
+    "after_preprocessing": 609.4453125,
+    "after_training": 881.3515625,
+    "after_diagnostics": 965.23828125
+  },
+  "diagnostics": {
+    "status": "passed",
+    "test_read": false,
+    "interpretation": "event_context",
+    "train_rows": 100000,
+    "validation_rows": 28165,
+    "train_metric_rows": 20000,
+    "selected_on_validation": "random_forest_balanced_loadout_history",
+    "controls": {
+      "real_labels": {
+        "macro_f1": 0.39960500820504136,
+        "weighted_f1": 0.46944451207983634,
+        "accuracy": 0.4488194567725901,
+        "tactical_role_accuracy": 0.5974791407775608,
+        "tactical_role_macro_f1": 0.5774131789518561
+      },
+      "shuffled_labels": {
+        "macro_f1": 0.12932929434330978,
+        "weighted_f1": 0.1732384375659432,
+        "accuracy": 0.14805609799396413,
+        "tactical_role_accuracy": 0.2858867388602876,
+        "tactical_role_macro_f1": 0.26721525850311806
+      }
+    },
+    "signal_macro_f1_difference": 0.27027571386173155,
+    "importance_model": "random_forest_balanced_loadout_history",
+    "importance_rows": 2000,
+    "process_peak_rss_mb": 965.23828125,
+    "blocking_warnings": [],
+    "library_warnings": []
+  },
+  "reference": null,
+  "versions": {
+    "numpy": "2.1.3",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "pyarrow": "23.0.1",
+    "matplotlib": "3.10.0",
+    "pytest": "8.4.2"
+  },
+  "validation_results": [
+    {
+      "name": "majority_plain_loadout_history",
+      "macro_f1": 0.11438388644013775,
+      "accuracy": 0.5224214450559205,
+      "seconds": 0.4603729629999407
+    },
+    {
+      "name": "logistic_balanced_loadout_history",
+      "macro_f1": 0.37436011270421526,
+      "accuracy": 0.4116101544470087,
+      "seconds": 5.2832982639999955
+    },
+    {
+      "name": "naive_bayes_plain_loadout_history",
+      "macro_f1": 0.32495399940999853,
+      "accuracy": 0.3925794425705663,
+      "seconds": 0.6841710229999762
+    },
+    {
+      "name": "decision_tree_plain_loadout_history",
+      "macro_f1": 0.38031777171579123,
+      "accuracy": 0.5780933783064086,
+      "seconds": 3.591285998000103
+    },
+    {
+      "name": "decision_tree_balanced_loadout_history",
+      "macro_f1": 0.37124725250567536,
+      "accuracy": 0.41054500266287947,
+      "seconds": 4.080498767999984
+    },
+    {
+      "name": "random_forest_plain_loadout_history",
+      "macro_f1": 0.3926946583566024,
+      "accuracy": 0.5951003017930055,
+      "seconds": 14.514627270999995
+    },
+    {
+      "name": "random_forest_balanced_loadout_history",
+      "macro_f1": 0.4306213844459535,
+      "accuracy": 0.5113083614415054,
+      "seconds": 17.932830932
+    },
+    {
+      "name": "hist_gradient_boosting_plain_loadout_history",
+      "macro_f1": 0.40622146539978327,
+      "accuracy": 0.595881413101367,
+      "seconds": 19.882532190000006
+    },
+    {
+      "name": "hist_gradient_boosting_balanced_loadout_history",
+      "macro_f1": 0.40865905244753703,
+      "accuracy": 0.45741168116456593,
+      "seconds": 28.20287835900001
+    },
+    {
+      "name": "random_forest_balanced_distance",
+      "macro_f1": 0.3038787477213914,
+      "accuracy": 0.36957216403337473,
+      "seconds": 13.496263582999973
+    },
+    {
+      "name": "random_forest_balanced_context",
+      "macro_f1": 0.34160482228874217,
+      "accuracy": 0.43774187821764604,
+      "seconds": 11.346005032999983
+    },
+    {
+      "name": "random_forest_balanced_full",
+      "macro_f1": 0.35237511590267606,
+      "accuracy": 0.4599680454464761,
+      "seconds": 19.820926704000044
+    }
+  ]
+}

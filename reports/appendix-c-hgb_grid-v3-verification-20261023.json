@@ -1,0 +1,36 @@
+{
+  "section": "hgb_grid",
+  "kernel": "sangtranminh211/pubg-appendix-hgb-cv-20261022",
+  "version": 3,
+  "status": "passed",
+  "test_read": false,
+  "tests_passed": 76,
+  "source_hashes_verified": 39,
+  "input_sha256": {
+    "dataset_manifest": "5b95abab6f2773161d66f2504cd71b86a51ea806b16795edb5e1d94b4f906fbe",
+    "experiments": "73a5bc7c57f4d27233b35556e2354b742521f3eb966cb846acdc1785c023c32b",
+    "selection": "6ab0c0b38e2e3d85e98de43b778784de2fdf0461adb2b4565c86578ff87272b1",
+    "train": "599b12fd22f12eb3e024fbec431ff32a8995cf9f309532c123e298b962f49704",
+    "validation": "a14df8d27b31ee197af858128702eb57d136c60790c7ac3d8925a5b0761e3a6b"
+  },
+  "output_sha256": {
+    "progress.json": "88e07fffc76db633bae1a98abc47105b9301c82082dffd029825de82fe95b5c0",
+    "readiness.json": "dcd2e60e48951edfc5f7a6b48fb7af113e90e8135ae3f77b1bb47b0fab652b64",
+    "results/appendix_cv_best_validation.csv": "4e613604c5ff4a7433459d6af6e69a9b5b07b50bbad9498d4a85387e52139059",
+    "results/appendix_cv_match_folds.csv": "839c0d1c8d927cb82b68a14c1191b114ee50a7098207c5277ef1aa4bb1d63c30",
+    "results/appendix_hgb_gridsearch_cv.csv": "30aa2216c77a4aa9652d148ca945d3bd4db030393e32d60480a8b8597cfa7124",
+    "results/appendix_summary.json": "6d0884714659469ccde6d62039b960ad47de2acdff609d29666edff6872c5b08",
+    "tests.log": "27143b12de4fbb3afdae2296894be0c1e5b47f1dca1ff03184cc0a6ae5bf8fb3",
+    "tests.xml": "bf1cdfae4fcf8e85a220601f7868be6b0657299ea1a3cabea583fa080832377f"
+  },
+  "rf_hgb_fold_audit_identical": true,
+  "report_copies_sha256": {
+    "reports/appendix-c-20261022/appendix_hgb_gridsearch_cv.csv": "30aa2216c77a4aa9652d148ca945d3bd4db030393e32d60480a8b8597cfa7124",
+    "reports/appendix-c-20261022/appendix_hgb_cv_best_validation.csv": "4e613604c5ff4a7433459d6af6e69a9b5b07b50bbad9498d4a85387e52139059",
+    "reports/appendix-c-20261022/appendix_hgb_cv_match_folds.csv": "839c0d1c8d927cb82b68a14c1191b114ee50a7098207c5277ef1aa4bb1d63c30",
+    "reports/appendix-c-20261022/hgb_grid_summary.json": "6d0884714659469ccde6d62039b960ad47de2acdff609d29666edff6872c5b08",
+    "reports/appendix-c-20261022/hgb_grid_readiness.json": "dcd2e60e48951edfc5f7a6b48fb7af113e90e8135ae3f77b1bb47b0fab652b64",
+    "reports/appendix-c-20261022/hgb_grid_tests.xml": "bf1cdfae4fcf8e85a220601f7868be6b0657299ea1a3cabea583fa080832377f",
+    "reports/appendix-c-20261022/hgb_grid_progress.json": "88e07fffc76db633bae1a98abc47105b9301c82082dffd029825de82fe95b5c0"
+  }
+}

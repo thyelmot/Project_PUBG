@@ -1,0 +1,16 @@
+{
+  "created_at_utc": "2026-10-23T02:57:36.785587+00:00",
+  "directory": "reports/pubg-report-evidence-20261023",
+  "zip": "reports/pubg-report-evidence-20261023.zip",
+  "zip_sha256": "8ff892ad32c5152c4a7aca8f62a0ec5c602ad1915b231b45a45141cb31756ee4",
+  "zip_bytes": 6779319,
+  "files_including_manifest": 139,
+  "manifest": "reports/pubg-report-evidence-20261023/MANIFEST_SHA256.json",
+  "main_manifest_verified": true,
+  "appendix_complete": true,
+  "minority_recall_verified": true,
+  "holdout_reevaluated": false,
+  "main_runtime_hashes_unchanged": 34,
+  "portable_markdown_links_verified": true,
+  "final_report_written": false
+}

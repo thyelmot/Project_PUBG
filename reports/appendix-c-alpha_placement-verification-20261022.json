@@ -1,0 +1,28 @@
+{
+  "section": "alpha_placement",
+  "kernel": "sangtranminh211/pubg-appendix-alpha-placement-20261022",
+  "version": 1,
+  "status": "passed",
+  "test_read": false,
+  "tests_passed": 73,
+  "source_hashes_verified": 38,
+  "input_sha256": {
+    "dataset_manifest": "5b95abab6f2773161d66f2504cd71b86a51ea806b16795edb5e1d94b4f906fbe",
+    "experiments": "73a5bc7c57f4d27233b35556e2354b742521f3eb966cb846acdc1785c023c32b",
+    "selection": "6ab0c0b38e2e3d85e98de43b778784de2fdf0461adb2b4565c86578ff87272b1",
+    "train": "599b12fd22f12eb3e024fbec431ff32a8995cf9f309532c123e298b962f49704",
+    "validation": "a14df8d27b31ee197af858128702eb57d136c60790c7ac3d8925a5b0761e3a6b"
+  },
+  "output_sha256": {
+    "readiness.json": "ed609d0075bd088962631942c86bf2ca2a3c3eca3ec770ea03bc74a28d598489",
+    "results/appendix_alpha_tradeoff.csv": "372000bba350edf166fbe97c1942d3b1886d9cc51d2362ca0762b8ad002dcb79",
+    "results/appendix_alpha_tradeoff.png": "a6c891f1a19ab22d99d14889770c87e8ab2ec1fdf92cffac81cca086ae3b80fa",
+    "results/appendix_context_history_placement.csv": "1d437b6fd568cb4bbbd6f26a0da96c8d2d3e9faac5edd71bc5af8dedfdb7aa37",
+    "results/appendix_history_placement_gains.csv": "1b8f851c558d9ab517a4491b410549dba5452fd938445d11dd58207cbdafc2f3",
+    "results/appendix_placement_bootstrap.csv": "d87cfead3d3ad43ec5002e152218e3d2666f8ae0c99d529dfab4881f96e79e35",
+    "results/appendix_placement_comparison.csv": "b5cd07ca6e3e4e7b22e737bf80f76c483c19d740b90ec259e9e95b78aae4265d",
+    "results/appendix_summary.json": "902378c26e0e1841a031f4831f5043b8c6d10f38a85cf689d8d5bb98ac840ba1",
+    "tests.log": "a0f2a7c817e9aba4e3d8aaffe650bf6919d1a48d336e99787a2d30323040f1c2",
+    "tests.xml": "a4b642dba34a7e39ab3422b8f2a4a99b74af13476478293a6f5f8af9c6876767"
+  }
+}
