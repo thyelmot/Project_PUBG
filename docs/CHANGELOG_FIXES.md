@@ -596,6 +596,18 @@
 - Kiểm thử: SHA256 của cả bốn file khớp trước/sau thao tác đổi tên, trước khi bổ sung mục nhật ký này; kiểm tra thư mục mới và ba đích liên kết README tồn tại, thư mục tên cũ không còn.
 - Giới hạn: chỉ tổ chức lại tài liệu trong `PUBG_Coursework`; không sửa bản `Project_PUBG_latest`, không chạy lại mô hình, không commit/push.
 
+## 23/10/2026 - Viết lại README theo cấu trúc và kết quả hiện hành
+
+- Yêu cầu: sửa README chi tiết, chuẩn xác hơn và commit lên GitHub từ thư mục chính `PUBG_Coursework`.
+- Tài liệu gốc đã đối chiếu: `PUBG_RESEARCH_SPEC.md` I, VI-VIII, X-XI; `PUBG_IMPLEMENTATION_PLAN.md` I-III, V; AGENTS workspace; config/source/generator hiện hành; báo cáo LaTeX và CSV/metadata ở `report/evidence/full_results`; handoff của snapshot S09-S10.
+- File thay đổi: viết lại `README.md`, ghi nối nhật ký này và `Project_PUBG/CHANGELOG_FIXES.md`. Hai tài liệu gốc `CHANGELOG_FIXES.md`, `RESULTS.md` đã ở trạng thái bị xóa local trước lượt này; không khôi phục hoặc stage việc xóa ngoài phạm vi yêu cầu. README dùng tài liệu thực có trong `docs/` và tự chứa hướng dẫn nhập kết quả.
+- Nội dung sửa: trình bày thông tin nhóm/giảng viên; phạm vi ML hồi cứu; nguồn/quy mô, target và Grade C; quy trình S00-S12; kết quả placement/cluster và giới hạn survival; sản phẩm/bảng CSV; phân biệt output, outputs, results; clone/cài đặt cơ bản, Kaggle/resume/lưu Output, nhập ZIP, môi trường đã chạy và giới hạn Colab; biên dịch/đóng gói báo cáo và kiểm thử. Giữ nguyên phụ lục S00 và marker mà generator/test sử dụng.
+- Đính chính quan trọng: không coi Colab đóng kèm mã cũ đã đồng bộ TSQR mới; không coi requirements theo khoảng là khóa môi trường resume; không coi cấu hình S08 lưu sẵn là chạy toàn bộ pipeline; không coi snapshot local có sẵn khi clone GitHub. Các tham chiếu tài liệu gốc ở một số helper/generator được công bố là giới hạn bảo trì, không âm thầm sửa code hoặc hash.
+- Ảnh hưởng: chỉ tài liệu; không đổi RQ, cohort, feature, target, split, leakage rule, estimator, metric hoặc checkpoint. Không sửa src/config/generator/notebook và không chạy lại S01-S10.
+- Kiểm thử: 3/3 test importer và 1/1 test đồng bộ tham số README/notebook đạt; kiểm liên kết nội bộ, số liệu với CSV đã lưu, phụ lục nguyên byte, Markdown fences và diff trước commit trong cùng lượt bàn giao. Chỉ stage README và nhật ký trong docs; đối chiếu mã commit/remote sau push.
+- Giới hạn: không chạy toàn bộ test suite, CUDA, raw/full-data hoặc builder Colab. Snapshot `results/` không đưa lên Git. Mã commit và trạng thái push báo trong phản hồi cuối.
+- Kết quả kiểm trước xuất bản: 29 liên kết nội bộ tồn tại; Markdown fences/details cân bằng; số liệu MAE/RMSE và tỷ lệ cải thiện T0/T1 khớp CSV gốc; Grade C, tổng hồ sơ, trạng thái CI và danh tính nhóm khớp nguồn; phụ lục S00 nguyên byte; diff không có lỗi khoảng trắng.
+
 
 
 
