@@ -119,7 +119,7 @@ while i<len(lines):
   widths=[CW*w/sum(weights) for w in weights]
   data=[[Paragraph(fmt(x),styles['headcell' if ri==0 else 'cell']) for x in row] for ri,row in enumerate(rows)]
   t=Table(data,colWidths=widths,repeatRows=1,hAlign='LEFT')
-  t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('BACKGROUND',(0,0),(-1,0),colors.HexColor('#eeeeee')),('GRID',(0,0),(-1,-1),.4,colors.HexColor('#777777')),('LEFTPADDING',(0,0),(-1,-1),5),('RIGHTPADDING',(0,0),(-1,-1),5),('TOPPADDING',(0,0),(-1,-1),5),('BOTTOMPADDING',(0,0),(-1,-1),5)]))
+  t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('BACKGROUND',(0,0),(-1,-1),colors.white),('TEXTCOLOR',(0,0),(-1,-1),colors.black),('GRID',(0,0),(-1,-1),.4,colors.HexColor('#777777')),('LEFTPADDING',(0,0),(-1,-1),5),('RIGHTPADDING',(0,0),(-1,-1),5),('TOPPADDING',(0,0),(-1,-1),5),('BOTTOMPADDING',(0,0),(-1,-1),5)]))
   t.spaceAfter=9;story.append(t);continue
  if line.startswith('!['):
   m=re.match(r'!\[(.*?)\]\((.*?)\)',line);from PIL import Image as PILImage
