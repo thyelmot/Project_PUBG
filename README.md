@@ -123,9 +123,6 @@ PUBG_Coursework/
   tests/                         Kiểm thử và dữ liệu fixture
   tools/                         Công cụ tạo notebook
   requirements.txt               Phụ thuộc phần mềm
-  PUBG_RESEARCH_SPEC.md          Đặc tả nghiên cứu
-  PUBG_IMPLEMENTATION_PLAN.md    Kế hoạch triển khai
-  CHANGELOG_FIXES.md             Lịch sử thay đổi
 ```
 
 `output/` là nơi lưu notebook kết quả của nhóm. Khi thực thi trên Kaggle, thư mục `outputs/<scope>/` do pipeline tạo chứa bảng, hình, mô hình, dự đoán và checkpoint; hai thư mục có vai trò khác nhau. Một số bảng hiển thị trong notebook được giới hạn số dòng xem trước.
